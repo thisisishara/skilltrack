@@ -37,11 +37,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     authorized({ auth: session, request: { nextUrl } }) {
       const isLoggedIn = Boolean(session?.user?.githubUsername)
+      const pathname = nextUrl.pathname
       const isPublicPath =
-        nextUrl.pathname === "/login" || nextUrl.pathname === "/access-denied"
+        pathname === "/login" ||
+        pathname === "/access-denied" ||
+        pathname === "/skilltrack-icon.png" ||
+        pathname.startsWith("/favicon/")
 
       if (isPublicPath) {
-        if (isLoggedIn && nextUrl.pathname === "/login") {
+        if (isLoggedIn && pathname === "/login") {
           return Response.redirect(new URL("/dashboard", nextUrl))
         }
 

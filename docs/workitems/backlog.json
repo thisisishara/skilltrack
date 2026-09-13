@@ -620,12 +620,12 @@
         "§19",
         "§50 Phase 3"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E05-P01",
           "title": "Infinite pannable canvas",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§19",
             "§5 canvas"
@@ -634,29 +634,29 @@
             {
               "id": "E05-P01-S01",
               "title": "Choose and document canvas library (React Flow expected)",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P01-S02",
               "title": "Infinite pan/zoom canvas as the only non-shadcn primary surface",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P01-S03",
               "title": "Canvas chrome uses shadcn Buttons for zoom/fit",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P01-S04",
               "title": "Empty roadmap Empty with create-first-node action",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E05-P02",
           "title": "Node CRUD with stable identity",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§9",
             "§29"
@@ -665,29 +665,29 @@
             {
               "id": "E05-P02-S01",
               "title": "Create nodes with stable UUIDs",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P02-S02",
               "title": "Edit title/description without regenerating IDs",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P02-S03",
               "title": "Delete node with AlertDialog; cascade children per domain rules",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P02-S04",
               "title": "Persist position_x / position_y independently of parent_id",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E05-P03",
           "title": "Tree hierarchy of arbitrary depth",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§10",
             "§29"
@@ -696,34 +696,34 @@
             {
               "id": "E05-P03-S01",
               "title": "Model parent_id tree; multiple roots allowed",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P03-S02",
               "title": "Create child / branch nodes",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P03-S03",
               "title": "Reparent/move nodes without losing identity or progress",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P03-S04",
               "title": "Reject self-parent and cycles; parent must share role",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P03-S05",
               "title": "Derive canvas edges from parent_id",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E05-P04",
           "title": "Lucide node icons",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§12"
           ],
@@ -731,22 +731,22 @@
             {
               "id": "E05-P04-S01",
               "title": "Persist Lucide kebab-case icon identifiers (default circle-dot)",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P04-S02",
               "title": "Resolve identifiers to Lucide components at the UI boundary",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P04-S03",
               "title": "Searchable icon picker via Command in Popover or Dialog",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E05-P04-S04",
               "title": "Icon picker Empty when search has no matches",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }

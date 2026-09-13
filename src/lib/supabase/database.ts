@@ -69,6 +69,66 @@ export type Database = {
           },
         ]
       }
+      roadmap_nodes: {
+        Row: {
+          id: string
+          role_id: string
+          parent_id: string | null
+          title: string
+          description: string | null
+          notes: string | null
+          icon: string
+          position_x: number
+          position_y: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          role_id: string
+          parent_id?: string | null
+          title: string
+          description?: string | null
+          notes?: string | null
+          icon?: string
+          position_x?: number
+          position_y?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          role_id?: string
+          parent_id?: string | null
+          title?: string
+          description?: string | null
+          notes?: string | null
+          icon?: string
+          position_x?: number
+          position_y?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_nodes_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roadmap_nodes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "roadmap_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

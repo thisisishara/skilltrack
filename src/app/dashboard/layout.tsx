@@ -63,7 +63,7 @@ export default async function DashboardLayout({
           displayName={displayName}
           avatarUrl={avatarUrl}
         />
-        <SidebarInset>
+        <SidebarInset className="min-h-0 overflow-hidden">
           <header className="flex h-12 shrink-0 items-center px-4">
             <SidebarTrigger />
           </header>

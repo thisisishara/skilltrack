@@ -1,0 +1,213 @@
+import "server-only"
+
+import { ApplicationError } from "@/domain/errors"
+import { displayNodeTitle } from "@/domain/nodes/title"
+import type { RoadmapNode } from "@/domain/nodes/types"
+import type { Database } from "@/lib/supabase/database"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
+
+type NodeRow = Database["public"]["Tables"]["roadmap_nodes"]["Row"]
+
+function toNode(row: NodeRow): RoadmapNode {
+  return {
+    id: row.id,
+    roleId: row.role_id,
+    parentId: row.parent_id,
+    title: row.title,
+    description: row.description,
+    notes: row.notes,
+    icon: row.icon,
+    positionX: row.position_x,
+    positionY: row.position_y,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function throwFromSupabase(error: { code?: string; message?: string } | null): never {
+  console.error(
+    JSON.stringify({
+      event: "database.roadmap_nodes.failed",
+      code: error?.code ?? null,
+    })
+  )
+  throw new ApplicationError("database", "Could not update roadmap nodes.", {
+    cause: error,
+  })
+}
+
+export async function listByRoleId(roleId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .select()
+    .eq("role_id", roleId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  return (data ?? []).map(toNode)
+}
+
+export async function getByIdForRole(roleId: string, nodeId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .select()
+    .eq("role_id", roleId)
+    .eq("id", nodeId)
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  return data ? toNode(data) : null
+}
+
+export async function insert(input: {
+  roleId: string
+  parentId: string | null
+  title: string
+  description: string | null
+  icon: string
+  positionX: number
+  positionY: number
+  sortOrder: number
+}) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .insert({
+      role_id: input.roleId,
+      parent_id: input.parentId,
+      title: displayNodeTitle(input.title),
+      description: input.description,
+      icon: input.icon,
+      position_x: input.positionX,
+      position_y: input.positionY,
+      sort_order: input.sortOrder,
+    })
+    .select()
+    .single()
+
+  if (error || !data) {
+    throwFromSupabase(error)
+  }
+
+  return toNode(data)
+}
+
+export async function updateDetails(
+  roleId: string,
+  nodeId: string,
+  input: {
+    title: string
+    description: string | null
+    icon: string
+  }
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .update({
+      title: displayNodeTitle(input.title),
+      description: input.description,
+      icon: input.icon,
+    })
+    .eq("role_id", roleId)
+    .eq("id", nodeId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That node no longer exists.")
+  }
+
+  return toNode(data)
+}
+
+export async function updatePosition(
+  roleId: string,
+  nodeId: string,
+  positionX: number,
+  positionY: number
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .update({
+      position_x: positionX,
+      position_y: positionY,
+    })
+    .eq("role_id", roleId)
+    .eq("id", nodeId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That node no longer exists.")
+  }
+
+  return toNode(data)
+}
+
+export async function updateParent(
+  roleId: string,
+  nodeId: string,
+  parentId: string | null,
+  sortOrder: number
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .update({
+      parent_id: parentId,
+      sort_order: sortOrder,
+    })
+    .eq("role_id", roleId)
+    .eq("id", nodeId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That node no longer exists.")
+  }
+
+  return toNode(data)
+}
+
+export async function deleteForRole(roleId: string, nodeId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .delete()
+    .eq("role_id", roleId)
+    .eq("id", nodeId)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That node no longer exists.")
+  }
+}

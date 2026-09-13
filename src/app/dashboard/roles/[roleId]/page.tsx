@@ -1,6 +1,8 @@
 import { Map } from "lucide-react"
 
+import { listNodesForRole } from "@/application/nodes/nodes-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
+import { RoadmapCanvas } from "@/components/canvas/roadmap-canvas"
 import { PersistActiveRole } from "@/components/roles/persist-active-role"
 import {
   Empty,
@@ -22,7 +24,7 @@ export default async function RoleDashboardPage({
 
   if (!role) {
     return (
-      <main className="flex min-h-0 flex-1 flex-col p-6">
+      <div className="flex min-h-0 flex-1 flex-col p-6">
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -35,24 +37,16 @@ export default async function RoleDashboardPage({
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      </main>
+      </div>
     )
   }
 
+  const nodes = await listNodesForRole(applicationUser.id, role.id)
+
   return (
-    <main className="flex min-h-0 flex-1 flex-col p-6">
+    <div className="flex min-h-0 flex-1 flex-col">
       <PersistActiveRole roleId={role.id} />
-      <Empty className="h-full">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Map />
-          </EmptyMedia>
-          <EmptyTitle>Roadmap</EmptyTitle>
-          <EmptyDescription>
-            The canvas for {role.name} lands in the next phase.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    </main>
+      <RoadmapCanvas roleId={role.id} nodes={nodes} />
+    </div>
   )
 }

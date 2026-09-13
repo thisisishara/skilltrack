@@ -538,12 +538,12 @@
         "§21",
         "§29"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E04-P01",
           "title": "Role CRUD",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§8",
             "§29"
@@ -552,29 +552,29 @@
             {
               "id": "E04-P01-S01",
               "title": "Create empty role/roadmap with unique normalized name per user",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P01-S02",
               "title": "Rename role without changing node IDs",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P01-S03",
               "title": "Delete role with AlertDialog confirmation and cascade",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P01-S04",
               "title": "Select active role and persist selection",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E04-P02",
           "title": "Sidebar role list and search",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§20",
             "§35"
@@ -583,27 +583,27 @@
             {
               "id": "E04-P02-S01",
               "title": "List roles in shadcn Sidebar",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P02-S02",
               "title": "Search/filter roles with Command or Input; Empty on no matches",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P02-S03",
               "title": "Create Role opens Dialog (empty vs import)",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P02-S04",
               "title": "Show GitHub user + Logout in sidebar footer",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E04-P02-S05",
               "title": "No-roles Empty with create action",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }

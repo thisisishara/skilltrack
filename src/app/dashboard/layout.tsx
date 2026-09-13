@@ -1,7 +1,9 @@
 import type { ReactNode } from "react"
 import { CircleAlert } from "lucide-react"
 
+import { listRoles } from "@/application/roles/roles-service"
 import { AppSidebar } from "@/components/layout/app-sidebar"
+import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   SidebarInset,
@@ -9,6 +11,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { isApplicationError } from "@/domain/errors"
+import type { Role } from "@/domain/roles/types"
 import { requireSession } from "@/lib/auth/session"
 
 export default async function DashboardLayout({
@@ -19,13 +22,15 @@ export default async function DashboardLayout({
   let githubUsername: string
   let displayName: string | null | undefined
   let avatarUrl: string | null | undefined
+  let roles: Role[] = []
   let databaseUnavailable = false
 
   try {
-    const { session } = await requireSession()
+    const { session, applicationUser } = await requireSession()
     githubUsername = session.user.githubUsername
     displayName = session.user.name
     avatarUrl = session.user.image
+    roles = await listRoles(applicationUser.id)
   } catch (error) {
     if (isApplicationError(error) && error.code === "database") {
       databaseUnavailable = true
@@ -52,17 +57,19 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider className="flex min-h-full flex-1">
-      <AppSidebar
-        githubUsername={githubUsername}
-        displayName={displayName}
-        avatarUrl={avatarUrl}
-      />
-      <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center px-4">
-          <SidebarTrigger />
-        </header>
-        {children}
-      </SidebarInset>
+      <RolesWorkspace roles={roles}>
+        <AppSidebar
+          githubUsername={githubUsername}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+        />
+        <SidebarInset>
+          <header className="flex h-12 shrink-0 items-center px-4">
+            <SidebarTrigger />
+          </header>
+          {children}
+        </SidebarInset>
+      </RolesWorkspace>
     </SidebarProvider>
   )
 }

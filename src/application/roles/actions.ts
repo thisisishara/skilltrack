@@ -1,0 +1,83 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+
+import {
+  createEmptyRole,
+  deleteRole,
+  renameRole,
+} from "@/application/roles/roles-service"
+import {
+  ApplicationError,
+  type ApplicationErrorCode,
+  isApplicationError,
+} from "@/domain/errors"
+import type { Role } from "@/domain/roles/types"
+import { requireSession } from "@/lib/auth/session"
+
+export type RoleActionResult =
+  | { ok: true; role: Role }
+  | { ok: true; deletedRoleId: string }
+  | { ok: false; code: ApplicationErrorCode; message: string }
+
+function fail(error: unknown): RoleActionResult {
+  if (isApplicationError(error)) {
+    return { ok: false, code: error.code, message: error.message }
+  }
+
+  return {
+    ok: false,
+    code: "unexpected",
+    message: "Something went wrong. Try again.",
+  }
+}
+
+function revalidateRoles() {
+  revalidatePath("/dashboard", "layout")
+}
+
+export async function createRoleAction(name: string): Promise<RoleActionResult> {
+  try {
+    const { applicationUser } = await requireSession()
+    const role = await createEmptyRole(applicationUser.id, name)
+    revalidateRoles()
+    return { ok: true, role }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function renameRoleAction(
+  roleId: string,
+  name: string
+): Promise<RoleActionResult> {
+  try {
+    if (!roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    const role = await renameRole(applicationUser.id, roleId, name)
+    revalidateRoles()
+    return { ok: true, role }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function deleteRoleAction(
+  roleId: string
+): Promise<RoleActionResult> {
+  try {
+    if (!roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    await deleteRole(applicationUser.id, roleId)
+    revalidateRoles()
+    return { ok: true, deletedRoleId: roleId }
+  } catch (error) {
+    return fail(error)
+  }
+}

@@ -47,7 +47,10 @@ SkillTrack lets users:
 
 ### Roadmaps
 - Create, rename, select, and delete roles.
-- Role selector with search.
+- A role is always selected when the user has at least one role.
+- Role switcher with search (not a full role list in the sidebar).
+- With a role selected, the first view is that role's roadmap.
+- Role settings (rename/delete) live on a per-role Settings screen.
 - Collapsible sidebar.
 - Infinite/pannable roadmap canvas.
 - Arbitrarily deep node hierarchy.
@@ -202,7 +205,8 @@ The product UI must be composed from **valid shadcn/ui components**. Do not inve
 | Selects / search pickers | `Select` (items inside `SelectGroup`), `Combobox`, `Command` |
 | Layout chrome | `Sidebar`, `Separator`, `ScrollArea`, `Card` (`CardHeader` / `CardTitle` / `CardDescription` / `CardContent` / `CardFooter`) |
 | Node configuration panel | `Sheet` with `SheetTitle` (required) |
-| Create / import / rename flows | `Dialog` with `DialogTitle` |
+| Create / import flows | `Dialog` with `DialogTitle` |
+| Role rename | inline `Field` on the role Settings screen |
 | Destructive confirmations | `AlertDialog` |
 | Empty states | `Empty` (`EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`) |
 | Inline warnings / errors | `Alert` (`AlertTitle`, `AlertDescription`) |
@@ -226,7 +230,7 @@ Required `Empty` compositions:
 
 | Surface | `EmptyTitle` (example) | Primary action in `EmptyContent` |
 | --- | --- | --- |
-| No roles yet | No roles yet | `Button` to open create-role `Dialog` |
+| No roles yet | Create a role to continue | `Button` to open create-role `Dialog` |
 | Role with no nodes | This roadmap is empty | `Button` to create the first node |
 | No checklist items on a node | No evidence items | `Button` to add a checklist item |
 | No notes on a node | No notes | `Button` or focus the notes `Textarea` |
@@ -402,6 +406,20 @@ Constraints:
 - Role names cannot be empty.
 - Role names should be normalized for uniqueness checks.
 - Renaming a role must not alter its node IDs.
+
+## Active Role
+
+When the user has one or more roles, one role is always selected. There is no “no roadmap selected” idle state.
+
+Selection resolution:
+
+1. If `localStorage` key `skilltrack-active-role-id` matches a role the user owns, use it.
+2. Otherwise use the first role for that user (`created_at` ascending).
+3. Write the resolved id back to `localStorage`.
+
+The selected role is also reflected in the URL (`/dashboard/roles/[roleId]`). Visiting `/dashboard` redirects to that role. Creating a role selects it. Deleting the active role selects the first remaining role, or the create-role gate if none remain.
+
+If the user has **no roles**, they must create one before using the rest of the app. The dashboard shows `Empty` with a create action; the role switcher still offers **Create Role**.
 
 ---
 
@@ -796,40 +814,54 @@ Position does not affect the semantic parent-child relationship.
 
 # 20. Sidebar
 
-The application chrome uses the shadcn `Sidebar` (collapsible). Icons in the sidebar are Lucide. Dividers are `Separator`. The signed-in GitHub user uses `Avatar` + `AvatarFallback`. Role search uses `Input` or `Command`. Overflow actions (rename/delete) use `DropdownMenu`.
+The application chrome uses the shadcn `Sidebar` (collapsible). Icons in the sidebar are Lucide. The signed-in GitHub user uses `Avatar` + `AvatarFallback` in a footer `DropdownMenu`. Role switching uses `Popover` + `Command` (searchable list), not a stacked list of every role.
 
 The sidebar contains:
 
 ```text
-SkillTrack
+[icon] Senior AI Engineer   ▾     ← role switcher (header)
+       Role
+
 ────────────
-Roles
-  Senior AI Engineer
+Roadmap                         ← only when a role is selected
+Settings                        ← only when a role is selected
+
+────────────
+[avatar] GitHub User        ▾     ← footer; menu opens upward
+         thisisishara
+```
+
+The role switcher popover opens **below** the header trigger. It contains:
+
+```text
+Find Role…
+  Senior AI Engineer          ✓
   Senior Software Engineer
   ML Engineer
-  ...
-
+────────────
 + Create Role
-
-────────────
-Job Analytics
-Settings
-
-────────────
-GitHub User
-thisisishara
-Logout
 ```
+
+Zero search hits use `CommandEmpty` (“No roles found.”). **Create Role** stays pinned at the bottom of the popover and opens the create `Dialog`. Rename and delete are **not** in this menu.
+
+With a role selected, the first destination is the **roadmap** view (`/dashboard/roles/[roleId]`). Sidebar nav, in order:
+
+1. **Roadmap** — canvas for the active role
+2. **Settings** — per-role settings (`/dashboard/roles/[roleId]/settings`)
+
+Job Analytics is **role-specific** and must not appear as global chrome. It is added to this nav later, after Roadmap, when that feature is scoped to the active role.
+
+The footer account menu opens **above** the trigger and includes Logout. It is not user “settings” for the role.
 
 Requirements:
 
 - collapsible shadcn `Sidebar`
-- role search
-- role selector
-- create role (`Dialog`)
-- delete role (`AlertDialog`)
-- rename role (`Dialog` or inline `Field`)
-- empty role list uses `Empty`
+- role switcher with search (`Command` in `Popover`)
+- create role (`Dialog` from the switcher)
+- Roadmap and Settings nav items only when a role is selected (Roadmap first)
+- rename role: inline `Field` on the role Settings screen
+- delete role: `AlertDialog` from the role Settings screen
+- no roles: blocking `Empty` plus Create Role in the switcher
 
 ---
 
@@ -1619,11 +1651,11 @@ The MVP should keep this visually useful without turning the application into a 
 
 # 35. Search
 
-Search UI uses shadcn `Command` (command palette and/or sidebar/filter fields). Zero hits use `Empty`.
+Search UI uses shadcn `Command` (command palette, role switcher, and/or filter fields). Zero hits in a `Command` list use `CommandEmpty`. Full-page or collection filters use `Empty`.
 
 Search should support:
 
-- role search
+- role search (in the sidebar role switcher; see §20)
 - roadmap node search
 - job description search
 
@@ -2504,7 +2536,8 @@ SkillTrack MVP is complete when a user can:
 ### Roadmap
 
 - Create `Senior AI Engineer`.
-- Search/select it in the sidebar.
+- Search/select it in the sidebar role switcher.
+- Land on that role’s roadmap view (sidebar **Roadmap** before **Settings**).
 - See an infinite canvas.
 - Create nested nodes to arbitrary depth.
 - Move nodes.

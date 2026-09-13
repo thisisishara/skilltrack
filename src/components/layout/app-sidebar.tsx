@@ -1,16 +1,12 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
-import {
-  Briefcase,
-  ChevronsUpDown,
-  LogOut,
-  Plus,
-  Settings,
-} from "lucide-react"
+import { usePathname } from "next/navigation"
+import { ChevronsUpDown, LogOut, Map, Settings } from "lucide-react"
 
 import { signOutAction } from "@/lib/auth/actions"
+import { RoleSwitcher } from "@/components/roles/role-switcher"
+import { useRolesUi } from "@/components/roles/roles-workspace"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -27,13 +23,11 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 type AppSidebarProps = {
@@ -47,70 +41,52 @@ export function AppSidebar({
   displayName,
   avatarUrl,
 }: AppSidebarProps) {
-  const { isMobile } = useSidebar()
+  const { activeRole } = useRolesUi()
+  const pathname = usePathname()
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
+  const roleHref = activeRole ? `/dashboard/roles/${activeRole.id}` : null
+  const settingsHref = roleHref ? `${roleHref}/settings` : null
+  const roadmapActive = Boolean(roleHref && pathname === roleHref)
+  const settingsActive = Boolean(
+    settingsHref && pathname.startsWith(settingsHref)
+  )
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              render={<Link href="/dashboard" />}
-            >
-              <Image
-                src="/skilltrack-icon.png"
-                alt=""
-                width={1254}
-                height={1254}
-                sizes="32px"
-                className="size-8 rounded-lg"
-              />
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">SkillTrack</span>
-                <span className="truncate text-xs">Roadmaps</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <RoleSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Roles</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled tooltip="Create Role">
-                  <Plus />
-                  <span>Create Role</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled tooltip="Job Analytics">
-                  <Briefcase />
-                  <span>Job Analytics</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton disabled tooltip="Settings">
-                  <Settings />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {activeRole && roleHref && settingsHref ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={roadmapActive}
+                    tooltip="Roadmap"
+                    render={<Link href={roleHref} />}
+                  >
+                    <Map />
+                    <span>Roadmap</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={settingsActive}
+                    tooltip="Settings"
+                    render={<Link href={settingsHref} />}
+                  >
+                    <Settings />
+                    <span>Settings</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter>
@@ -141,9 +117,10 @@ export function AppSidebar({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="min-w-56"
-                side={isMobile ? "bottom" : "right"}
-                align="end"
+                side="top"
+                align="start"
                 sideOffset={4}
+                collisionAvoidance={{ side: "none" }}
               >
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="p-0 font-normal">

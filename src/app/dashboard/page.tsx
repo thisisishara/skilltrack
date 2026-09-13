@@ -10,10 +10,10 @@ import {
 import { requireSession } from "@/lib/auth/session"
 
 export default async function DashboardPage() {
-  await requireSession()
+  const { applicationUser } = await requireSession()
 
   return (
-    <main className="flex flex-1 flex-col p-6">
+    <main className="flex min-h-0 flex-1 flex-col p-6">
       <Empty className="h-full">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -21,8 +21,8 @@ export default async function DashboardPage() {
           </EmptyMedia>
           <EmptyTitle>No roadmap selected</EmptyTitle>
           <EmptyDescription>
-            Role and roadmap management lands in the next phase. You are signed
-            in and this dashboard is protected.
+            Signed in as {applicationUser.githubUsername}. Role and roadmap
+            management lands in the next phase.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

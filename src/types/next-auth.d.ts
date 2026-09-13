@@ -9,6 +9,7 @@ declare module "next-auth" {
       image?: string | null
       githubUsername: string
       githubUserId: string
+      applicationUserId?: string
     }
   }
 }

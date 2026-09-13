@@ -1,0 +1,641 @@
+{
+  "project": "SkillTrack",
+  "spec": "docs/spec/spec.md",
+  "updated": "2026-09-13",
+  "statusValues": ["pending", "done"],
+  "rule": "An epic or PBI stays pending until every child is done. Flip status to done as work ships.",
+  "epics": [
+    {
+      "id": "E01",
+      "title": "Application foundation and UI system",
+      "phase": 1,
+      "spec": ["§4", "§5", "§43", "§48.9", "§49 UI system"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E01-P01",
+          "title": "Scaffold Next.js 16 app with TypeScript, Tailwind, and src/",
+          "status": "done",
+          "spec": ["§5", "§50 Phase 1"],
+          "subtasks": [
+            { "id": "E01-P01-S01", "title": "Create Next.js 16 App Router project", "status": "done" },
+            { "id": "E01-P01-S02", "title": "Enable TypeScript strict mode", "status": "done" },
+            { "id": "E01-P01-S03", "title": "Enable Tailwind CSS v4", "status": "done" },
+            { "id": "E01-P01-S04", "title": "Use src/ layout matching suggested repo structure", "status": "done" }
+          ]
+        },
+        {
+          "id": "E01-P02",
+          "title": "Use Inter as the only UI typeface",
+          "status": "pending",
+          "spec": ["§5 Typography"],
+          "subtasks": [
+            { "id": "E01-P02-S01", "title": "Load Inter via next/font/google", "status": "pending" },
+            { "id": "E01-P02-S02", "title": "Map --font-sans / font-sans to Inter on the root layout", "status": "pending" },
+            { "id": "E01-P02-S03", "title": "Remove Geist / secondary display fonts from chrome", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E01-P03",
+          "title": "Initialize shadcn/ui and required primitives",
+          "status": "pending",
+          "spec": ["§5 Required shadcn/ui usage"],
+          "subtasks": [
+            { "id": "E01-P03-S01", "title": "Init shadcn/ui in the project", "status": "done" },
+            { "id": "E01-P03-S02", "title": "Add Button, Card, Separator, Avatar, Badge, Alert, Empty", "status": "done" },
+            { "id": "E01-P03-S03", "title": "Add Sidebar, Sheet, Dialog, AlertDialog", "status": "pending" },
+            { "id": "E01-P03-S04", "title": "Add Field, Input, Textarea, InputGroup, Checkbox, Select, Combobox, ToggleGroup", "status": "pending" },
+            { "id": "E01-P03-S05", "title": "Add Command, Popover, Tooltip, Tabs, Breadcrumb, Progress, Skeleton, Spinner, Table, ScrollArea", "status": "pending" },
+            { "id": "E01-P03-S06", "title": "Add sonner Toaster and wire mutation toasts", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E01-P04",
+          "title": "Lucide-only icons in application chrome",
+          "status": "pending",
+          "spec": ["§5 Icons", "§12"],
+          "subtasks": [
+            { "id": "E01-P04-S01", "title": "Depend on lucide-react and import icons as components", "status": "done" },
+            { "id": "E01-P04-S02", "title": "Use data-icon on Button icons; no extra size classes inside shadcn components", "status": "done" },
+            { "id": "E01-P04-S03", "title": "Replace custom GitHub SVG with a Lucide icon on the sign-in button", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E01-P05",
+          "title": "App mark and favicon set",
+          "status": "pending",
+          "spec": ["§5 Icons App mark"],
+          "subtasks": [
+            { "id": "E01-P05-S01", "title": "Keep source art at public/skilltrack-icon.png", "status": "pending" },
+            { "id": "E01-P05-S02", "title": "Ship browser/PWA icons under public/favicon/", "status": "pending" },
+            { "id": "E01-P05-S03", "title": "Wire metadata/manifest to favicon assets", "status": "pending" },
+            { "id": "E01-P05-S04", "title": "Use Lucide Zap in chrome where a vector mark is needed", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E01-P06",
+          "title": "Protected dashboard shell",
+          "status": "pending",
+          "spec": ["§20", "§50 Phase 1"],
+          "subtasks": [
+            { "id": "E01-P06-S01", "title": "Add /dashboard route gated by session", "status": "done" },
+            { "id": "E01-P06-S02", "title": "Redirect unauthenticated users to /login", "status": "done" },
+            { "id": "E01-P06-S03", "title": "Show Empty state when no roadmap is selected", "status": "done" },
+            { "id": "E01-P06-S04", "title": "Replace custom sidebar with shadcn Sidebar (collapsible)", "status": "pending" },
+            { "id": "E01-P06-S05", "title": "Add login/dashboard Skeleton while session restores", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "GitHub authentication and allow-list",
+      "phase": 1,
+      "spec": ["§6", "§39 Authentication", "§49 Authentication"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E02-P01",
+          "title": "Auth.js GitHub OAuth",
+          "status": "done",
+          "spec": ["§5 Authentication", "§6.1"],
+          "subtasks": [
+            { "id": "E02-P01-S01", "title": "Configure Auth.js with GitHub provider", "status": "done" },
+            { "id": "E02-P01-S02", "title": "Add /api/auth/[...nextauth] route handlers", "status": "done" },
+            { "id": "E02-P01-S03", "title": "Document AUTH_SECRET, AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, ALLOWED_GITHUB_USERNAME", "status": "done" },
+            { "id": "E02-P01-S04", "title": "Keep secrets out of the client bundle and git", "status": "done" }
+          ]
+        },
+        {
+          "id": "E02-P02",
+          "title": "Server-side GitHub username allow-list",
+          "status": "done",
+          "spec": ["§6.2"],
+          "subtasks": [
+            { "id": "E02-P02-S01", "title": "Read allowed username from env, never from the client", "status": "done" },
+            { "id": "E02-P02-S02", "title": "Reject non-allowed GitHub logins in the signIn callback", "status": "done" },
+            { "id": "E02-P02-S03", "title": "Support wildcard * to allow any GitHub account", "status": "done" },
+            { "id": "E02-P02-S04", "title": "Store githubUsername / githubUserId on the server session", "status": "done" }
+          ]
+        },
+        {
+          "id": "E02-P03",
+          "title": "Login, denial, and logout UX",
+          "status": "done",
+          "spec": ["§6.1", "§38"],
+          "subtasks": [
+            { "id": "E02-P03-S01", "title": "Login Card with GitHub sign-in Button", "status": "done" },
+            { "id": "E02-P03-S02", "title": "Access-denied Alert for disallowed accounts", "status": "done" },
+            { "id": "E02-P03-S03", "title": "Logout action returning to login", "status": "done" },
+            { "id": "E02-P03-S04", "title": "Log authentication denials server-side", "status": "done" }
+          ]
+        },
+        {
+          "id": "E02-P04",
+          "title": "Route protection via Next.js proxy",
+          "status": "done",
+          "spec": ["§6", "§39"],
+          "subtasks": [
+            { "id": "E02-P04-S01", "title": "Protect app routes with auth proxy/authorized callback", "status": "done" },
+            { "id": "E02-P04-S02", "title": "Keep /login, /access-denied, and /api/auth public", "status": "done" },
+            { "id": "E02-P04-S03", "title": "Re-check session in dashboard server components", "status": "done" }
+          ]
+        },
+        {
+          "id": "E02-P05",
+          "title": "Localhost and Vercel OAuth configuration",
+          "status": "pending",
+          "spec": ["§5 Authentication", "§49 Authentication"],
+          "subtasks": [
+            { "id": "E02-P05-S01", "title": "Document localhost callback URL", "status": "done" },
+            { "id": "E02-P05-S02", "title": "Configure production GitHub callback and AUTH_TRUST_HOST for Vercel", "status": "pending" },
+            { "id": "E02-P05-S03", "title": "Verify sign-in and sign-out on Vercel", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "Supabase data platform, users, and RLS",
+      "phase": 2,
+      "spec": ["§25", "§27", "§28", "§36", "§39 Supabase"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E03-P01",
+          "title": "Supabase project wiring",
+          "status": "pending",
+          "spec": ["§5 Database"],
+          "subtasks": [
+            { "id": "E03-P01-S01", "title": "Add supabase/ config and committed migrations folder", "status": "pending" },
+            { "id": "E03-P01-S02", "title": "Document anon and server env vars; never expose service-role to the browser", "status": "pending" },
+            { "id": "E03-P01-S03", "title": "Create server-only Supabase client used by repositories", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E03-P02",
+          "title": "Schema migrations for MVP tables",
+          "status": "pending",
+          "spec": ["§25"],
+          "subtasks": [
+            { "id": "E03-P02-S01", "title": "Migrate users", "status": "pending" },
+            { "id": "E03-P02-S02", "title": "Migrate roles with normalized unique name per user", "status": "pending" },
+            { "id": "E03-P02-S03", "title": "Migrate roadmap_nodes with parent_id and positions", "status": "pending" },
+            { "id": "E03-P02-S04", "title": "Migrate checklist_items", "status": "pending" },
+            { "id": "E03-P02-S05", "title": "Migrate node_links", "status": "pending" },
+            { "id": "E03-P02-S06", "title": "Migrate job_descriptions and job_requirements", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E03-P03",
+          "title": "Row Level Security",
+          "status": "pending",
+          "spec": ["§27", "§39 Authorization"],
+          "subtasks": [
+            { "id": "E03-P03-S01", "title": "Enable RLS on all user-owned tables", "status": "pending" },
+            { "id": "E03-P03-S02", "title": "Users can only access their own row", "status": "pending" },
+            { "id": "E03-P03-S03", "title": "Roles, nodes, checklists, links, and jobs scoped through owning user", "status": "pending" },
+            { "id": "E03-P03-S04", "title": "Never trust client-supplied user_id / role_id / node_id without server checks", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E03-P04",
+          "title": "Create or load application user after GitHub sign-in",
+          "status": "pending",
+          "spec": ["§6.1", "§6.3", "§25 users"],
+          "subtasks": [
+            { "id": "E03-P04-S01", "title": "Upsert users from GitHub profile (id independent of username)", "status": "pending" },
+            { "id": "E03-P04-S02", "title": "Scope all subsequent writes through application user_id", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E03-P05",
+          "title": "Repository and application service boundaries",
+          "status": "pending",
+          "spec": ["§4", "§28", "§37"],
+          "subtasks": [
+            { "id": "E03-P05-S01", "title": "Introduce domain / application / repositories modules", "status": "pending" },
+            { "id": "E03-P05-S02", "title": "Call Supabase only from repositories, via Server Actions or route handlers", "status": "pending" },
+            { "id": "E03-P05-S03", "title": "Keep UI free of database access and domain rules", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "Roles and sidebar management",
+      "phase": 2,
+      "spec": ["§8", "§20", "§21", "§29"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E04-P01",
+          "title": "Role CRUD",
+          "status": "pending",
+          "spec": ["§8", "§29"],
+          "subtasks": [
+            { "id": "E04-P01-S01", "title": "Create empty role/roadmap with unique normalized name per user", "status": "pending" },
+            { "id": "E04-P01-S02", "title": "Rename role without changing node IDs", "status": "pending" },
+            { "id": "E04-P01-S03", "title": "Delete role with AlertDialog confirmation and cascade", "status": "pending" },
+            { "id": "E04-P01-S04", "title": "Select active role and persist selection", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E04-P02",
+          "title": "Sidebar role list and search",
+          "status": "pending",
+          "spec": ["§20", "§35"],
+          "subtasks": [
+            { "id": "E04-P02-S01", "title": "List roles in shadcn Sidebar", "status": "pending" },
+            { "id": "E04-P02-S02", "title": "Search/filter roles with Command or Input; Empty on no matches", "status": "pending" },
+            { "id": "E04-P02-S03", "title": "Create Role opens Dialog (empty vs import)", "status": "pending" },
+            { "id": "E04-P02-S04", "title": "Show GitHub user + Logout in sidebar footer", "status": "pending" },
+            { "id": "E04-P02-S05", "title": "No-roles Empty with create action", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "Roadmap canvas, nodes, hierarchy, and icons",
+      "phase": 3,
+      "spec": ["§9", "§10", "§12", "§19", "§50 Phase 3"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E05-P01",
+          "title": "Infinite pannable canvas",
+          "status": "pending",
+          "spec": ["§19", "§5 canvas"],
+          "subtasks": [
+            { "id": "E05-P01-S01", "title": "Choose and document canvas library (React Flow expected)", "status": "pending" },
+            { "id": "E05-P01-S02", "title": "Infinite pan/zoom canvas as the only non-shadcn primary surface", "status": "pending" },
+            { "id": "E05-P01-S03", "title": "Canvas chrome uses shadcn Buttons for zoom/fit", "status": "pending" },
+            { "id": "E05-P01-S04", "title": "Empty roadmap Empty with create-first-node action", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E05-P02",
+          "title": "Node CRUD with stable identity",
+          "status": "pending",
+          "spec": ["§9", "§29"],
+          "subtasks": [
+            { "id": "E05-P02-S01", "title": "Create nodes with stable UUIDs", "status": "pending" },
+            { "id": "E05-P02-S02", "title": "Edit title/description without regenerating IDs", "status": "pending" },
+            { "id": "E05-P02-S03", "title": "Delete node with AlertDialog; cascade children per domain rules", "status": "pending" },
+            { "id": "E05-P02-S04", "title": "Persist position_x / position_y independently of parent_id", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E05-P03",
+          "title": "Tree hierarchy of arbitrary depth",
+          "status": "pending",
+          "spec": ["§10", "§29"],
+          "subtasks": [
+            { "id": "E05-P03-S01", "title": "Model parent_id tree; multiple roots allowed", "status": "pending" },
+            { "id": "E05-P03-S02", "title": "Create child / branch nodes", "status": "pending" },
+            { "id": "E05-P03-S03", "title": "Reparent/move nodes without losing identity or progress", "status": "pending" },
+            { "id": "E05-P03-S04", "title": "Reject self-parent and cycles; parent must share role", "status": "pending" },
+            { "id": "E05-P03-S05", "title": "Derive canvas edges from parent_id", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E05-P04",
+          "title": "Lucide node icons",
+          "status": "pending",
+          "spec": ["§12"],
+          "subtasks": [
+            { "id": "E05-P04-S01", "title": "Persist Lucide kebab-case icon identifiers (default circle-dot)", "status": "pending" },
+            { "id": "E05-P04-S02", "title": "Resolve identifiers to Lucide components at the UI boundary", "status": "pending" },
+            { "id": "E05-P04-S03", "title": "Searchable icon picker via Command in Popover or Dialog", "status": "pending" },
+            { "id": "E05-P04-S04", "title": "Icon picker Empty when search has no matches", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "Node configuration, evidence, and derived progress",
+      "phase": 4,
+      "spec": ["§11", "§13", "§14", "§15", "§16", "§17", "§18", "§34", "§52"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E06-P01",
+          "title": "Node configuration Sheet",
+          "status": "pending",
+          "spec": ["§11"],
+          "subtasks": [
+            { "id": "E06-P01-S01", "title": "Open shadcn Sheet with SheetTitle on node click", "status": "pending" },
+            { "id": "E06-P01-S02", "title": "Edit title, description, icon, parent via Field primitives", "status": "pending" },
+            { "id": "E06-P01-S03", "title": "Show node / child / completion state with Progress and Badge", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E06-P02",
+          "title": "Evidence checklist",
+          "status": "pending",
+          "spec": ["§13", "§14", "§16"],
+          "subtasks": [
+            { "id": "E06-P02-S01", "title": "Add / edit / delete / reorder checklist items", "status": "pending" },
+            { "id": "E06-P02-S02", "title": "Check/uncheck items; persist completed_at", "status": "pending" },
+            { "id": "E06-P02-S03", "title": "Empty checklist Empty with add-item action", "status": "pending" },
+            { "id": "E06-P02-S04", "title": "Optimistic UI updates where safe; toast mutations with sonner", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E06-P03",
+          "title": "Notes and links",
+          "status": "pending",
+          "spec": ["§17", "§18"],
+          "subtasks": [
+            { "id": "E06-P03-S01", "title": "Free-form notes field on the node", "status": "pending" },
+            { "id": "E06-P03-S02", "title": "CRUD node_links with label + valid URL", "status": "pending" },
+            { "id": "E06-P03-S03", "title": "Empty states for missing notes and links", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E06-P04",
+          "title": "Derived progress calculation",
+          "status": "pending",
+          "spec": ["§15", "§52"],
+          "subtasks": [
+            { "id": "E06-P04-S01", "title": "Node progress = completed / total checklist items (0% if none)", "status": "pending" },
+            { "id": "E06-P04-S02", "title": "Parent/subtree progress from descendant checklist items", "status": "pending" },
+            { "id": "E06-P04-S03", "title": "Roadmap progress from all checklist items", "status": "pending" },
+            { "id": "E06-P04-S04", "title": "Derive pending / in_progress / done; do not store duplicate progress fields", "status": "pending" },
+            { "id": "E06-P04-S05", "title": "Header Card with Progress + Badge counts for the selected role", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "Canonical JSON import and export",
+      "phase": 5,
+      "spec": ["§22", "§23", "§24", "§30", "§31", "§44", "§49 Import/Export"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E07-P01",
+          "title": "Versioned roadmap JSON schema",
+          "status": "pending",
+          "spec": ["§23", "§24"],
+          "subtasks": [
+            { "id": "E07-P01-S01", "title": "Encode skilltrack.roadmap.v1 in src/schemas", "status": "pending" },
+            { "id": "E07-P01-S02", "title": "Validate schema version, UUIDs, nodes, checklists, links, notes, positions", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E07-P02",
+          "title": "Import only while creating a role",
+          "status": "pending",
+          "spec": ["§21", "§30"],
+          "subtasks": [
+            { "id": "E07-P02-S01", "title": "Create-role Dialog option to import JSON", "status": "pending" },
+            { "id": "E07-P02-S02", "title": "Disallow import onto an existing role (no silent merge)", "status": "pending" },
+            { "id": "E07-P02-S03", "title": "Transactional import with rollback on any failure", "status": "pending" },
+            { "id": "E07-P02-S04", "title": "Reject invalid JSON, schema, duplicate names, cycles, bad parents, malformed links", "status": "pending" },
+            { "id": "E07-P02-S05", "title": "Empty/no-file Empty state in the import picker", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E07-P03",
+          "title": "Export roadmap JSON",
+          "status": "pending",
+          "spec": ["§31", "§49 Export"],
+          "subtasks": [
+            { "id": "E07-P03-S01", "title": "Export metadata, nodes, checklists, links, notes, icons, positions", "status": "pending" },
+            { "id": "E07-P03-S02", "title": "Never include auth tokens or credentials", "status": "pending" },
+            { "id": "E07-P03-S03", "title": "Re-import of an export preserves hierarchy and evidence state", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "Job analytics and deterministic matching",
+      "phase": 6,
+      "spec": ["§32", "§33", "§26", "§49 Job Analytics"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E08-P01",
+          "title": "Job descriptions",
+          "status": "pending",
+          "spec": ["§32", "§25 job_descriptions"],
+          "subtasks": [
+            { "id": "E08-P01-S01", "title": "Add job views and sidebar Job Analytics entry", "status": "pending" },
+            { "id": "E08-P01-S02", "title": "CRUD jobs: company, role title, source, URL, dates, description", "status": "pending" },
+            { "id": "E08-P01-S03", "title": "No-jobs Empty with create action; Table or Card list", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E08-P02",
+          "title": "Manual skill requirements",
+          "status": "pending",
+          "spec": ["§25 job_requirements"],
+          "subtasks": [
+            { "id": "E08-P02-S01", "title": "Add/edit/delete requirements with importance required|preferred|unknown", "status": "pending" },
+            { "id": "E08-P02-S02", "title": "Empty requirements Empty with add action", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E08-P03",
+          "title": "Deterministic job-to-roadmap coverage",
+          "status": "pending",
+          "spec": ["§33", "§26"],
+          "subtasks": [
+            { "id": "E08-P03-S01", "title": "Match normalized requirement names to node titles", "status": "pending" },
+            { "id": "E08-P03-S02", "title": "Allow manual association of a requirement to a node", "status": "pending" },
+            { "id": "E08-P03-S03", "title": "Show matched, unmatched, coverage, and gaps without an LLM", "status": "pending" },
+            { "id": "E08-P03-S04", "title": "Do not implement semantic or AI matching in MVP", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "Search, errors, and observability",
+      "phase": 4,
+      "spec": ["§35", "§38", "§40"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E09-P01",
+          "title": "Command search",
+          "status": "pending",
+          "spec": ["§35"],
+          "subtasks": [
+            { "id": "E09-P01-S01", "title": "Search roles, nodes, and jobs via Command", "status": "pending" },
+            { "id": "E09-P01-S02", "title": "Zero hits use Empty with clear-search action", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E09-P02",
+          "title": "Typed error presentation",
+          "status": "pending",
+          "spec": ["§38"],
+          "subtasks": [
+            { "id": "E09-P02-S01", "title": "Map validation, auth, not found, conflict, database, unexpected errors", "status": "pending" },
+            { "id": "E09-P02-S02", "title": "Field errors via Field data-invalid; page errors via Alert; mutations via sonner", "status": "pending" },
+            { "id": "E09-P02-S03", "title": "Do not leak internal database details to the client", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E09-P03",
+          "title": "MVP structured logging",
+          "status": "pending",
+          "spec": ["§40"],
+          "subtasks": [
+            { "id": "E09-P03-S01", "title": "Log auth failures (already started)", "status": "done" },
+            { "id": "E09-P03-S02", "title": "Log import failures and important database failures", "status": "pending" },
+            { "id": "E09-P03-S03", "title": "Structured server-side errors without secrets", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "Testing",
+      "phase": 7,
+      "spec": ["§41", "§49"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E10-P01",
+          "title": "Unit tests for domain rules",
+          "status": "pending",
+          "spec": ["§41 Unit Tests", "§29"],
+          "subtasks": [
+            { "id": "E10-P01-S01", "title": "Progress calculations", "status": "pending" },
+            { "id": "E10-P01-S02", "title": "Hierarchy, cycle detection, name normalization", "status": "pending" },
+            { "id": "E10-P01-S03", "title": "Import validation and deterministic skill matching", "status": "pending" },
+            { "id": "E10-P01-S04", "title": "GitHub allow-list helper", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E10-P02",
+          "title": "Integration tests",
+          "status": "pending",
+          "spec": ["§41 Integration Tests"],
+          "subtasks": [
+            { "id": "E10-P02-S01", "title": "Repository operations and RLS isolation", "status": "pending" },
+            { "id": "E10-P02-S02", "title": "Role/node/checklist persistence", "status": "pending" },
+            { "id": "E10-P02-S03", "title": "Import transaction rollback and export round-trip", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E10-P03",
+          "title": "End-to-end tests",
+          "status": "pending",
+          "spec": ["§41 End-to-End Tests"],
+          "subtasks": [
+            { "id": "E10-P03-S01", "title": "Login → create role → node → checklist → progress → reload", "status": "pending" },
+            { "id": "E10-P03-S02", "title": "Import JSON preserves hierarchy, checklist, and progress", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "CI/CD, Vercel, and polish",
+      "phase": 8,
+      "spec": ["§42", "§50 Phase 8"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E11-P01",
+          "title": "PR pipeline",
+          "status": "pending",
+          "spec": ["§42"],
+          "subtasks": [
+            { "id": "E11-P01-S01", "title": "Lint, typecheck, unit tests, integration tests, build on PRs", "status": "pending" },
+            { "id": "E11-P01-S02", "title": "Apply Supabase migrations from committed files", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E11-P02",
+          "title": "Vercel production deploy",
+          "status": "pending",
+          "spec": ["§5 Hosting", "§50 Phase 8"],
+          "subtasks": [
+            { "id": "E11-P02-S01", "title": "Deploy app to Vercel free tier", "status": "pending" },
+            { "id": "E11-P02-S02", "title": "Set production env vars and GitHub OAuth callback", "status": "pending" },
+            { "id": "E11-P02-S03", "title": "Point Supabase free tier at production", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E11-P03",
+          "title": "Final UX polish against UI system",
+          "status": "pending",
+          "spec": ["§5 UI System", "§49 UI system"],
+          "subtasks": [
+            { "id": "E11-P03-S01", "title": "Audit screens for Inter, Lucide, and shadcn composition", "status": "pending" },
+            { "id": "E11-P03-S02", "title": "Confirm every empty surface uses Empty", "status": "pending" },
+            { "id": "E11-P03-S03", "title": "Confirm node editor is a Sheet and toasts use sonner", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "Architectural decision records",
+      "phase": 1,
+      "spec": ["§51"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E12-P01",
+          "title": "Write MVP ADRs",
+          "status": "pending",
+          "spec": ["§51"],
+          "subtasks": [
+            { "id": "E12-P01-S01", "title": "ADR-001 Supabase as application database", "status": "pending" },
+            { "id": "E12-P01-S02", "title": "ADR-002 GitHub OAuth with Auth.js", "status": "pending" },
+            { "id": "E12-P01-S03", "title": "ADR-003 Modular monolith", "status": "pending" },
+            { "id": "E12-P01-S04", "title": "ADR-004 Tree hierarchy using parent_id", "status": "pending" },
+            { "id": "E12-P01-S05", "title": "ADR-005 Evidence-based progress", "status": "pending" },
+            { "id": "E12-P01-S06", "title": "ADR-006 Canonical versioned JSON", "status": "pending" },
+            { "id": "E12-P01-S07", "title": "ADR-007 RLS user isolation", "status": "pending" },
+            { "id": "E12-P01-S08", "title": "ADR-008 AI deferred from MVP", "status": "pending" },
+            { "id": "E12-P01-S09", "title": "ADR-009 Canvas library selection", "status": "pending" },
+            { "id": "E12-P01-S10", "title": "ADR-010 Deterministic job matching", "status": "pending" },
+            { "id": "E12-P01-S11", "title": "ADR-011 Inter, Lucide, and shadcn/ui", "status": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "Future AI capabilities (out of MVP)",
+      "phase": 9,
+      "spec": ["§3 Later Stages", "§45", "§46", "§47"],
+      "status": "pending",
+      "pbis": [
+        {
+          "id": "E13-P01",
+          "title": "Isolate a future AI module",
+          "status": "pending",
+          "spec": ["§4", "§45"],
+          "subtasks": [
+            { "id": "E13-P01-S01", "title": "Keep domain modules free of LLM vendor coupling", "status": "pending" },
+            { "id": "E13-P01-S02", "title": "Require human confirmation for any AI-generated roadmap change", "status": "pending" }
+          ]
+        },
+        {
+          "id": "E13-P02",
+          "title": "Deferred AI product capabilities",
+          "status": "pending",
+          "spec": ["§3 Later Stages"],
+          "subtasks": [
+            { "id": "E13-P02-S01", "title": "LLM job-description skill extraction", "status": "pending" },
+            { "id": "E13-P02-S02", "title": "LLM gap analysis and roadmap suggestions", "status": "pending" },
+            { "id": "E13-P02-S03", "title": "Semantic matching and AI-generated branches", "status": "pending" },
+            { "id": "E13-P02-S04", "title": "Multi-provider LLM abstraction", "status": "pending" }
+          ]
+        }
+      ]
+    }
+  ]
+}

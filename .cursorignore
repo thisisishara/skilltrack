@@ -1,0 +1,26 @@
+# Secrets: never index real env or key material.
+# *.env does not match .env; name those files explicitly.
+.env
+.env.*
+!.env.example
+!.env*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+credentials.json
+secrets.json
+
+# Generated / heavy
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local scratch
+Untitled
+*.log

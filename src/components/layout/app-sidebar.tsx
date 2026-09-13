@@ -1,10 +1,26 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
-import { Briefcase, Plus, Settings, Zap } from "lucide-react"
+import {
+  Briefcase,
+  ChevronsUpDown,
+  LogOut,
+  Plus,
+  Settings,
+} from "lucide-react"
 
-import { SignOutButton } from "@/components/auth/sign-out-button"
+import { signOutAction } from "@/lib/auth/actions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -17,8 +33,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
 
@@ -33,32 +47,40 @@ export function AppSidebar({
   displayName,
   avatarUrl,
 }: AppSidebarProps) {
-  const { state } = useSidebar()
-  const collapsed = state === "collapsed"
+  const { isMobile } = useSidebar()
+  const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <SidebarTrigger />
-          <Link
-            href="/dashboard"
-            className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:hidden"
-          >
-            <Zap />
-            <span className="truncate text-sm font-medium">SkillTrack</span>
-          </Link>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/dashboard" />}
+            >
+              <Image
+                src="/skilltrack-icon.png"
+                alt=""
+                width={1254}
+                height={1254}
+                sizes="32px"
+                className="size-8 rounded-lg"
+              />
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">SkillTrack</span>
+                <span className="truncate text-xs">Roadmaps</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Roles</SidebarGroupLabel>
           <SidebarGroupContent>
-            <p className="px-2 text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
-              No roles yet
-            </p>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton disabled tooltip="Create Role">
@@ -70,9 +92,8 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
-
         <SidebarGroup>
+          <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -93,21 +114,73 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2">
-          <Avatar className="size-8">
-            {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-medium">
-              {displayName ?? githubUsername}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {githubUsername}
-            </p>
-          </div>
-        </div>
-        <SignOutButton collapsed={collapsed} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                  />
+                }
+              >
+                <Avatar className="size-8 rounded-lg">
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt="" />
+                  ) : null}
+                  <AvatarFallback className="rounded-lg">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{name}</span>
+                  <span className="truncate text-xs">{githubUsername}</span>
+                </div>
+                <ChevronsUpDown className="ml-auto" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="min-w-56"
+                side={isMobile ? "bottom" : "right"}
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="size-8 rounded-lg">
+                        {avatarUrl ? (
+                          <AvatarImage src={avatarUrl} alt="" />
+                        ) : null}
+                        <AvatarFallback className="rounded-lg">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-medium">{name}</span>
+                        <span className="truncate text-xs">
+                          {githubUsername}
+                        </span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => {
+                      void signOutAction()
+                    }}
+                  >
+                    <LogOut />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

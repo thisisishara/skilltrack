@@ -3,7 +3,11 @@ import { CircleAlert } from "lucide-react"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 import { isApplicationError } from "@/domain/errors"
 import { requireSession } from "@/lib/auth/session"
 
@@ -53,7 +57,12 @@ export default async function DashboardLayout({
         displayName={displayName}
         avatarUrl={avatarUrl}
       />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <header className="flex h-12 shrink-0 items-center px-4">
+          <SidebarTrigger />
+        </header>
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   )
 }

@@ -129,6 +129,85 @@ export type Database = {
           },
         ]
       }
+      checklist_items: {
+        Row: {
+          id: string
+          node_id: string
+          title: string
+          description: string | null
+          is_completed: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          node_id: string
+          title: string
+          description?: string | null
+          is_completed?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          node_id?: string
+          title?: string
+          description?: string | null
+          is_completed?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "roadmap_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      node_links: {
+        Row: {
+          id: string
+          node_id: string
+          label: string
+          url: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          node_id: string
+          label: string
+          url: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          node_id?: string
+          label?: string
+          url?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "node_links_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "roadmap_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

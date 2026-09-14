@@ -767,12 +767,12 @@
         "§34",
         "§52"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E06-P01",
           "title": "Node configuration Sheet",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§11"
           ],
@@ -780,24 +780,24 @@
             {
               "id": "E06-P01-S01",
               "title": "Open shadcn Sheet with SheetTitle on node click",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P01-S02",
               "title": "Edit title, description, icon, parent via Field primitives",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P01-S03",
               "title": "Show node / child / completion state with Progress and Badge",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E06-P02",
           "title": "Evidence checklist",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§13",
             "§14",
@@ -807,29 +807,29 @@
             {
               "id": "E06-P02-S01",
               "title": "Add / edit / delete / reorder checklist items",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P02-S02",
               "title": "Check/uncheck items; persist completed_at",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P02-S03",
               "title": "Empty checklist Empty with add-item action",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P02-S04",
               "title": "Optimistic UI updates where safe; toast mutations with sonner",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E06-P03",
           "title": "Notes and links",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§17",
             "§18"
@@ -838,24 +838,24 @@
             {
               "id": "E06-P03-S01",
               "title": "Free-form notes field on the node",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P03-S02",
               "title": "CRUD node_links with label + valid URL",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P03-S03",
               "title": "Empty states for missing notes and links",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E06-P04",
           "title": "Derived progress calculation",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§15",
             "§52"
@@ -864,27 +864,27 @@
             {
               "id": "E06-P04-S01",
               "title": "Node progress = completed / total checklist items (0% if none)",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P04-S02",
               "title": "Parent/subtree progress from descendant checklist items",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P04-S03",
               "title": "Roadmap progress from all checklist items",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P04-S04",
               "title": "Derive pending / in_progress / done; do not store duplicate progress fields",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E06-P04-S05",
               "title": "Header Card with Progress + Badge counts for the selected role",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }

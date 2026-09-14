@@ -45,7 +45,7 @@ async function requireOwnedRole(userId: string, roleId: string) {
   return role
 }
 
-async function requireOwnedNode(userId: string, roleId: string, nodeId: string) {
+export async function requireOwnedNode(userId: string, roleId: string, nodeId: string) {
   await requireOwnedRole(userId, roleId)
   const node = await nodesRepository.getByIdForRole(roleId, nodeId)
 
@@ -121,6 +121,7 @@ export async function updateNodeDetails(
     title: string
     description?: string | null
     icon?: string | null
+    notes?: string | null
   }
 ) {
   await requireOwnedNode(userId, roleId, nodeId)
@@ -129,6 +130,9 @@ export async function updateNodeDetails(
     title: requireTitle(input.title),
     description: optionalDescription(input.description),
     icon: normalizeNodeIcon(input.icon),
+    ...(input.notes !== undefined
+      ? { notes: optionalDescription(input.notes) }
+      : {}),
   })
 }
 

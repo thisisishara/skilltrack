@@ -109,6 +109,7 @@ export async function updateDetails(
     title: string
     description: string | null
     icon: string
+    notes?: string | null
   }
 ) {
   const supabase = getSupabaseServerClient()
@@ -118,6 +119,7 @@ export async function updateDetails(
       title: displayNodeTitle(input.title),
       description: input.description,
       icon: input.icon,
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
     })
     .eq("role_id", roleId)
     .eq("id", nodeId)

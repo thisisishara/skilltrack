@@ -3,12 +3,16 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 
 import { NodeLucideIcon } from "@/components/canvas/lucide-icon"
+import { ProgressStatusBadge } from "@/components/canvas/progress-status-badge"
+import type { ProgressStatus } from "@/domain/progress/progress"
 
 export type RoadmapFlowNode = Node<
   {
     title: string
     description: string | null
     icon: string
+    percent: number
+    status: ProgressStatus
   },
   "roadmap"
 >
@@ -29,13 +33,16 @@ export function RoadmapNodeCard({ data, selected }: NodeProps<RoadmapFlowNode>) 
         <span className="mt-0.5 text-muted-foreground">
           <NodeLucideIcon name={data.icon} />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{data.title}</p>
           {data.description ? (
             <p className="line-clamp-2 text-xs text-muted-foreground">
               {data.description}
             </p>
           ) : null}
+          <div className="mt-1.5">
+            <ProgressStatusBadge status={data.status} percent={data.percent} />
+          </div>
         </div>
       </div>
       <Handle

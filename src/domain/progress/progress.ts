@@ -1,0 +1,143 @@
+import type { ChecklistItem } from "@/domain/checklists/types"
+import type { RoadmapNode } from "@/domain/nodes/types"
+
+export type ProgressStatus = "pending" | "in_progress" | "done"
+
+export type ProgressSnapshot = {
+  completed: number
+  total: number
+  percent: number
+  status: ProgressStatus
+}
+
+export type NodeStatusCounts = {
+  pending: number
+  inProgress: number
+  done: number
+}
+
+export function ratioToPercent(completed: number, total: number) {
+  if (total <= 0) {
+    return 0
+  }
+
+  if (completed <= 0) {
+    return 0
+  }
+
+  if (completed >= total) {
+    return 100
+  }
+
+  return Math.min(99, Math.round((completed / total) * 100))
+}
+
+export function statusFromCounts(completed: number, total: number): ProgressStatus {
+  if (total <= 0 || completed <= 0) {
+    return "pending"
+  }
+
+  if (completed >= total) {
+    return "done"
+  }
+
+  return "in_progress"
+}
+
+export function progressFromCounts(completed: number, total: number): ProgressSnapshot {
+  return {
+    completed,
+    total,
+    percent: ratioToPercent(completed, total),
+    status: statusFromCounts(completed, total),
+  }
+}
+
+export function nodeProgress(items: ChecklistItem[], nodeId: string) {
+  const own = items.filter((item) => item.nodeId === nodeId)
+  const completed = own.filter((item) => item.isCompleted).length
+  return progressFromCounts(completed, own.length)
+}
+
+export function subtreeNodeIds(
+  nodes: Pick<RoadmapNode, "id" | "parentId">[],
+  rootId: string
+) {
+  const childrenByParent = new Map<string | null, string[]>()
+
+  for (const node of nodes) {
+    const siblings = childrenByParent.get(node.parentId) ?? []
+    siblings.push(node.id)
+    childrenByParent.set(node.parentId, siblings)
+  }
+
+  const ids = new Set<string>()
+  const stack = [rootId]
+
+  while (stack.length > 0) {
+    const current = stack.pop()
+    if (!current || ids.has(current)) {
+      continue
+    }
+
+    ids.add(current)
+    const children = childrenByParent.get(current) ?? []
+    for (const childId of children) {
+      stack.push(childId)
+    }
+  }
+
+  return ids
+}
+
+export function subtreeProgress(
+  nodes: Pick<RoadmapNode, "id" | "parentId">[],
+  items: ChecklistItem[],
+  rootId: string
+) {
+  const ids = subtreeNodeIds(nodes, rootId)
+  const subtreeItems = items.filter((item) => ids.has(item.nodeId))
+  const completed = subtreeItems.filter((item) => item.isCompleted).length
+  return progressFromCounts(completed, subtreeItems.length)
+}
+
+export function roadmapProgress(items: ChecklistItem[]) {
+  const completed = items.filter((item) => item.isCompleted).length
+  return progressFromCounts(completed, items.length)
+}
+
+export function progressStatusLabel(status: ProgressStatus) {
+  if (status === "done") {
+    return "Done"
+  }
+
+  if (status === "in_progress") {
+    return "In progress"
+  }
+
+  return "Pending"
+}
+
+export function nodeStatusCounts(
+  nodes: Pick<RoadmapNode, "id">[],
+  items: ChecklistItem[]
+): NodeStatusCounts {
+  const counts: NodeStatusCounts = {
+    pending: 0,
+    inProgress: 0,
+    done: 0,
+  }
+
+  for (const node of nodes) {
+    const status = nodeProgress(items, node.id).status
+    if (status === "in_progress") {
+      counts.inProgress += 1
+    } else if (status === "done") {
+      counts.done += 1
+    } else {
+      counts.pending += 1
+    }
+  }
+
+  return counts
+}

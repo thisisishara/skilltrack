@@ -65,6 +65,7 @@ export async function updateNodeAction(input: {
   title: string
   description?: string | null
   icon?: string | null
+  notes?: string | null
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {

@@ -39,6 +39,11 @@ import {
   type RoadmapFlowNode,
 } from "@/components/canvas/roadmap-node"
 import { RoadmapProgressCard } from "@/components/canvas/roadmap-progress-card"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
@@ -85,6 +90,34 @@ function toFlowEdges(nodes: RoadmapNode[]): Edge[] {
     }))
 }
 
+function mergeFlowNodes(
+  current: RoadmapFlowNode[],
+  next: RoadmapFlowNode[]
+): RoadmapFlowNode[] {
+  const currentById = new Map(current.map((node) => [node.id, node]))
+
+  return next.map((node) => {
+    const previous = currentById.get(node.id)
+    if (!previous) {
+      return node
+    }
+
+    return {
+      ...previous,
+      position: node.position,
+      data: node.data,
+    }
+  })
+}
+
+function isValidConnection(connection: Connection | Edge) {
+  return (
+    Boolean(connection.source) &&
+    Boolean(connection.target) &&
+    connection.source !== connection.target
+  )
+}
+
 function RoadmapCanvasInner({
   roleId,
   roleName,
@@ -100,23 +133,28 @@ function RoadmapCanvasInner({
 }) {
   const router = useRouter()
   const { resolvedTheme } = useTheme()
+  const [themeReady, setThemeReady] = useState(false)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
   const [flowNodes, setFlowNodes] = useState<RoadmapFlowNode[]>(() =>
     toFlowNodes(serverNodes, serverItems)
   )
   const [edges, setEdges] = useState<Edge[]>(() => toFlowEdges(serverNodes))
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [configNodeId, setConfigNodeId] = useState<string | null>(null)
   const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  useEffect(() => {
+    setThemeReady(true)
+  }, [])
 
   useEffect(() => {
     setItems(serverItems)
   }, [serverItems])
 
   useEffect(() => {
-    setFlowNodes(toFlowNodes(serverNodes, items))
+    setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(serverNodes, items)))
     setEdges(toFlowEdges(serverNodes))
   }, [serverNodes, items])
 
@@ -125,14 +163,26 @@ function RoadmapCanvasInner({
     [serverNodes, selectedId]
   )
 
+  const configNode = useMemo(
+    () => serverNodes.find((node) => node.id === configNodeId) ?? null,
+    [serverNodes, configNodeId]
+  )
+  const sheetOpen = Boolean(configNode)
+
+  useEffect(() => {
+    if (configNodeId && !configNode) {
+      setConfigNodeId(null)
+    }
+  }, [configNode, configNodeId])
+
   const selectedItems = useMemo(
-    () => items.filter((item) => item.nodeId === selectedId),
-    [items, selectedId]
+    () => items.filter((item) => item.nodeId === configNodeId),
+    [items, configNodeId]
   )
 
   const selectedLinks = useMemo(
-    () => serverLinks.filter((link) => link.nodeId === selectedId),
-    [serverLinks, selectedId]
+    () => serverLinks.filter((link) => link.nodeId === configNodeId),
+    [serverLinks, configNodeId]
   )
 
   const overallProgress = useMemo(() => roadmapProgress(items), [items])
@@ -141,20 +191,57 @@ function RoadmapCanvasInner({
     [serverNodes, items]
   )
   const selectedNodeProgress = useMemo(
-    () => (selectedId ? nodeProgress(items, selectedId) : nodeProgress([], "")),
-    [items, selectedId]
+    () => (configNodeId ? nodeProgress(items, configNodeId) : nodeProgress([], "")),
+    [items, configNodeId]
   )
   const selectedSubtreeProgress = useMemo(
     () =>
-      selectedId
-        ? subtreeProgress(serverNodes, items, selectedId)
+      configNodeId
+        ? subtreeProgress(serverNodes, items, configNodeId)
         : nodeProgress([], ""),
-    [items, selectedId, serverNodes]
+    [items, configNodeId, serverNodes]
   )
 
   const onNodesChange = useCallback((changes: NodeChange<RoadmapFlowNode>[]) => {
     setFlowNodes((current) => applyNodeChanges(changes, current))
   }, [])
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((current) => applyEdgeChanges(changes, current))
+  }, [])
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selected }: { nodes: RoadmapFlowNode[] }) => {
+      const nextId = selected[0]?.id ?? null
+      setSelectedId((current) => (current === nextId ? current : nextId))
+    },
+    []
+  )
+
+  const onNodeClick = useCallback(
+    (_event: unknown, node: { id: string }) => {
+      setSelectedId(node.id)
+      setConfigNodeId(node.id)
+    },
+    []
+  )
+
+  const onBeforeDelete = useCallback(
+    async ({ nodes: deletingNodes }: { nodes: { id: string }[] }) => {
+      if (deletingNodes.length === 0) {
+        return false
+      }
+
+      const first = deletingNodes[0]
+      if (first) {
+        setSelectedId(first.id)
+        setDeleteOpen(true)
+      }
+
+      return false
+    },
+    []
+  )
 
   const persistPosition: OnNodeDrag<RoadmapFlowNode> = useCallback(
     async (_event, node) => {
@@ -229,7 +316,7 @@ function RoadmapCanvasInner({
 
   function openSheet(nodeId: string) {
     setSelectedId(nodeId)
-    setSheetOpen(true)
+    setConfigNodeId(nodeId)
   }
 
   async function handleDialogSubmit(input: {
@@ -264,13 +351,13 @@ function RoadmapCanvasInner({
     icon: string
     notes: string
   }) {
-    if (!selectedNode) {
+    if (!configNode) {
       return { ok: false as const, code: "unexpected" as const, message: "Select a node first." }
     }
 
     const result = await updateNodeAction({
       roleId,
-      nodeId: selectedNode.id,
+      nodeId: configNode.id,
       title: input.title,
       description: input.description,
       icon: input.icon,
@@ -285,13 +372,13 @@ function RoadmapCanvasInner({
   }
 
   async function handleParentChange(parentId: string | null) {
-    if (!selectedNode) {
+    if (!configNode) {
       return
     }
 
     const result = await reparentNodeAction({
       roleId,
-      nodeId: selectedNode.id,
+      nodeId: configNode.id,
       parentId,
     })
 
@@ -314,7 +401,7 @@ function RoadmapCanvasInner({
 
     const result = await setChecklistItemCompletedAction({
       roleId,
-      nodeId: selectedId ?? "",
+      nodeId: configNodeId ?? "",
       itemId,
       isCompleted,
     })
@@ -343,57 +430,30 @@ function RoadmapCanvasInner({
 
     toast.success("Node deleted")
     setDeleteOpen(false)
-    setSheetOpen(false)
+    setConfigNodeId(null)
     setSelectedId(null)
     router.refresh()
   }
 
-  return (
-    <div className="relative min-h-0 flex-1">
+  const canvas = (
+    <div className="relative h-full min-h-0">
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        onEdgesChange={(changes: EdgeChange[]) => {
-          setEdges((current) => applyEdgeChanges(changes, current))
-        }}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
-        onBeforeDelete={async ({ nodes: deletingNodes }) => {
-          if (deletingNodes.length === 0) {
-            return true
-          }
-
-          const first = deletingNodes[0]
-          if (first) {
-            setSelectedId(first.id)
-            setDeleteOpen(true)
-          }
-
-          return false
-        }}
+        onBeforeDelete={onBeforeDelete}
         onNodeDragStop={persistPosition}
-        onNodeClick={(_event, node) => {
-          openSheet(node.id)
-        }}
-        onNodeDoubleClick={(_event, node) => {
-          openSheet(node.id)
-        }}
-        onPaneClick={() => {
-          setSheetOpen(false)
-        }}
-        onSelectionChange={({ nodes: selected }) => {
-          setSelectedId(selected[0]?.id ?? null)
-        }}
-        isValidConnection={(connection) =>
-          Boolean(connection.source) &&
-          Boolean(connection.target) &&
-          connection.source !== connection.target
-        }
+        onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeClick}
+        onSelectionChange={onSelectionChange}
+        isValidConnection={isValidConnection}
         fitView={serverNodes.length > 0}
         deleteKeyCode={["Backspace", "Delete"]}
-        colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+        colorMode={themeReady && resolvedTheme === "dark" ? "dark" : "light"}
         minZoom={0.2}
         maxZoom={1.75}
         className="h-full bg-background"
@@ -419,31 +479,54 @@ function RoadmapCanvasInner({
       {serverNodes.length === 0 ? (
         <EmptyRoadmap onCreate={() => openCreate(null)} />
       ) : null}
+    </div>
+  )
+
+  return (
+    <div className="flex h-full min-h-0 flex-1">
+      <ResizablePanelGroup orientation="horizontal" className="min-h-0">
+        <ResizablePanel id="roadmap-canvas" defaultSize="70%" minSize="40%">
+          {canvas}
+        </ResizablePanel>
+        {sheetOpen ? (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel id="node-config" defaultSize="30%" minSize="22%" maxSize="48%">
+              <div className="h-full min-h-0 overflow-hidden">
+                <NodeConfigSheet
+                  open={sheetOpen}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setConfigNodeId(null)
+                    }
+                  }}
+                  roleId={roleId}
+                  node={configNode}
+                  nodes={serverNodes}
+                  checklistItems={selectedItems}
+                  links={selectedLinks}
+                  nodeProgress={selectedNodeProgress}
+                  subtreeProgress={selectedSubtreeProgress}
+                  onSaveDetails={handleSaveDetails}
+                  onParentChange={handleParentChange}
+                  onToggleChecklist={handleToggleChecklist}
+                  onRefresh={() => router.refresh()}
+                />
+              </div>
+            </ResizablePanel>
+          </>
+        ) : null}
+      </ResizablePanelGroup>
       <NodeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
         onSubmit={handleDialogSubmit}
       />
-      <NodeConfigSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        roleId={roleId}
-        node={selectedNode}
-        nodes={serverNodes}
-        checklistItems={selectedItems}
-        links={selectedLinks}
-        nodeProgress={selectedNodeProgress}
-        subtreeProgress={selectedSubtreeProgress}
-        onSaveDetails={handleSaveDetails}
-        onParentChange={handleParentChange}
-        onToggleChecklist={handleToggleChecklist}
-        onRefresh={() => router.refresh()}
-      />
       <DeleteNodeAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        nodeTitle={selectedNode?.title ?? ""}
+        nodeTitle={selectedNode?.title ?? configNode?.title ?? ""}
         onConfirm={handleDelete}
       />
     </div>
@@ -454,8 +537,8 @@ export function RoadmapCanvas({
   roleId,
   roleName,
   nodes,
-  checklistItems = [],
-  links = [],
+  checklistItems,
+  links,
 }: {
   roleId: string
   roleName: string

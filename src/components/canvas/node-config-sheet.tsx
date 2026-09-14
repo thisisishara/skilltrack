@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { NotebookPen } from "lucide-react"
+import { NotebookPen, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import type { NodeActionResult } from "@/application/nodes/actions"
@@ -37,13 +37,6 @@ import { Input } from "@/components/ui/input"
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
@@ -182,17 +175,33 @@ export function NodeConfigSheet({
     }
   }
 
+  if (!open || !node) {
+    return null
+  }
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md">
-        {node ? (
-          <>
-            <SheetHeader className="border-b">
-              <SheetTitle>{node.title}</SheetTitle>
-              <SheetDescription>
-                Configure evidence, notes, and links for this skill.
-              </SheetDescription>
-              <div className="flex flex-col gap-3 pt-2">
+    <aside className="flex h-full min-h-0 flex-col bg-background">
+            <div className="flex flex-col gap-3 border-b p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h2 className="font-heading truncate text-base font-medium">
+                    {node.title}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Configure evidence, notes, and links for this skill.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Close node configuration"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <XIcon />
+                </Button>
+              </div>
+              <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <ProgressStatusBadge
                     status={nodeProgress.status}
@@ -215,7 +224,7 @@ export function NodeConfigSheet({
                   </ProgressValue>
                 </Progress>
               </div>
-            </SheetHeader>
+            </div>
             <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-6 p-4">
                 <form onSubmit={handleSubmit}>
@@ -341,9 +350,6 @@ export function NodeConfigSheet({
                 </section>
               </div>
             </ScrollArea>
-          </>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+    </aside>
   )
 }

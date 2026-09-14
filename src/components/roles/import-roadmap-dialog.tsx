@@ -107,7 +107,7 @@ export function ImportRoadmapDialog({
       >
         <DialogContent
           className={cn(
-            "flex max-h-[min(90dvh,44rem)] w-full flex-col overflow-hidden sm:max-w-lg",
+            "flex max-h-[min(90dvh,44rem)] w-full flex-col sm:max-w-lg",
             isFileOver && "outline-2 outline-dashed outline-offset-4 outline-ring"
           )}
           {...dropProps}
@@ -119,20 +119,22 @@ export function ImportRoadmapDialog({
               choose one. The role name stays the same.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="grid min-h-0 gap-4 overflow-y-auto">
-            <FieldGroup className="min-w-0">
-              <ImportJsonFields json={json} error={error} onJsonChange={(value) => {
-                setJson(value)
-                setError(null)
-              }} />
-            </FieldGroup>
-            {error ? (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertTitle>Import failed</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+            <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+              <FieldGroup className="min-w-0">
+                <ImportJsonFields json={json} error={error} onJsonChange={(value) => {
+                  setJson(value)
+                  setError(null)
+                }} />
+              </FieldGroup>
+              {error ? (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertTitle>Import failed</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={requestClose}>
                 Cancel

@@ -402,9 +402,8 @@ updated_at
 
 Constraints:
 
-- `user_id + name` must be unique.
+- `user_id + name` must be unique (exact match after trim; case-sensitive).
 - Role names cannot be empty.
-- Role names should be normalized for uniqueness checks.
 - Renaming a role must not alter its node IDs.
 
 ## Active Role
@@ -1246,10 +1245,8 @@ updated_at timestamptz not null
 Constraint:
 
 ```text
-unique(user_id, normalized_name)
+unique(user_id, name)
 ```
-
-A normalized-name column may be added to support case-insensitive uniqueness.
 
 ---
 

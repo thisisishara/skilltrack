@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -39,36 +39,77 @@ export function RoleSettings({ role }: { role: Role }) {
   const router = useRouter()
   const { roles } = useRolesUi()
   const [name, setName] = useState(role.name)
-  const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [exportPending, setExportPending] = useState(false)
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveGeneration = useRef(0)
 
   useEffect(() => {
-    // Re-sync the name field when a different role is selected/renamed
-    // elsewhere, without resetting on every keystroke while editing.
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+
+    saveGeneration.current += 1
+    // Re-sync when switching roles. Ignore later role.name updates so a
+    // refresh after autosave cannot overwrite in-progress typing.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(role.name)
     setError(null)
-  }, [role.id, role.name])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset on role switch
+  }, [role.id])
 
-  async function handleRename(event: FormEvent) {
-    event.preventDefault()
-    setPending(true)
-    setError(null)
-    const result = await renameRoleAction(role.id, name)
-    setPending(false)
-
-    if (!result.ok) {
-      setError(result.message)
-      if (result.code !== "validation" && result.code !== "conflict") {
-        toast.error(result.message)
+  useEffect(() => {
+    return () => {
+      if (persistTimer.current) {
+        clearTimeout(persistTimer.current)
       }
+    }
+  }, [])
+
+  function persistName(nextName: string) {
+    const trimmed = nextName.trim()
+    if (trimmed === role.name) {
       return
     }
 
-    toast.success("Role renamed")
-    router.refresh()
+    const generation = ++saveGeneration.current
+    void renameRoleAction(role.id, nextName).then((result) => {
+      if (generation !== saveGeneration.current) {
+        return
+      }
+
+      if (!result.ok) {
+        setError(result.message)
+        if (result.code !== "validation" && result.code !== "conflict") {
+          toast.error(result.message)
+        }
+        return
+      }
+
+      setError(null)
+      router.refresh()
+    })
+  }
+
+  function persistNameNow(nextName: string) {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+    persistName(nextName)
+  }
+
+  function scheduleRename(nextName: string) {
+    setName(nextName)
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+    }
+    persistTimer.current = setTimeout(() => {
+      persistTimer.current = null
+      persistName(nextName)
+    }, 350)
   }
 
   async function handleExport() {
@@ -116,42 +157,33 @@ export function RoleSettings({ role }: { role: Role }) {
       </div>
 
       <Card>
-        <form
-          onSubmit={handleRename}
-          className="flex flex-col gap-(--card-spacing)"
-        >
-          <CardHeader>
-            <CardTitle>Name</CardTitle>
-            <CardDescription>
-              Unique per account. Changing it does not regenerate roadmap nodes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FieldGroup>
-              <Field data-invalid={error ? true : undefined}>
-                <FieldLabel htmlFor="role-settings-name">Role name</FieldLabel>
-                <Input
-                  id="role-settings-name"
-                  className="font-mono"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  autoComplete="off"
-                  aria-invalid={error ? true : undefined}
-                />
-                {error ? <FieldError>{error}</FieldError> : (
-                  <FieldDescription className="font-mono text-xs">
-                    Normalized uniqueness is case-insensitive.
-                  </FieldDescription>
-                )}
-              </Field>
-            </FieldGroup>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={pending || name.trim() === role.name}>
-              {pending ? "Saving…" : "Save"}
-            </Button>
-          </CardFooter>
-        </form>
+        <CardHeader>
+          <CardTitle>Name</CardTitle>
+          <CardDescription>
+            Unique per account. Changing it does not regenerate roadmap nodes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <Field data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="role-settings-name">Role name</FieldLabel>
+              <Input
+                id="role-settings-name"
+                className="font-mono"
+                value={name}
+                onChange={(event) => scheduleRename(event.target.value)}
+                onBlur={() => persistNameNow(name)}
+                autoComplete="off"
+                aria-invalid={error ? true : undefined}
+              />
+              {error ? <FieldError>{error}</FieldError> : (
+                <FieldDescription>
+                  Unique per account.
+                </FieldDescription>
+              )}
+            </Field>
+          </FieldGroup>
+        </CardContent>
       </Card>
 
       <Card>

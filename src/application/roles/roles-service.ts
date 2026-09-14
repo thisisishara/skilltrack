@@ -1,13 +1,13 @@
 import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
-import { displayRoleName, normalizeRoleName } from "@/domain/roles/name"
+import { displayRoleName } from "@/domain/roles/name"
 import * as rolesRepository from "@/repositories/roles/roles-repository"
 
 function requireName(name: string) {
   const trimmed = displayRoleName(name)
 
-  if (!trimmed || !normalizeRoleName(name)) {
+  if (!trimmed) {
     throw new ApplicationError("validation", "Role name cannot be empty.")
   }
 

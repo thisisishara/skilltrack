@@ -145,7 +145,6 @@ export function AppSidebar({
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    variant="destructive"
                     onClick={() => {
                       void signOutAction()
                     }}

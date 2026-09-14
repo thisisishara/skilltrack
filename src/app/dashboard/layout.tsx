@@ -3,13 +3,10 @@ import { CircleAlert } from "lucide-react"
 
 import { listRoles } from "@/application/roles/roles-service"
 import { AppSidebar } from "@/components/layout/app-sidebar"
+import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { isApplicationError } from "@/domain/errors"
 import type { Role } from "@/domain/roles/types"
 import { requireSession } from "@/lib/auth/session"
@@ -64,9 +61,7 @@ export default async function DashboardLayout({
           avatarUrl={avatarUrl}
         />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <header className="flex h-12 shrink-0 items-center px-4">
-            <SidebarTrigger />
-          </header>
+          <DashboardHeader />
           {children}
         </SidebarInset>
       </RolesWorkspace>

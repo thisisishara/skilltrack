@@ -39,7 +39,6 @@ export type Database = {
           user_id: string
           name: string
           description: string | null
-          normalized_name: string
           created_at: string
           updated_at: string
         }

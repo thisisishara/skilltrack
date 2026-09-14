@@ -124,7 +124,8 @@ export function CreateRoleDialog({
       >
         <DialogContent
           className={cn(
-            "flex max-h-[min(90dvh,44rem)] w-full flex-col overflow-hidden sm:max-w-lg",
+            "flex w-full flex-col sm:max-w-lg",
+            mode === "import" && "max-h-[min(90dvh,44rem)]",
             isFileOver && "outline-2 outline-dashed outline-offset-4 outline-ring"
           )}
           {...dropProps}
@@ -135,74 +136,81 @@ export function CreateRoleDialog({
               Start an empty roadmap or drop a JSON file to import one.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="grid min-h-0 gap-4 overflow-y-auto">
-            <FieldGroup className="min-w-0">
-              <Field>
-                <FieldLabel>How to start</FieldLabel>
-                <ToggleGroup
-                  value={[mode]}
-                  onValueChange={(value) => {
-                    const next = Array.isArray(value) ? value[0] : value
-                    if (next === "empty" || next === "import") {
-                      setMode(next)
-                      setError(null)
-                    }
-                  }}
-                  variant="outline"
-                  spacing={0}
-                  className="w-full"
-                >
-                  <ToggleGroupItem value="empty" className="flex-1">
-                    Empty roadmap
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="import" className="flex-1">
-                    Import JSON
-                  </ToggleGroupItem>
-                </ToggleGroup>
-                <FieldDescription>
-                  Import onto a new role, or later onto a role that still has no
-                  nodes.
-                </FieldDescription>
-              </Field>
-              <Field data-invalid={error && mode === "empty" ? true : undefined}>
-                <FieldLabel htmlFor="create-role-name">
-                  {mode === "import" ? "Name override (optional)" : "Name"}
-                </FieldLabel>
-                <Input
-                  id="create-role-name"
-                  className="font-mono"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Senior AI Engineer"
-                  autoComplete="off"
-                  aria-invalid={error && mode === "empty" ? true : undefined}
-                />
-                {mode === "empty" && error ? <FieldError>{error}</FieldError> : (
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+            <div
+              className={cn(
+                "flex flex-col gap-4",
+                mode === "import" && "min-h-0 overflow-y-auto"
+              )}
+            >
+              <FieldGroup className="min-w-0">
+                <Field>
+                  <FieldLabel>How to start</FieldLabel>
+                  <ToggleGroup
+                    value={[mode]}
+                    onValueChange={(value) => {
+                      const next = Array.isArray(value) ? value[0] : value
+                      if (next === "empty" || next === "import") {
+                        setMode(next)
+                        setError(null)
+                      }
+                    }}
+                    variant="outline"
+                    spacing={0}
+                    className="w-full"
+                  >
+                    <ToggleGroupItem value="empty" className="flex-1">
+                      Empty roadmap
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="import" className="flex-1">
+                      Import JSON
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                   <FieldDescription>
-                    {mode === "import"
-                      ? "Leave blank to use the name from the JSON document."
-                      : "Unique per account, case-insensitive."}
+                    Import onto a new role, or later onto a role that still has no
+                    nodes.
                   </FieldDescription>
-                )}
-              </Field>
-              {mode === "import" ? (
-                <ImportJsonFields
-                  json={json}
-                  error={error}
-                  onJsonChange={(value) => {
-                    setJson(value)
-                    setError(null)
-                  }}
-                />
+                </Field>
+                <Field data-invalid={error && mode === "empty" ? true : undefined}>
+                  <FieldLabel htmlFor="create-role-name">
+                    {mode === "import" ? "Name override (optional)" : "Name"}
+                  </FieldLabel>
+                  <Input
+                    id="create-role-name"
+                    className="font-mono"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Senior AI Engineer"
+                    autoComplete="off"
+                    aria-invalid={error && mode === "empty" ? true : undefined}
+                  />
+                  {mode === "empty" && error ? <FieldError>{error}</FieldError> : (
+                    <FieldDescription>
+                      {mode === "import"
+                        ? "Leave blank to use the name from the JSON document."
+                        : "Unique per account."}
+                    </FieldDescription>
+                  )}
+                </Field>
+                {mode === "import" ? (
+                  <ImportJsonFields
+                    json={json}
+                    error={error}
+                    onJsonChange={(value) => {
+                      setJson(value)
+                      setError(null)
+                    }}
+                  />
+                ) : null}
+              </FieldGroup>
+              {error && mode === "import" ? (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertTitle>Import failed</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               ) : null}
-            </FieldGroup>
-            {error && mode === "import" ? (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertTitle>Import failed</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={requestClose}>
                 Cancel

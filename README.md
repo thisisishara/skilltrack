@@ -43,17 +43,28 @@ Set the GitHub OAuth App homepage to the production URL: [https://skilltrack-lov
 
 ### Apply database migrations
 
-The same SQL in `supabase/migrations/` must run on **both** projects.
+The same committed SQL in `supabase/migrations/` must run on **both** projects (`skilltrack-dev` and `skilltrack-prod`). `npm run db:push` is `npx supabase db push`.
 
 ```bash
 npx supabase login
-npx supabase link --project-ref <skilltrack-dev-ref>
+
+npx supabase link --project-ref kttuqdmzakhvzahizunv
 npm run db:push
-npx supabase link --project-ref <skilltrack-prod-ref>
+
+npx supabase link --project-ref whtsvfcjqyflugocuwip
 npm run db:push
+
+npx supabase link --project-ref kttuqdmzakhvzahizunv
 ```
 
-Or paste `supabase/migrations/20260914000000_mvp_schema.sql` into **SQL Editor → New query** in each project and run it.
+The last `link` leaves the CLI pointed at **dev**, which is what local `npm run dev` uses.
+
+Dashboards:
+
+- Dev: [https://supabase.com/dashboard/project/kttuqdmzakhvzahizunv](https://supabase.com/dashboard/project/kttuqdmzakhvzahizunv)
+- Prod: [https://supabase.com/dashboard/project/whtsvfcjqyflugocuwip](https://supabase.com/dashboard/project/whtsvfcjqyflugocuwip)
+
+To apply by hand instead of the CLI, open **SQL Editor → New query** in each project and run every file in `supabase/migrations/` in filename order (not only the first file).
 
 ## Develop
 

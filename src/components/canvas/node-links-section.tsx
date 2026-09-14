@@ -100,25 +100,46 @@ function LinkRow({
   onDelete: () => void
   onUpdate: (link: NodeLink, label: string, url: string) => string | null
 }) {
+  const [label, setLabel] = useState(link.label)
+  const [url, setUrl] = useState(link.url)
+  const [error, setError] = useState<string | null>(null)
+
+  function persist() {
+    if (label.trim() === link.label && url.trim() === link.url) {
+      return
+    }
+
+    const message = onUpdate(link, label, url)
+    setError(message)
+  }
+
   return (
     <li className="rounded-lg border p-3">
-      <LinkForm
-        initialLabel={link.label}
-        initialUrl={link.url}
-        pendingLabel="Saving…"
-        submitLabel="Save link"
-        onSubmit={async (label, url) => {
-          if (label.trim() === link.label && url.trim() === link.url) {
-            return null
-          }
-          const message = onUpdate(link, label, url)
-          if (message) {
-            return message
-          }
-          toast.success("Link updated")
-          return null
-        }}
-      />
+      <FieldGroup className="gap-3">
+        <Field data-invalid={error ? true : undefined}>
+          <FieldLabel>Label</FieldLabel>
+          <Input
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            onBlur={persist}
+            placeholder="Official documentation"
+            autoComplete="off"
+            aria-invalid={error ? true : undefined}
+          />
+        </Field>
+        <Field data-invalid={error ? true : undefined}>
+          <FieldLabel>URL</FieldLabel>
+          <Input
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            onBlur={persist}
+            placeholder="https://example.com"
+            autoComplete="off"
+            aria-invalid={error ? true : undefined}
+          />
+          {error ? <FieldError>{error}</FieldError> : null}
+        </Field>
+      </FieldGroup>
       <Button type="button" size="sm" variant="ghost" className="mt-2" onClick={onDelete}>
         <Trash2 data-icon="inline-start" />
         Delete

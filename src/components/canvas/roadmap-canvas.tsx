@@ -84,6 +84,7 @@ import {
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import {
+  incomingEdgeAppearance,
   nodeProgress,
   nodeStatusCounts,
   roadmapProgress,
@@ -161,15 +162,19 @@ function toFlowNodes(
   })
 }
 
-function toFlowEdges(nodes: RoadmapNode[]): Edge[] {
+function toFlowEdges(nodes: RoadmapNode[], items: ChecklistItem[]): Edge[] {
   return nodes
     .filter((node) => node.parentId && isSkillNode(node))
-    .map((node) => ({
-      id: `${node.parentId}->${node.id}`,
-      source: node.parentId as string,
-      target: node.id,
-      animated: node.incomingEdgeAnimated,
-    }))
+    .map((node) => {
+      const appearance = incomingEdgeAppearance(nodeProgress(items, node.id).status)
+      return {
+        id: `${node.parentId}->${node.id}`,
+        source: node.parentId as string,
+        target: node.id,
+        animated: appearance.animated,
+        style: appearance.style,
+      }
+    })
 }
 
 function mergeFlowNodes(
@@ -269,7 +274,7 @@ function RoadmapCanvasInner({
   const [flowNodes, setFlowNodes] = useState<CanvasFlowNode[]>(() =>
     toFlowNodes(serverNodes, serverItems)
   )
-  const [edges, setEdges] = useState<Edge[]>(() => toFlowEdges(serverNodes))
+  const [edges, setEdges] = useState<Edge[]>(() => toFlowEdges(serverNodes, serverItems))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [configNodeId, setConfigNodeId] = useState<string | null>(null)
   const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
@@ -296,7 +301,7 @@ function RoadmapCanvasInner({
 
   useEffect(() => {
     setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(nodes, items)))
-    setEdges(toFlowEdges(nodes))
+    setEdges(toFlowEdges(nodes, items))
   }, [nodes, items])
 
   const selectedNode = useMemo(
@@ -459,11 +464,14 @@ function RoadmapCanvasInner({
       )
       setEdges((current) => {
         const withoutIncoming = current.filter((edge) => edge.target !== connection.target)
-        const target = nodes.find((node) => node.id === connection.target)
+        const appearance = incomingEdgeAppearance(
+          nodeProgress(items, connection.target).status
+        )
         return addEdge(
           {
             ...connection,
-            animated: target?.incomingEdgeAnimated ?? false,
+            animated: appearance.animated,
+            style: appearance.style,
           },
           withoutIncoming
         )
@@ -480,7 +488,7 @@ function RoadmapCanvasInner({
         }
       })
     },
-    [nodes, roleId]
+    [nodes, items, roleId]
   )
 
   const onEdgesDelete: OnEdgesDelete = useCallback(
@@ -538,7 +546,6 @@ function RoadmapCanvasInner({
     description: string
     icon: string
     handleKind: NodeHandleKind
-    incomingEdgeAnimated: boolean
   }) {
     if (!dialogMode || dialogMode.kind !== "create") {
       return { ok: false as const, code: "unexpected" as const, message: "Nothing to save." }
@@ -569,7 +576,7 @@ function RoadmapCanvasInner({
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
       handleKind: input.handleKind,
-      incomingEdgeAnimated: input.incomingEdgeAnimated,
+      incomingEdgeAnimated: false,
       positionX,
       positionY,
       sortOrder: nextSortOrder(nodes, parentId),
@@ -607,7 +614,6 @@ function RoadmapCanvasInner({
     icon: string
     notes: string
     handleKind: NodeHandleKind
-    incomingEdgeAnimated: boolean
   }) {
     if (!configNode) {
       return {
@@ -634,7 +640,6 @@ function RoadmapCanvasInner({
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
       handleKind: input.handleKind,
-      incomingEdgeAnimated: input.incomingEdgeAnimated,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
 
@@ -646,7 +651,6 @@ function RoadmapCanvasInner({
       icon: next.icon,
       notes: next.notes,
       handleKind: next.handleKind,
-      incomingEdgeAnimated: next.incomingEdgeAnimated,
     }).then((result) => {
       if (!result.ok) {
         setNodes((current) =>

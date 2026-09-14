@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { NotebookPen, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -48,6 +48,7 @@ import {
   type NodeHandleKind,
 } from "@/domain/nodes/handle"
 import type { RoadmapNode } from "@/domain/nodes/types"
+import { displayNodeTitle } from "@/domain/nodes/title"
 import type { ProgressSnapshot } from "@/domain/progress/progress"
 
 const ROOT_PARENT = "__none__"
@@ -91,7 +92,6 @@ export function NodeConfigSheet({
     icon: string
     notes: string
     handleKind: NodeHandleKind
-    incomingEdgeAnimated: boolean
   }) => Promise<NodeActionResult>
   onParentChange: (parentId: string | null) => Promise<void>
   onToggleChecklist: (itemId: string, isCompleted: boolean) => Promise<void>
@@ -109,30 +109,44 @@ export function NodeConfigSheet({
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState("circle-dot")
   const [handleKind, setHandleKind] = useState<NodeHandleKind>("regular")
-  const [incomingEdgeAnimated, setIncomingEdgeAnimated] = useState(false)
   const [notes, setNotes] = useState("")
   const [editingNotes, setEditingNotes] = useState(false)
-  const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const selectedNodeId = node?.id ?? null
+
+  useEffect(() => {
+    return () => {
+      if (persistTimer.current) {
+        clearTimeout(persistTimer.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!node || !open) {
       return
     }
 
-    // Re-sync form fields when the selected node changes or the panel
-    // (re)opens, without resetting on every keystroke while editing.
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+
+    // Re-sync when the selected node or panel open state changes, not on
+    // every autosave that updates the same node.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(node.title)
     setDescription(node.description ?? "")
     setIcon(node.icon)
     setHandleKind(node.handleKind)
-    setIncomingEdgeAnimated(node.incomingEdgeAnimated)
     setNotes(node.notes ?? "")
     setEditingNotes(Boolean(node.notes))
-    setPending(false)
     setError(null)
-  }, [node, open])
+    // selectedNodeId/open are enough; including `node` would reset the form
+    // on every optimistic autosave of the same node.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNodeId, open])
 
   const parentOptions = useMemo<ParentOption[]>(() => {
     if (!node) {
@@ -167,61 +181,69 @@ export function NodeConfigSheet({
     parentOptions.find((option) => option.id === (node?.parentId ?? ROOT_PARENT)) ??
     parentOptions[0]
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    setPending(true)
-    setError(null)
-    const result = await onSaveDetails({
-      title,
-      description,
-      icon,
-      notes,
-      handleKind,
-      incomingEdgeAnimated,
-    })
-    setPending(false)
-
-    if (!result.ok) {
-      setError(result.message)
-      if (result.code !== "validation") {
-        toast.error(result.message)
-      }
-      return
-    }
-
-    toast.success("Node updated")
+  type DetailSnapshot = {
+    title: string
+    description: string
+    icon: string
+    notes: string
+    handleKind: NodeHandleKind
   }
 
-  async function persistNotes() {
-    if (!node) {
+  function snapshotWith(patch: Partial<DetailSnapshot>): DetailSnapshot {
+    return {
+      title: patch.title ?? title,
+      description: patch.description ?? description,
+      icon: patch.icon ?? icon,
+      notes: patch.notes ?? notes,
+      handleKind: patch.handleKind ?? handleKind,
+    }
+  }
+
+  function flushDetails(next: DetailSnapshot) {
+    if (!displayNodeTitle(next.title)) {
+      setError("Node title cannot be empty.")
       return
     }
 
-    const next = notes.trim()
-    const current = node.notes?.trim() ?? ""
-    if (next === current) {
-      if (!next) {
-        setEditingNotes(false)
+    if (
+      node &&
+      next.title === node.title &&
+      (next.description.trim() || null) === node.description &&
+      next.icon === node.icon &&
+      (next.notes.trim() || null) === node.notes &&
+      next.handleKind === node.handleKind
+    ) {
+      return
+    }
+
+    setError(null)
+    void onSaveDetails(next).then((result) => {
+      if (!result.ok) {
+        setError(result.message)
+        if (result.code !== "validation") {
+          toast.error(result.message)
+        }
       }
-      return
-    }
-
-    const result = await onSaveDetails({
-      title,
-      description,
-      icon,
-      notes,
-      handleKind,
-      incomingEdgeAnimated,
     })
-    if (!result.ok) {
-      toast.error(result.message)
-      return
-    }
+  }
 
-    if (!next) {
-      setEditingNotes(false)
+  function scheduleDetails(patch: Partial<DetailSnapshot>) {
+    const next = snapshotWith(patch)
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
     }
+    persistTimer.current = setTimeout(() => {
+      persistTimer.current = null
+      flushDetails(next)
+    }, 350)
+  }
+
+  function persistDetailsNow(patch: Partial<DetailSnapshot>) {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+    flushDetails(snapshotWith(patch))
   }
 
   if (!open || !node) {
@@ -276,14 +298,18 @@ export function NodeConfigSheet({
             </div>
             <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-6 p-4">
-                <form onSubmit={handleSubmit}>
-                  <FieldGroup>
+                <FieldGroup>
                     <Field data-invalid={error ? true : undefined}>
                       <FieldLabel htmlFor="sheet-node-title">Title</FieldLabel>
                       <Input
                         id="sheet-node-title"
                         value={title}
-                        onChange={(event) => setTitle(event.target.value)}
+                        onChange={(event) => {
+                          const next = event.target.value
+                          setTitle(next)
+                          scheduleDetails({ title: next })
+                        }}
+                        onBlur={() => persistDetailsNow({ title })}
                         autoComplete="off"
                         aria-invalid={error ? true : undefined}
                       />
@@ -294,22 +320,33 @@ export function NodeConfigSheet({
                       <Textarea
                         id="sheet-node-description"
                         value={description}
-                        onChange={(event) => setDescription(event.target.value)}
+                        onChange={(event) => {
+                          const next = event.target.value
+                          setDescription(next)
+                          scheduleDetails({ description: next })
+                        }}
+                        onBlur={() => persistDetailsNow({ description })}
                         placeholder="Short summary of this skill"
                       />
                     </Field>
                     <Field>
                       <FieldLabel>Icon</FieldLabel>
-                      <IconPicker value={icon} onChange={setIcon} />
+                      <IconPicker
+                        value={icon}
+                        onChange={(next) => {
+                          setIcon(next)
+                          persistDetailsNow({ icon: next })
+                        }}
+                      />
                     </Field>
                     <NodeHandleFields
                       handleKind={handleKind}
-                      incomingEdgeAnimated={incomingEdgeAnimated}
-                      onHandleKindChange={setHandleKind}
-                      onIncomingEdgeAnimatedChange={setIncomingEdgeAnimated}
+                      onHandleKindChange={(next) => {
+                        setHandleKind(next)
+                        persistDetailsNow({ handleKind: next })
+                      }}
                       allowInput={!nodes.some((item) => item.parentId === node.id)}
                       allowOutput={!node.parentId}
-                      idPrefix="sheet-node"
                     />
                     <Field>
                       <FieldLabel>Parent</FieldLabel>
@@ -345,13 +382,7 @@ export function NodeConfigSheet({
                         </ComboboxContent>
                       </Combobox>
                     </Field>
-                    <div className="flex justify-end">
-                      <Button type="submit" size="sm" disabled={pending}>
-                        {pending ? "Saving…" : "Save details"}
-                      </Button>
-                    </div>
-                  </FieldGroup>
-                </form>
+                </FieldGroup>
                 <Separator />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Notes</h3>
@@ -378,8 +409,17 @@ export function NodeConfigSheet({
                       <Textarea
                         id="sheet-node-notes"
                         value={notes}
-                        onChange={(event) => setNotes(event.target.value)}
-                        onBlur={() => void persistNotes()}
+                        onChange={(event) => {
+                          const next = event.target.value
+                          setNotes(next)
+                          scheduleDetails({ notes: next })
+                        }}
+                        onBlur={() => {
+                          persistDetailsNow({ notes })
+                          if (!notes.trim()) {
+                            setEditingNotes(false)
+                          }
+                        }}
                         placeholder="What have you learned?"
                       />
                     </Field>

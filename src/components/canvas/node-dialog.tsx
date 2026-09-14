@@ -47,14 +47,12 @@ export function NodeDialog({
     description: string
     icon: string
     handleKind: NodeHandleKind
-    incomingEdgeAnimated: boolean
   }) => Promise<NodeActionResult>
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState(DEFAULT_NODE_ICON)
   const [handleKind, setHandleKind] = useState<NodeHandleKind>(DEFAULT_NODE_HANDLE_KIND)
-  const [incomingEdgeAnimated, setIncomingEdgeAnimated] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -83,7 +81,6 @@ export function NodeDialog({
     setDescription("")
     setIcon(DEFAULT_NODE_ICON)
     setHandleKind(DEFAULT_NODE_HANDLE_KIND)
-    setIncomingEdgeAnimated(false)
   }, [open, mode])
 
   async function handleSubmit(event: FormEvent) {
@@ -95,7 +92,6 @@ export function NodeDialog({
       description,
       icon,
       handleKind,
-      incomingEdgeAnimated,
     })
     setPending(false)
 
@@ -149,12 +145,9 @@ export function NodeDialog({
             </Field>
             <NodeHandleFields
               handleKind={handleKind}
-              incomingEdgeAnimated={incomingEdgeAnimated}
               onHandleKindChange={setHandleKind}
-              onIncomingEdgeAnimatedChange={setIncomingEdgeAnimated}
               allowInput
               allowOutput={!isChild}
-              idPrefix="create-node"
             />
           </FieldGroup>
           <DialogFooter>

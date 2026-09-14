@@ -107,6 +107,23 @@ export function roadmapProgress(items: ChecklistItem[]) {
   return progressFromCounts(completed, items.length)
 }
 
+export const DONE_INCOMING_EDGE_STROKE = "#4CAF50"
+
+export function incomingEdgeAppearance(status: ProgressStatus): {
+  animated: boolean
+  style: { stroke: string }
+} {
+  if (status === "in_progress") {
+    return { animated: true, style: { stroke: "var(--xy-edge-stroke)" } }
+  }
+
+  if (status === "done") {
+    return { animated: false, style: { stroke: DONE_INCOMING_EDGE_STROKE } }
+  }
+
+  return { animated: false, style: { stroke: "var(--xy-edge-stroke)" } }
+}
+
 export function progressStatusLabel(status: ProgressStatus) {
   if (status === "done") {
     return "Done"

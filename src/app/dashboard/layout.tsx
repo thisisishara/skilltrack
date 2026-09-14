@@ -56,7 +56,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarProvider className="flex min-h-full flex-1">
+    <SidebarProvider className="h-dvh overflow-hidden">
       <RolesWorkspace roles={roles}>
         <AppSidebar
           githubUsername={githubUsername}

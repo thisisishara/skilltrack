@@ -17,7 +17,7 @@ export function MustCreateRole() {
   const { openCreate } = useRolesUi()
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col p-6">
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
       <Empty className="h-full">
         <EmptyHeader>
           <EmptyMedia variant="icon">

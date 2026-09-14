@@ -43,6 +43,8 @@ export function CreateRoleDialog({
 
   useEffect(() => {
     if (open) {
+      // Reset the form each time the dialog opens for a fresh role.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName("")
       setMode("empty")
       setError(null)

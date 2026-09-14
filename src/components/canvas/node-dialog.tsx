@@ -66,6 +66,9 @@ export function NodeDialog({
       return
     }
 
+    // Reset/populate form fields whenever the dialog (re)opens or its mode
+    // changes, without resetting on every keystroke while editing.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPending(false)
     setError(null)
 

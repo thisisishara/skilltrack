@@ -17,6 +17,7 @@ import {
   type NodeChange,
   type OnConnect,
   type OnEdgesDelete,
+  type OnMoveEnd,
   type OnNodeDrag,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
@@ -59,6 +60,7 @@ import {
   roadmapProgress,
   subtreeProgress,
 } from "@/domain/progress/progress"
+import { readStoredViewport, writeStoredViewport } from "@/lib/canvas/viewport-storage"
 
 const nodeTypes = {
   roadmap: RoadmapNodeCard,
@@ -155,6 +157,7 @@ function RoadmapCanvasInner({
   const { resolvedTheme } = useTheme()
   const [themeReady, setThemeReady] = useState(false)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
+  const [initialViewport] = useState(() => readStoredViewport(roleId))
   const [flowNodes, setFlowNodes] = useState<RoadmapFlowNode[]>(() =>
     toFlowNodes(serverNodes, serverItems)
   )
@@ -166,14 +169,24 @@ function RoadmapCanvasInner({
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
+    // Client-only mount flag to avoid an SSR/client colorMode mismatch;
+    // this can only be known after hydration, so an effect is required.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeReady(true)
   }, [])
 
   useEffect(() => {
+    // Re-sync local, optimistically-mutable checklist state whenever the
+    // server payload changes (e.g. after router.refresh()).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(serverItems)
   }, [serverItems])
 
   useEffect(() => {
+    // Recompute derived React Flow nodes/edges when server nodes or
+    // checklist-derived progress changes, without clobbering in-flight
+    // drag positions (see mergeFlowNodes).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(serverNodes, items)))
     setEdges(toFlowEdges(serverNodes))
   }, [serverNodes, items])
@@ -191,6 +204,9 @@ function RoadmapCanvasInner({
 
   useEffect(() => {
     if (configNodeId && !configNode) {
+      // The selected node was deleted or reparented out from under us;
+      // close the config panel rather than pointing at stale data.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfigNodeId(null)
     }
   }, [configNode, configNodeId])
@@ -356,6 +372,13 @@ function RoadmapCanvasInner({
     [serverNodes]
   )
 
+  const onMoveEnd: OnMoveEnd = useCallback(
+    (_event, viewport) => {
+      writeStoredViewport(roleId, viewport)
+    },
+    [roleId]
+  )
+
   function openCreate(parentId: string | null) {
     setDialogMode({ kind: "create", parentId })
     setDialogOpen(true)
@@ -491,7 +514,7 @@ function RoadmapCanvasInner({
   }
 
   const canvas = (
-    <div className="relative h-full min-h-0">
+    <div className="relative h-full min-h-0 overflow-hidden">
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
@@ -505,8 +528,10 @@ function RoadmapCanvasInner({
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeClick}
         onSelectionChange={onSelectionChange}
+        onMoveEnd={onMoveEnd}
         isValidConnection={onValidConnection}
-        fitView={serverNodes.length > 0}
+        defaultViewport={initialViewport ?? undefined}
+        fitView={serverNodes.length > 0 && !initialViewport}
         deleteKeyCode={["Backspace", "Delete"]}
         colorMode={themeReady && resolvedTheme === "dark" ? "dark" : "light"}
         minZoom={0.2}
@@ -539,7 +564,7 @@ function RoadmapCanvasInner({
   )
 
   return (
-    <div className="flex h-full min-h-0 flex-1">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <ResizablePanelGroup orientation="horizontal" className="min-h-0">
         <ResizablePanel id="roadmap-canvas" defaultSize="70%" minSize="40%">
           {canvas}

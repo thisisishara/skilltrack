@@ -108,6 +108,9 @@ export function NodeConfigSheet({
       return
     }
 
+    // Re-sync form fields when the selected node changes or the panel
+    // (re)opens, without resetting on every keystroke while editing.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(node.title)
     setDescription(node.description ?? "")
     setIcon(node.icon)

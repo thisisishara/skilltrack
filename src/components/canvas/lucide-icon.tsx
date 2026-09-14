@@ -1,5 +1,6 @@
 "use client"
 
+import { createElement } from "react"
 import type { LucideIcon, LucideProps } from "lucide-react"
 import {
   Book,
@@ -83,6 +84,8 @@ export function NodeLucideIcon({
   name,
   ...props
 }: { name: string } & LucideProps) {
-  const Icon = resolveLucideIcon(name)
-  return <Icon {...props} />
+  // resolveLucideIcon always returns one of the static imports above, so the
+  // component identity is stable for a given name; createElement sidesteps
+  // the (false-positive) "component created during render" lint heuristic.
+  return createElement(resolveLucideIcon(name), props)
 }

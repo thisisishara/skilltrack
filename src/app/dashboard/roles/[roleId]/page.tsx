@@ -26,7 +26,7 @@ export default async function RoleDashboardPage({
 
   if (!role) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col p-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -50,7 +50,7 @@ export default async function RoleDashboardPage({
   ])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PersistActiveRole roleId={role.id} />
       <RoadmapCanvas
         roleId={role.id}

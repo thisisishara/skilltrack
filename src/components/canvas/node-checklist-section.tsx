@@ -247,6 +247,9 @@ function ChecklistRow({
   const [description, setDescription] = useState(item.description ?? "")
 
   useEffect(() => {
+    // Re-sync editable fields when the underlying item changes (e.g. after
+    // a reorder or refresh), without resetting on every keystroke.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(item.title)
     setDescription(item.description ?? "")
   }, [item.title, item.description])

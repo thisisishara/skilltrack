@@ -809,6 +809,51 @@
               "status": "done"
             }
           ]
+        },
+        {
+          "id": "E05-P08",
+          "title": "Persist canvas zoom and pan across refresh",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E05-P08-S01",
+              "title": "Restore last viewport (x, y, zoom) per role on load; fall back to fitView when none is stored",
+              "status": "done"
+            },
+            {
+              "id": "E05-P08-S02",
+              "title": "Persist viewport client-side after pan/zoom gestures settle",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E05-P09",
+          "title": "Canvas layout stays within the viewport",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E05-P09-S01",
+              "title": "Cap the dashboard shell to the viewport height so the page never scrolls",
+              "status": "done"
+            },
+            {
+              "id": "E05-P09-S02",
+              "title": "Canvas panel stays clipped to its bounds when the node config panel opens",
+              "status": "done"
+            },
+            {
+              "id": "E05-P09-S03",
+              "title": "Only the node config panel scrolls internally; the canvas pans/zooms instead",
+              "status": "done"
+            }
+          ]
         }
       ]
     },

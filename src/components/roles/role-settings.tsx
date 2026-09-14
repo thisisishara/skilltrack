@@ -42,6 +42,9 @@ export function RoleSettings({ role }: { role: Role }) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
+    // Re-sync the name field when a different role is selected/renamed
+    // elsewhere, without resetting on every keystroke while editing.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(role.name)
     setError(null)
   }, [role.id, role.name])

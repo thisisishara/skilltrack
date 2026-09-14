@@ -28,7 +28,9 @@ export function RoadmapNodeCard({ data, selected }: NodeProps<RoadmapFlowNode>) 
   return (
     <div
       className={`w-52 rounded-xl border bg-card px-3 py-2.5 shadow-sm ${
-        selected ? "border-ring ring-3 ring-ring/50" : "border-border"
+        selected
+          ? "border-ring outline-2 outline-dashed outline-offset-4 outline-ring"
+          : "border-border"
       }`}
     >
       {nodeCanHaveParent(data.handleKind) ? (

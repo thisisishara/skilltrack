@@ -18,15 +18,18 @@ import {
 export function DeleteNodeAlert({
   open,
   onOpenChange,
+  count,
   nodeTitle,
   onConfirm,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  count: number
   nodeTitle: string
   onConfirm: () => Promise<void>
 }) {
   const [pending, setPending] = useState(false)
+  const multi = count > 1
 
   async function handleConfirm() {
     setPending(true)
@@ -41,11 +44,15 @@ export function DeleteNodeAlert({
           <AlertDialogMedia>
             <TriangleAlert />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete this node?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {multi ? `Delete ${count} items?` : "Delete this node?"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            {nodeTitle
-              ? `“${nodeTitle}” and its child nodes will be permanently deleted.`
-              : "This node and its child nodes will be permanently deleted."}
+            {multi
+              ? `${count} selected items and any child nodes will be permanently deleted.`
+              : nodeTitle
+                ? `“${nodeTitle}” and its child nodes will be permanently deleted.`
+                : "This node and its child nodes will be permanently deleted."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -58,7 +65,7 @@ export function DeleteNodeAlert({
               void handleConfirm()
             }}
           >
-            {pending ? "Deleting…" : "Delete node"}
+            {pending ? "Deleting…" : multi ? "Delete items" : "Delete node"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

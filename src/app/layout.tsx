@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { AppProviders } from "@/components/providers";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
 });
 
@@ -38,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${inter.className} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppProviders>{children}</AppProviders>

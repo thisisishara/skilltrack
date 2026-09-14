@@ -28,7 +28,7 @@ export function EmptyRoadmap({
           </EmptyMedia>
           <EmptyTitle>This roadmap is empty</EmptyTitle>
           <EmptyDescription>
-            Create the first node or import a canonical JSON roadmap.
+            Create the first node, import JSON, or drop a .json file on the canvas.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>

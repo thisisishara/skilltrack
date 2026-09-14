@@ -278,19 +278,19 @@ export function NodeConfigSheet({
                     status={nodeProgress.status}
                     percent={nodeProgress.percent}
                   />
-                  <span className="text-xs text-muted-foreground">
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
                     {nodeProgress.completed}/{nodeProgress.total} evidence
                   </span>
                 </div>
                 <Progress value={nodeProgress.percent}>
-                  <ProgressLabel>Node</ProgressLabel>
-                  <ProgressValue>
+                  <ProgressLabel className="font-mono text-xs">Node</ProgressLabel>
+                  <ProgressValue className="font-mono text-xs">
                     {() => `${nodeProgress.percent}%`}
                   </ProgressValue>
                 </Progress>
                 <Progress value={subtreeProgress.percent}>
-                  <ProgressLabel>Subtree</ProgressLabel>
-                  <ProgressValue>
+                  <ProgressLabel className="font-mono text-xs">Subtree</ProgressLabel>
+                  <ProgressValue className="font-mono text-xs">
                     {() => `${subtreeProgress.percent}%`}
                   </ProgressValue>
                 </Progress>

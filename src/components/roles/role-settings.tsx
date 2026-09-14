@@ -132,13 +132,14 @@ export function RoleSettings({ role }: { role: Role }) {
                 <FieldLabel htmlFor="role-settings-name">Role name</FieldLabel>
                 <Input
                   id="role-settings-name"
+                  className="font-mono"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   autoComplete="off"
                   aria-invalid={error ? true : undefined}
                 />
                 {error ? <FieldError>{error}</FieldError> : (
-                  <FieldDescription>
+                  <FieldDescription className="font-mono text-xs">
                     Normalized uniqueness is case-insensitive.
                   </FieldDescription>
                 )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { CircleAlert } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "cn"
 
 import type { RoleActionResult } from "@/application/roles/actions"
 import { ImportJsonFields } from "@/components/roles/import-json-fields"
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 
 type CreateMode = "empty" | "import"
 
@@ -55,6 +57,11 @@ export function CreateRoleDialog({
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [discardOpen, setDiscardOpen] = useState(false)
+  const { isOver: isFileOver, dropProps } = useJsonFileDrop((text) => {
+    setMode("import")
+    setJson(text)
+    setError(null)
+  })
 
   useEffect(() => {
     if (open) {
@@ -115,15 +122,21 @@ export function CreateRoleDialog({
           onOpenChange(true)
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent
+          className={cn(
+            "flex max-h-[min(90dvh,44rem)] w-full flex-col overflow-hidden sm:max-w-lg",
+            isFileOver && "outline-2 outline-dashed outline-offset-4 outline-ring"
+          )}
+          {...dropProps}
+        >
           <DialogHeader>
             <DialogTitle>Create Role</DialogTitle>
             <DialogDescription>
-              Start an empty roadmap or import a canonical JSON document.
+              Start an empty roadmap or drop a JSON file to import one.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <FieldGroup>
+          <form onSubmit={handleSubmit} className="grid min-h-0 gap-4 overflow-y-auto">
+            <FieldGroup className="min-w-0">
               <Field>
                 <FieldLabel>How to start</FieldLabel>
                 <ToggleGroup
@@ -157,6 +170,7 @@ export function CreateRoleDialog({
                 </FieldLabel>
                 <Input
                   id="create-role-name"
+                  className="font-mono"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Senior AI Engineer"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
@@ -18,6 +18,8 @@ import {
   type OnConnect,
   type OnEdgesDelete,
   type OnMoveEnd,
+  SelectionMode,
+  useReactFlow,
   type OnNodeDrag,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
@@ -42,7 +44,10 @@ import {
   updateNodeAction,
 } from "@/application/nodes/actions"
 import { exportRoadmapAction, importRoadmapAction } from "@/application/import-export/actions"
-import { CanvasToolbar } from "@/components/canvas/canvas-toolbar"
+import {
+  CanvasToolbar,
+  type CanvasInteractionTool,
+} from "@/components/canvas/canvas-toolbar"
 import { DeleteNodeAlert } from "@/components/canvas/delete-node-alert"
 import { EmptyRoadmap } from "@/components/canvas/empty-roadmap"
 import { LabelDialog, type LabelDialogMode } from "@/components/canvas/label-dialog"
@@ -50,11 +55,12 @@ import { LabelNodeCard, type LabelFlowNode } from "@/components/canvas/label-nod
 import { NodeConfigSheet } from "@/components/canvas/node-config-sheet"
 import { NodeDialog, type NodeDialogMode } from "@/components/canvas/node-dialog"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
+import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 import {
   RoadmapNodeCard,
   type RoadmapFlowNode,
 } from "@/components/canvas/roadmap-node"
-import { RoadmapProgressCard } from "@/components/canvas/roadmap-progress-card"
+import { RoadmapStatusBar } from "@/components/canvas/roadmap-status-bar"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -88,6 +94,8 @@ import type { RoadmapNode } from "@/domain/nodes/types"
 import { downloadTextFile } from "@/lib/roadmap/download"
 import {
   incomingEdgeAppearance,
+  DEFAULT_EDGE_STROKE,
+  DEFAULT_EDGE_STROKE_WIDTH,
   nodeProgress,
   nodeStatusCounts,
   roadmapProgress,
@@ -143,6 +151,8 @@ function toFlowNodes(
         id: node.id,
         type: "label" as const,
         position: { x: node.positionX, y: node.positionY },
+        connectable: false,
+        zIndex: 0,
         data: { title: node.title },
       }
     }
@@ -152,6 +162,7 @@ function toFlowNodes(
       id: node.id,
       type: "roadmap" as const,
       position: { x: node.positionX, y: node.positionY },
+      zIndex: 2,
       data: {
         title: node.title,
         description: node.description,
@@ -174,6 +185,7 @@ function toFlowEdges(nodes: RoadmapNode[], items: ChecklistItem[]): Edge[] {
         id: `${node.parentId}->${node.id}`,
         source: node.parentId as string,
         target: node.id,
+        zIndex: 1,
         animated: appearance.animated,
         style: appearance.style,
       }
@@ -195,6 +207,8 @@ function mergeFlowNodes(
     return {
       ...previous,
       type: node.type,
+      zIndex: node.zIndex,
+      connectable: node.connectable,
       position: previous.position,
       data: node.data,
     } as CanvasFlowNode
@@ -205,11 +219,20 @@ function isValidConnectionForNodes(
   nodes: RoadmapNode[],
   connection: Connection | Edge
 ) {
-  if (
-    !connection.source ||
-    !connection.target ||
-    connection.source === connection.target
-  ) {
+  if (!connection.source) {
+    return false
+  }
+
+  // React Flow calls this as a drag starts, before a target handle is hovered.
+  // Returning false here aborts the connection entirely.
+  if (!connection.target) {
+    const source = nodes.find((node) => node.id === connection.source)
+    return Boolean(
+      source && isSkillNode(source) && nodeCanHaveChildren(source.handleKind)
+    )
+  }
+
+  if (connection.source === connection.target) {
     return false
   }
 
@@ -219,7 +242,31 @@ function isValidConnectionForNodes(
     return false
   }
 
+  if (wouldCreateCycle(nodes, connection.target, connection.source)) {
+    return false
+  }
+
   return nodeCanHaveChildren(source.handleKind) && nodeCanHaveParent(target.handleKind)
+}
+
+function sameIds(left: string[], right: string[]) {
+  return left.length === right.length && left.every((id, index) => id === right[index])
+}
+
+function selectedRootIds(nodes: RoadmapNode[], selectedIds: string[]) {
+  const selected = new Set(selectedIds)
+  const byId = new Map(nodes.map((node) => [node.id, node]))
+
+  return selectedIds.filter((id) => {
+    let parentId = byId.get(id)?.parentId ?? null
+    while (parentId) {
+      if (selected.has(parentId)) {
+        return false
+      }
+      parentId = byId.get(parentId)?.parentId ?? null
+    }
+    return true
+  })
 }
 
 function nextSortOrder(nodes: RoadmapNode[], parentId: string | null) {
@@ -268,6 +315,7 @@ function RoadmapCanvasInner({
   links: NodeLink[]
 }) {
   const router = useRouter()
+  const { getNodes } = useReactFlow()
   const { resolvedTheme } = useTheme()
   const [themeReady, setThemeReady] = useState(false)
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
@@ -278,14 +326,19 @@ function RoadmapCanvasInner({
     toFlowNodes(serverNodes, serverItems)
   )
   const [edges, setEdges] = useState<Edge[]>(() => toFlowEdges(serverNodes, serverItems))
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [configNodeId, setConfigNodeId] = useState<string | null>(null)
+  const [canvasTool, setCanvasTool] = useState<CanvasInteractionTool>("pointer")
+  const [deleteIds, setDeleteIds] = useState<string[]>([])
   const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [labelMode, setLabelMode] = useState<LabelDialogMode | null>(null)
   const [labelOpen, setLabelOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [importSeedJson, setImportSeedJson] = useState("")
+  const [importSeedError, setImportSeedError] = useState<string | null>(null)
+  const importDropLock = useRef(false)
 
   useEffect(() => {
     // Theme is read after mount so SSR and the first client paint match.
@@ -315,9 +368,15 @@ function RoadmapCanvasInner({
     setEdges(toFlowEdges(nodes, items))
   }, [nodes, items])
 
+  const selectedId = selectedIds[0] ?? null
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedId) ?? null,
     [nodes, selectedId]
+  )
+  const singleSelection = selectedIds.length === 1
+  const deleteNodes = useMemo(
+    () => nodes.filter((node) => deleteIds.includes(node.id)),
+    [deleteIds, nodes]
   )
 
   const configNode = useMemo(() => {
@@ -381,6 +440,36 @@ function RoadmapCanvasInner({
     toast.success("Roadmap exported")
   }
 
+  const handleDroppedJson = useCallback(
+    (text: string) => {
+      if (nodes.length > 0) {
+        toast.error("Import only works on an empty roadmap.")
+        return
+      }
+
+      if (importDropLock.current) {
+        return
+      }
+      importDropLock.current = true
+
+      void importRoadmapAction({ json: text, roleId }).then((result) => {
+        importDropLock.current = false
+        if (result.ok) {
+          toast.success("Roadmap imported")
+          router.refresh()
+          return
+        }
+
+        setImportSeedJson(text)
+        setImportSeedError(result.message)
+        setImportOpen(true)
+      })
+    },
+    [nodes.length, roleId, router]
+  )
+  const { isOver: isJsonFileOver, dropProps: jsonDropProps } =
+    useJsonFileDrop(handleDroppedJson)
+
   const onNodesChange = useCallback((changes: NodeChange<CanvasFlowNode>[]) => {
     setFlowNodes((current) => applyNodeChanges(changes, current))
   }, [])
@@ -391,24 +480,40 @@ function RoadmapCanvasInner({
 
   const onSelectionChange = useCallback(
     ({ nodes: selected }: { nodes: CanvasFlowNode[] }) => {
-      const nextId = selected[0]?.id ?? null
-      setSelectedId((current) => (current === nextId ? current : nextId))
+      const nextIds = selected.map((node) => node.id)
+      setSelectedIds((current) => (sameIds(current, nextIds) ? current : nextIds))
+      if (nextIds.length !== 1) {
+        setConfigNodeId(null)
+      }
     },
     []
   )
 
-  const onNodeClick = useCallback((_event: unknown, node: CanvasFlowNode) => {
-    setSelectedId(node.id)
-    if (node.type === "label") {
-      setConfigNodeId(null)
-      return
-    }
-    setConfigNodeId(node.id)
-  }, [])
+  const onNodeClick = useCallback(
+    (event: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean }, node: CanvasFlowNode) => {
+      if (
+        canvasTool === "select" ||
+        event.shiftKey ||
+        event.metaKey ||
+        event.ctrlKey
+      ) {
+        if (node.type === "label") {
+          setConfigNodeId(null)
+        }
+        return
+      }
+
+      if (node.type === "label") {
+        setConfigNodeId(null)
+        return
+      }
+      setConfigNodeId(node.id)
+    },
+    [canvasTool]
+  )
 
   const onNodeDoubleClick = useCallback(
     (_event: unknown, node: CanvasFlowNode) => {
-      setSelectedId(node.id)
       if (node.type === "label") {
         const label = nodes.find((item) => item.id === node.id)
         if (!label) {
@@ -424,18 +529,22 @@ function RoadmapCanvasInner({
     [nodes]
   )
 
+  function openDelete(ids: string[]) {
+    if (ids.length === 0) {
+      return
+    }
+    setDeleteIds(ids)
+    setDeleteOpen(true)
+  }
+
   const onBeforeDelete = useCallback(
     async ({ nodes: deletingNodes }: { nodes: { id: string }[] }) => {
       if (deletingNodes.length === 0) {
         return false
       }
 
-      const first = deletingNodes[0]
-      if (first) {
-        setSelectedId(first.id)
-        setDeleteOpen(true)
-      }
-
+      setDeleteIds(deletingNodes.map((node) => node.id))
+      setDeleteOpen(true)
       return false
     },
     []
@@ -443,27 +552,36 @@ function RoadmapCanvasInner({
 
   const persistPosition: OnNodeDrag<CanvasFlowNode> = useCallback(
     async (_event, node) => {
+      const selected = getNodes().filter((item) => item.selected)
+      const moved = selected.length > 0 ? selected : [node]
+      const positions = new Map(moved.map((item) => [item.id, item.position]))
+
       setNodes((current) =>
-        current.map((item) =>
-          item.id === node.id
-            ? { ...item, positionX: node.position.x, positionY: node.position.y }
+        current.map((item) => {
+          const position = positions.get(item.id)
+          return position
+            ? { ...item, positionX: position.x, positionY: position.y }
             : item
-        )
+        })
       )
 
-      const result = await moveNodeAction({
-        roleId,
-        nodeId: node.id,
-        positionX: node.position.x,
-        positionY: node.position.y,
-      })
-
-      if (!result.ok) {
-        toast.error(result.message)
+      const results = await Promise.all(
+        moved.map((item) =>
+          moveNodeAction({
+            roleId,
+            nodeId: item.id,
+            positionX: item.position.x,
+            positionY: item.position.y,
+          })
+        )
+      )
+      const failed = results.find((result) => !result.ok)
+      if (failed && !failed.ok) {
+        toast.error(failed.message)
         router.refresh()
       }
     },
-    [roleId, router]
+    [getNodes, roleId, router]
   )
 
   const onConnect: OnConnect = useCallback(
@@ -493,6 +611,7 @@ function RoadmapCanvasInner({
         return addEdge(
           {
             ...connection,
+            zIndex: 1,
             animated: appearance.animated,
             style: appearance.style,
           },
@@ -560,7 +679,7 @@ function RoadmapCanvasInner({
   }
 
   function openSheet(nodeId: string) {
-    setSelectedId(nodeId)
+    setSelectedIds([nodeId])
     setConfigNodeId(nodeId)
   }
 
@@ -1023,37 +1142,50 @@ function RoadmapCanvasInner({
   }
 
   function handleDelete() {
-    if (!selectedNode) {
+    if (deleteIds.length === 0) {
       return
     }
 
-    const removing = subtreeNodeIds(nodes, selectedNode.id)
+    const roots = selectedRootIds(nodes, deleteIds)
+    const removing = new Set<string>()
+    for (const id of roots) {
+      for (const childId of subtreeNodeIds(nodes, id)) {
+        removing.add(childId)
+      }
+    }
+
     const previousNodes = nodes
     const previousItems = items
     const previousLinks = links
+    const deleteCount = deleteIds.length
+    const onlyLabel =
+      deleteNodes.length === 1 && deleteNodes[0] && isLabelNode(deleteNodes[0])
     setNodes((current) => current.filter((node) => !removing.has(node.id)))
     setItems((current) => current.filter((item) => !removing.has(item.nodeId)))
     setLinks((current) => current.filter((link) => !removing.has(link.nodeId)))
     setDeleteOpen(false)
     setConfigNodeId(null)
-    setSelectedId(null)
-    toast.success(isLabelNode(selectedNode) ? "Label deleted" : "Node deleted")
+    setSelectedIds([])
+    setDeleteIds([])
+    toast.success(
+      onlyLabel ? "Label deleted" : deleteCount > 1 ? "Items deleted" : "Node deleted"
+    )
 
-    void deleteNodeAction({
-      roleId,
-      nodeId: selectedNode.id,
-    }).then((result) => {
-      if (!result.ok) {
+    void Promise.all(
+      roots.map((nodeId) => deleteNodeAction({ roleId, nodeId }))
+    ).then((results) => {
+      const failed = results.find((result) => !result.ok)
+      if (failed && !failed.ok) {
         setNodes(previousNodes)
         setItems(previousItems)
         setLinks(previousLinks)
-        toast.error(result.message)
+        toast.error(failed.message)
       }
     })
   }
 
   const canvas = (
-    <div className="relative h-full min-h-0 overflow-hidden">
+    <div className="relative h-full min-h-0 overflow-hidden" {...jsonDropProps}>
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
@@ -1069,20 +1201,43 @@ function RoadmapCanvasInner({
         onSelectionChange={onSelectionChange}
         onMoveEnd={onMoveEnd}
         isValidConnection={onValidConnection}
+        selectionOnDrag={canvasTool === "select"}
+        panOnDrag={canvasTool === "select" ? [1, 2] : true}
+        selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode="Shift"
+        connectionLineStyle={{
+          stroke: DEFAULT_EDGE_STROKE,
+          strokeWidth: DEFAULT_EDGE_STROKE_WIDTH,
+        }}
+        defaultEdgeOptions={{
+          zIndex: 1,
+          style: {
+            stroke: DEFAULT_EDGE_STROKE,
+            strokeWidth: DEFAULT_EDGE_STROKE_WIDTH,
+          },
+        }}
         defaultViewport={initialViewport ?? undefined}
         fitView={nodes.length > 0 && !initialViewport}
         deleteKeyCode={["Backspace", "Delete"]}
         colorMode={themeReady && resolvedTheme === "dark" ? "dark" : "light"}
         minZoom={0.2}
         maxZoom={1.75}
-        className="h-full bg-background"
+        className={
+          canvasTool === "select"
+            ? "h-full cursor-crosshair bg-background"
+            : "h-full bg-background"
+        }
       >
         <Background gap={20} size={1} />
       </ReactFlow>
       <CanvasToolbar
-        hasSelection={Boolean(selectedNode)}
+        tool={canvasTool}
+        onToolChange={setCanvasTool}
+        hasSelection={selectedIds.length > 0}
+        canEdit={singleSelection}
         canAddChild={Boolean(
-          selectedNode &&
+          singleSelection &&
+            selectedNode &&
             isSkillNode(selectedNode) &&
             nodeCanHaveChildren(selectedNode.handleKind)
         )}
@@ -1093,7 +1248,7 @@ function RoadmapCanvasInner({
         }}
         onAddChild={() => selectedNode && isSkillNode(selectedNode) && openCreate(selectedNode.id)}
         onEdit={() => {
-          if (!selectedNode) {
+          if (!selectedNode || !singleSelection) {
             return
           }
           if (isLabelNode(selectedNode)) {
@@ -1107,30 +1262,34 @@ function RoadmapCanvasInner({
           }
           openSheet(selectedNode.id)
         }}
-        onDelete={() => selectedNode && setDeleteOpen(true)}
+        onDelete={() => openDelete(selectedIds)}
         onExport={() => void handleExport()}
       />
-      {skillNodes.length > 0 ? (
-        <div className="pointer-events-none absolute top-3 right-3 z-10">
-          <RoadmapProgressCard
-            roleName={roleName}
-            progress={overallProgress}
-            counts={statusCounts}
-          />
-        </div>
-      ) : null}
       {nodes.length === 0 ? (
         <EmptyRoadmap
           onCreate={() => openCreate(null)}
-          onImport={() => setImportOpen(true)}
+          onImport={() => {
+            setImportSeedJson("")
+            setImportSeedError(null)
+            setImportOpen(true)
+          }}
         />
+      ) : null}
+      {isJsonFileOver ? (
+        <div className="pointer-events-none absolute inset-3 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-ring bg-background/55">
+          <p className="rounded-lg bg-background/95 px-4 py-2 text-sm font-medium shadow-sm">
+            {nodes.length > 0
+              ? "Import only works on an empty roadmap"
+              : "Drop JSON to import"}
+          </p>
+        </div>
       ) : null}
     </div>
   )
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel id="roadmap-canvas" defaultSize="70%" minSize="40%">
           {canvas}
         </ResizablePanel>
@@ -1170,6 +1329,11 @@ function RoadmapCanvasInner({
           </>
         ) : null}
       </ResizablePanelGroup>
+      <RoadmapStatusBar
+        roleName={roleName}
+        progress={overallProgress}
+        counts={statusCounts}
+      />
       <NodeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -1185,14 +1349,23 @@ function RoadmapCanvasInner({
       <DeleteNodeAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        nodeTitle={selectedNode?.title ?? configNode?.title ?? ""}
+        count={deleteIds.length}
+        nodeTitle={deleteNodes[0]?.title ?? ""}
         onConfirm={async () => {
           handleDelete()
         }}
       />
       <ImportRoadmapDialog
         open={importOpen}
-        onOpenChange={setImportOpen}
+        onOpenChange={(open) => {
+          setImportOpen(open)
+          if (!open) {
+            setImportSeedJson("")
+            setImportSeedError(null)
+          }
+        }}
+        initialJson={importSeedJson}
+        initialError={importSeedError}
         onImport={async (json) => {
           const result = await importRoadmapAction({ json, roleId })
           if (result.ok && "role" in result) {

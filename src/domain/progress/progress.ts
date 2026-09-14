@@ -108,20 +108,31 @@ export function roadmapProgress(items: ChecklistItem[]) {
 }
 
 export const DONE_INCOMING_EDGE_STROKE = "#4CAF50"
+export const DEFAULT_EDGE_STROKE = "var(--muted-foreground)"
+export const DEFAULT_EDGE_STROKE_WIDTH = 1.75
 
 export function incomingEdgeAppearance(status: ProgressStatus): {
   animated: boolean
-  style: { stroke: string }
+  style: { stroke: string; strokeWidth: number }
 } {
   if (status === "in_progress") {
-    return { animated: true, style: { stroke: "var(--xy-edge-stroke)" } }
+    return {
+      animated: true,
+      style: { stroke: DEFAULT_EDGE_STROKE, strokeWidth: DEFAULT_EDGE_STROKE_WIDTH },
+    }
   }
 
   if (status === "done") {
-    return { animated: false, style: { stroke: DONE_INCOMING_EDGE_STROKE } }
+    return {
+      animated: false,
+      style: { stroke: DONE_INCOMING_EDGE_STROKE, strokeWidth: DEFAULT_EDGE_STROKE_WIDTH },
+    }
   }
 
-  return { animated: false, style: { stroke: "var(--xy-edge-stroke)" } }
+  return {
+    animated: false,
+    style: { stroke: DEFAULT_EDGE_STROKE, strokeWidth: DEFAULT_EDGE_STROKE_WIDTH },
+  }
 }
 
 export function progressStatusLabel(status: ProgressStatus) {

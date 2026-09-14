@@ -801,6 +801,8 @@ Required interactions:
 
 The UI should remain clean even for large roadmaps. Canvas toolbars use shadcn `Button`, `Tooltip`, and Lucide icons. A roadmap with zero nodes shows `Empty` over the canvas (create-first-node action).
 
+Canvas **labels** are free-floating annotations (`kind = label`). They can be placed and moved on the canvas. They are not skills: no handles, no parent, no checklist progress, and they do not participate in the tree.
+
 Node position is persisted:
 
 ```text
@@ -1227,6 +1229,7 @@ roadmap_nodes
 id uuid primary key
 role_id uuid not null references roles(id) on delete cascade
 parent_id uuid references roadmap_nodes(id) on delete cascade
+kind text not null default 'skill'  -- skill | label
 title text not null
 description text
 icon text

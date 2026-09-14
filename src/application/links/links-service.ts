@@ -3,6 +3,7 @@ import "server-only"
 import { requireOwnedNode } from "@/application/nodes/nodes-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
+import { isLabelNode } from "@/domain/nodes/kind"
 import {
   displayLinkLabel,
   isValidHttpUrl,
@@ -45,13 +46,17 @@ export async function createNodeLink(
   roleId: string,
   nodeId: string,
   input: {
+    id?: string
     label: string
     url: string
   }
 ) {
-  await requireOwnedNode(userId, roleId, nodeId)
+  const node = await requireOwnedNode(userId, roleId, nodeId)
+  if (isLabelNode(node)) {
+    throw new ApplicationError("validation", "Labels cannot have links.")
+  }
   const { label, url } = requireLink(input.label, input.url)
-  return linksRepository.insert({ nodeId, label, url })
+  return linksRepository.insert({ id: input.id, nodeId, label, url })
 }
 
 export async function updateNodeLink(

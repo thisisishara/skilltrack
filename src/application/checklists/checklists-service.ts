@@ -5,6 +5,7 @@ import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import { displayChecklistTitle } from "@/domain/checklists/title"
+import { isLabelNode } from "@/domain/nodes/kind"
 import * as checklistsRepository from "@/repositories/checklists/checklists-repository"
 
 function requireTitle(title: string) {
@@ -42,16 +43,21 @@ export async function createChecklistItem(
   roleId: string,
   nodeId: string,
   input: {
+    id?: string
     title: string
     description?: string | null
   }
 ) {
-  await requireOwnedNode(userId, roleId, nodeId)
+  const node = await requireOwnedNode(userId, roleId, nodeId)
+  if (isLabelNode(node)) {
+    throw new ApplicationError("validation", "Labels cannot have checklist items.")
+  }
   const items = await checklistsRepository.listByNodeId(nodeId)
   const sortOrder =
     items.length === 0 ? 0 : Math.max(...items.map((item) => item.sortOrder)) + 1
 
   return checklistsRepository.insert({
+    id: input.id,
     nodeId,
     title: requireTitle(input.title),
     description: optionalDescription(input.description),

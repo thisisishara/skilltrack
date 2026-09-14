@@ -1581,6 +1581,93 @@
           ]
         }
       ]
+    },
+    {
+      "id": "E14",
+      "title": "Canvas responsiveness, labels, and node chrome",
+      "phase": 3,
+      "spec": [
+        "§11",
+        "§19"
+      ],
+      "status": "done",
+      "pbis": [
+        {
+          "id": "E14-P01",
+          "title": "Optimistic canvas and node-config mutations",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E14-P01-S01",
+              "title": "Use local nodes, checklist items, and links as the canvas session source of truth",
+              "status": "done"
+            },
+            {
+              "id": "E14-P01-S02",
+              "title": "Create with client UUIDs and persist in the background",
+              "status": "done"
+            },
+            {
+              "id": "E14-P01-S03",
+              "title": "Optimistically connect, reparent, update, and delete nodes",
+              "status": "done"
+            },
+            {
+              "id": "E14-P01-S04",
+              "title": "Optimistically mutate checklist items and links without a full refresh",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E14-P02",
+          "title": "Draggable canvas label elements",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E14-P02-S01",
+              "title": "Persist node kind skill | label with labels always parentless",
+              "status": "done"
+            },
+            {
+              "id": "E14-P02-S02",
+              "title": "Add, move, and edit canvas labels as a React Flow node type",
+              "status": "done"
+            },
+            {
+              "id": "E14-P02-S03",
+              "title": "Exclude labels from progress, handles, and hierarchy",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E14-P03",
+          "title": "Cleaner skill-node layout and progress",
+          "status": "done",
+          "spec": [
+            "§11"
+          ],
+          "subtasks": [
+            {
+              "id": "E14-P03-S01",
+              "title": "Show node progress as Progress plus a numeric percent",
+              "status": "done"
+            },
+            {
+              "id": "E14-P03-S02",
+              "title": "Hide the node progress meter when a skill has no checklist items",
+              "status": "done"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

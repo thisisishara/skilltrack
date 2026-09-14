@@ -39,13 +39,17 @@ function revalidateRole(roleId: string) {
 }
 
 export async function createNodeAction(input: {
+  id?: string
   roleId: string
   parentId: string | null
+  kind?: string | null
   title: string
   description?: string | null
   icon?: string | null
   handleKind?: string | null
   incomingEdgeAnimated?: boolean
+  positionX?: number
+  positionY?: number
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId) {

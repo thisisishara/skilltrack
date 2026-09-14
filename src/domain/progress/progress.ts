@@ -1,4 +1,5 @@
 import type { ChecklistItem } from "@/domain/checklists/types"
+import { isSkillNode } from "@/domain/nodes/kind"
 import type { RoadmapNode } from "@/domain/nodes/types"
 
 export type ProgressStatus = "pending" | "in_progress" | "done"
@@ -119,7 +120,7 @@ export function progressStatusLabel(status: ProgressStatus) {
 }
 
 export function nodeStatusCounts(
-  nodes: Pick<RoadmapNode, "id">[],
+  nodes: Pick<RoadmapNode, "id" | "kind">[],
   items: ChecklistItem[]
 ): NodeStatusCounts {
   const counts: NodeStatusCounts = {
@@ -129,6 +130,10 @@ export function nodeStatusCounts(
   }
 
   for (const node of nodes) {
+    if (!isSkillNode(node)) {
+      continue
+    }
+
     const status = nodeProgress(items, node.id).status
     if (status === "in_progress") {
       counts.inProgress += 1

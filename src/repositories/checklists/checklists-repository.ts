@@ -67,6 +67,7 @@ export async function listByNodeId(nodeId: string) {
 }
 
 export async function insert(input: {
+  id?: string
   nodeId: string
   title: string
   description: string | null
@@ -76,6 +77,7 @@ export async function insert(input: {
   const { data, error } = await supabase
     .from("checklist_items")
     .insert({
+      ...(input.id ? { id: input.id } : {}),
       node_id: input.nodeId,
       title: displayChecklistTitle(input.title),
       description: input.description,

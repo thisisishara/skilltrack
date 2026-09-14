@@ -74,6 +74,7 @@ export type Database = {
           id: string
           role_id: string
           parent_id: string | null
+          kind: string
           title: string
           description: string | null
           notes: string | null
@@ -90,6 +91,7 @@ export type Database = {
           id?: string
           role_id: string
           parent_id?: string | null
+          kind?: string
           title: string
           description?: string | null
           notes?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           id?: string
           role_id?: string
           parent_id?: string | null
+          kind?: string
           title?: string
           description?: string | null
           notes?: string | null

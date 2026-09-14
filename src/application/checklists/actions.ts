@@ -39,6 +39,7 @@ function revalidateRole(roleId: string) {
 }
 
 export async function createChecklistItemAction(input: {
+  id?: string
   roleId: string
   nodeId: string
   title: string

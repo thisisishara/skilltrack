@@ -1,9 +1,11 @@
 import type { NodeHandleKind } from "@/domain/nodes/handle"
+import type { NodeKind } from "@/domain/nodes/kind"
 
 export type RoadmapNode = {
   id: string
   roleId: string
   parentId: string | null
+  kind: NodeKind
   title: string
   description: string | null
   notes: string | null

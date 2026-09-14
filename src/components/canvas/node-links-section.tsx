@@ -4,11 +4,6 @@ import { useState, type FormEvent } from "react"
 import { Link2, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import {
-  createNodeLinkAction,
-  deleteNodeLinkAction,
-  updateNodeLinkAction,
-} from "@/application/links/actions"
 import { Button } from "@/components/ui/button"
 import {
   Empty,
@@ -23,28 +18,17 @@ import { Input } from "@/components/ui/input"
 import type { NodeLink } from "@/domain/links/types"
 
 export function NodeLinksSection({
-  roleId,
-  nodeId,
   links,
-  onRefresh,
+  onCreate,
+  onUpdate,
+  onDelete,
 }: {
-  roleId: string
-  nodeId: string
   links: NodeLink[]
-  onRefresh: () => void
+  onCreate: (input: { label: string; url: string }) => string | null
+  onUpdate: (link: NodeLink, label: string, url: string) => string | null
+  onDelete: (linkId: string) => void
 }) {
   const [adding, setAdding] = useState(false)
-
-  async function handleDelete(linkId: string) {
-    const result = await deleteNodeLinkAction({ roleId, nodeId, linkId })
-    if (!result.ok) {
-      toast.error(result.message)
-      return
-    }
-
-    toast.success("Link deleted")
-    onRefresh()
-  }
 
   if (links.length === 0 && !adding) {
     return (
@@ -74,10 +58,11 @@ export function NodeLinksSection({
           <LinkRow
             key={link.id}
             link={link}
-            roleId={roleId}
-            nodeId={nodeId}
-            onDelete={handleDelete}
-            onRefresh={onRefresh}
+            onDelete={() => {
+              onDelete(link.id)
+              toast.success("Link deleted")
+            }}
+            onUpdate={onUpdate}
           />
         ))}
       </ul>
@@ -87,18 +72,12 @@ export function NodeLinksSection({
           submitLabel="Add link"
           onCancel={() => setAdding(false)}
           onSubmit={async (label, url) => {
-            const result = await createNodeLinkAction({
-              roleId,
-              nodeId,
-              label,
-              url,
-            })
-            if (!result.ok) {
-              return result.message
+            const message = onCreate({ label, url })
+            if (message) {
+              return message
             }
             toast.success("Link added")
             setAdding(false)
-            onRefresh()
             return null
           }}
         />
@@ -114,16 +93,12 @@ export function NodeLinksSection({
 
 function LinkRow({
   link,
-  roleId,
-  nodeId,
   onDelete,
-  onRefresh,
+  onUpdate,
 }: {
   link: NodeLink
-  roleId: string
-  nodeId: string
-  onDelete: (linkId: string) => Promise<void>
-  onRefresh: () => void
+  onDelete: () => void
+  onUpdate: (link: NodeLink, label: string, url: string) => string | null
 }) {
   return (
     <li className="rounded-lg border p-3">
@@ -133,28 +108,18 @@ function LinkRow({
         pendingLabel="Saving…"
         submitLabel="Save link"
         onSubmit={async (label, url) => {
-          const result = await updateNodeLinkAction({
-            roleId,
-            nodeId,
-            linkId: link.id,
-            label,
-            url,
-          })
-          if (!result.ok) {
-            return result.message
+          if (label.trim() === link.label && url.trim() === link.url) {
+            return null
+          }
+          const message = onUpdate(link, label, url)
+          if (message) {
+            return message
           }
           toast.success("Link updated")
-          onRefresh()
           return null
         }}
       />
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        className="mt-2"
-        onClick={() => void onDelete(link.id)}
-      >
+      <Button type="button" size="sm" variant="ghost" className="mt-2" onClick={onDelete}>
         <Trash2 data-icon="inline-start" />
         Delete
       </Button>

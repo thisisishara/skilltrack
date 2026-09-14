@@ -5,6 +5,7 @@ import {
   normalizeNodeHandleKind,
   type NodeHandleKind,
 } from "@/domain/nodes/handle"
+import { normalizeNodeKind, type NodeKind } from "@/domain/nodes/kind"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import type { Database } from "@/lib/supabase/database"
@@ -17,6 +18,7 @@ function toNode(row: NodeRow): RoadmapNode {
     id: row.id,
     roleId: row.role_id,
     parentId: row.parent_id,
+    kind: normalizeNodeKind(row.kind),
     title: row.title,
     description: row.description,
     notes: row.notes,
@@ -76,8 +78,10 @@ export async function getByIdForRole(roleId: string, nodeId: string) {
 }
 
 export async function insert(input: {
+  id?: string
   roleId: string
   parentId: string | null
+  kind: NodeKind
   title: string
   description: string | null
   icon: string
@@ -91,8 +95,10 @@ export async function insert(input: {
   const { data, error } = await supabase
     .from("roadmap_nodes")
     .insert({
+      ...(input.id ? { id: input.id } : {}),
       role_id: input.roleId,
       parent_id: input.parentId,
+      kind: input.kind,
       title: displayNodeTitle(input.title),
       description: input.description,
       icon: input.icon,

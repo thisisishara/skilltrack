@@ -47,6 +47,7 @@ export async function listByRoleId(roleId: string) {
 }
 
 export async function insert(input: {
+  id?: string
   nodeId: string
   label: string
   url: string
@@ -55,6 +56,7 @@ export async function insert(input: {
   const { data, error } = await supabase
     .from("node_links")
     .insert({
+      ...(input.id ? { id: input.id } : {}),
       node_id: input.nodeId,
       label: displayLinkLabel(input.label),
       url: normalizeLinkUrl(input.url),

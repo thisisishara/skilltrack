@@ -37,6 +37,7 @@ function revalidateRole(roleId: string) {
 }
 
 export async function createNodeLinkAction(input: {
+  id?: string
   roleId: string
   nodeId: string
   label: string

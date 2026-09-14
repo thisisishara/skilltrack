@@ -10,12 +10,19 @@ import {
 } from "@/domain/nodes/handle"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
 import { normalizeNodeIcon } from "@/domain/nodes/icon"
+import {
+  isLabelNode,
+  normalizeNodeKind,
+} from "@/domain/nodes/kind"
+import {
+  CHILD_OFFSET_Y,
+  LABEL_OFFSET_X,
+  LABEL_ORIGIN_Y,
+  ROOT_OFFSET_X,
+} from "@/domain/nodes/layout"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import * as nodesRepository from "@/repositories/nodes/nodes-repository"
-
-const CHILD_OFFSET_Y = 160
-const ROOT_OFFSET_X = 280
 
 function requireTitle(title: string) {
   const trimmed = displayNodeTitle(title)
@@ -55,6 +62,10 @@ function assertParentAssignment(
     throw new ApplicationError("validation", "Parent node was not found.")
   }
 
+  if (isLabelNode(parent)) {
+    throw new ApplicationError("validation", "Labels cannot have children.")
+  }
+
   const message = parentLinkError(childKind, parent.handleKind, parentId)
   if (message) {
     throw new ApplicationError("validation", message)
@@ -90,25 +101,43 @@ export async function listNodesForRole(userId: string, roleId: string) {
 export async function createNode(
   userId: string,
   input: {
+    id?: string
     roleId: string
     parentId: string | null
+    kind?: string | null
     title: string
     description?: string | null
     icon?: string | null
     handleKind?: string | null
     incomingEdgeAnimated?: boolean
+    positionX?: number
+    positionY?: number
   }
 ) {
   await requireOwnedRole(userId, input.roleId)
   const title = requireTitle(input.title)
-  const handleKind = normalizeNodeHandleKind(input.handleKind)
+  const kind = normalizeNodeKind(input.kind)
+  const handleKind =
+    kind === "label" ? "regular" : normalizeNodeHandleKind(input.handleKind)
   const nodes = await nodesRepository.listByRoleId(input.roleId)
+
+  if (kind === "label" && input.parentId) {
+    throw new ApplicationError("validation", "Labels cannot have a parent.")
+  }
 
   let positionX = 0
   let positionY = 0
-  const parentId: string | null = input.parentId
+  const parentId: string | null = kind === "label" ? null : input.parentId
 
-  if (parentId) {
+  if (
+    Number.isFinite(input.positionX) &&
+    Number.isFinite(input.positionY) &&
+    input.positionX !== undefined &&
+    input.positionY !== undefined
+  ) {
+    positionX = input.positionX
+    positionY = input.positionY
+  } else if (parentId) {
     const parent = nodes.find((node) => node.id === parentId)
 
     if (!parent) {
@@ -126,20 +155,30 @@ export async function createNode(
 
     positionX = parent.positionX
     positionY = parent.positionY + CHILD_OFFSET_Y
+  } else if (kind === "label") {
+    const labels = nodes.filter(isLabelNode)
+    positionX = labels.length * LABEL_OFFSET_X
+    positionY = LABEL_ORIGIN_Y
   } else {
-    const roots = nodes.filter((node) => node.parentId === null)
+    const roots = nodes.filter((node) => node.parentId === null && node.kind !== "label")
     positionX = roots.length * ROOT_OFFSET_X
     positionY = 0
   }
 
+  if (parentId) {
+    assertParentAssignment(nodes, handleKind, parentId)
+  }
+
   return nodesRepository.insert({
+    id: input.id,
     roleId: input.roleId,
     parentId,
+    kind,
     title,
     description: optionalDescription(input.description),
     icon: normalizeNodeIcon(input.icon),
     handleKind,
-    incomingEdgeAnimated: Boolean(input.incomingEdgeAnimated),
+    incomingEdgeAnimated: kind === "label" ? false : Boolean(input.incomingEdgeAnimated),
     positionX,
     positionY,
     sortOrder: nextSortOrder(nodes, parentId),
@@ -211,6 +250,10 @@ export async function reparentNode(
 ) {
   const node = await requireOwnedNode(userId, roleId, nodeId)
   const nodes = await nodesRepository.listByRoleId(roleId)
+
+  if (isLabelNode(node) && parentId) {
+    throw new ApplicationError("validation", "Labels cannot have a parent.")
+  }
 
   if (parentId) {
     const parent = nodes.find((item) => item.id === parentId)

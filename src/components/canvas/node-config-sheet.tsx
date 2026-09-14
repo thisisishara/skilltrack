@@ -60,7 +60,6 @@ type ParentOption = {
 export function NodeConfigSheet({
   open,
   onOpenChange,
-  roleId,
   node,
   nodes,
   checklistItems,
@@ -70,11 +69,16 @@ export function NodeConfigSheet({
   onSaveDetails,
   onParentChange,
   onToggleChecklist,
-  onRefresh,
+  onCreateChecklist,
+  onUpdateChecklist,
+  onDeleteChecklist,
+  onReorderChecklist,
+  onCreateLink,
+  onUpdateLink,
+  onDeleteLink,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  roleId: string
   node: RoadmapNode | null
   nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
@@ -91,7 +95,15 @@ export function NodeConfigSheet({
   }) => Promise<NodeActionResult>
   onParentChange: (parentId: string | null) => Promise<void>
   onToggleChecklist: (itemId: string, isCompleted: boolean) => Promise<void>
-  onRefresh: () => void
+  onCreateChecklist: (input: { title: string; description: string }) => {
+    ok: true
+  } | { ok: false; message: string }
+  onUpdateChecklist: (item: ChecklistItem, title: string, description: string) => void
+  onDeleteChecklist: (itemId: string) => void
+  onReorderChecklist: (orderedIds: string[]) => void
+  onCreateLink: (input: { label: string; url: string }) => string | null
+  onUpdateLink: (link: NodeLink, label: string, url: string) => string | null
+  onDeleteLink: (linkId: string) => void
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -377,21 +389,22 @@ export function NodeConfigSheet({
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Evidence checklist</h3>
                   <NodeChecklistSection
-                    roleId={roleId}
-                    nodeId={node.id}
                     items={checklistItems}
                     onToggle={onToggleChecklist}
-                    onRefresh={onRefresh}
+                    onCreate={onCreateChecklist}
+                    onUpdate={onUpdateChecklist}
+                    onDelete={onDeleteChecklist}
+                    onReorder={onReorderChecklist}
                   />
                 </section>
                 <Separator />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Links</h3>
                   <NodeLinksSection
-                    roleId={roleId}
-                    nodeId={node.id}
                     links={links}
-                    onRefresh={onRefresh}
+                    onCreate={onCreateLink}
+                    onUpdate={onUpdateLink}
+                    onDelete={onDeleteLink}
                   />
                 </section>
               </div>

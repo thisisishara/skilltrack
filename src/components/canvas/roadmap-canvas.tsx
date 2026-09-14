@@ -22,7 +22,18 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 
-import { setChecklistItemCompletedAction } from "@/application/checklists/actions"
+import {
+  createChecklistItemAction,
+  deleteChecklistItemAction,
+  reorderChecklistItemsAction,
+  setChecklistItemCompletedAction,
+  updateChecklistItemAction,
+} from "@/application/checklists/actions"
+import {
+  createNodeLinkAction,
+  deleteNodeLinkAction,
+  updateNodeLinkAction,
+} from "@/application/links/actions"
 import {
   createNodeAction,
   deleteNodeAction,
@@ -33,6 +44,8 @@ import {
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar"
 import { DeleteNodeAlert } from "@/components/canvas/delete-node-alert"
 import { EmptyRoadmap } from "@/components/canvas/empty-roadmap"
+import { LabelDialog, type LabelDialogMode } from "@/components/canvas/label-dialog"
+import { LabelNodeCard, type LabelFlowNode } from "@/components/canvas/label-node"
 import { NodeConfigSheet } from "@/components/canvas/node-config-sheet"
 import { NodeDialog, type NodeDialogMode } from "@/components/canvas/node-dialog"
 import {
@@ -46,35 +59,94 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
+import { displayChecklistTitle } from "@/domain/checklists/title"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
+import {
+  displayLinkLabel,
+  isValidHttpUrl,
+  normalizeLinkUrl,
+} from "@/domain/links/url"
 import {
   nodeCanHaveChildren,
   nodeCanHaveParent,
   type NodeHandleKind,
 } from "@/domain/nodes/handle"
+import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
+import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/nodes/icon"
+import { isLabelNode, isSkillNode } from "@/domain/nodes/kind"
+import {
+  CHILD_OFFSET_Y,
+  LABEL_OFFSET_X,
+  LABEL_ORIGIN_Y,
+  ROOT_OFFSET_X,
+} from "@/domain/nodes/layout"
+import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import {
   nodeProgress,
   nodeStatusCounts,
   roadmapProgress,
+  subtreeNodeIds,
   subtreeProgress,
 } from "@/domain/progress/progress"
 import { readStoredViewport, writeStoredViewport } from "@/lib/canvas/viewport-storage"
 
+export type CanvasFlowNode = RoadmapFlowNode | LabelFlowNode
+
 const nodeTypes = {
   roadmap: RoadmapNodeCard,
+  label: LabelNodeCard,
+}
+
+function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
+  const serverIds = new Set(server.map((item) => item.id))
+  return [...server, ...local.filter((item) => !serverIds.has(item.id))]
+}
+
+function mergeNodes(server: RoadmapNode[], local: RoadmapNode[]): RoadmapNode[] {
+  const localById = new Map(local.map((node) => [node.id, node]))
+  const serverIds = new Set(server.map((node) => node.id))
+  const merged = server.map((node) => {
+    const current = localById.get(node.id)
+    if (!current) {
+      return node
+    }
+
+    return {
+      ...node,
+      positionX: current.positionX,
+      positionY: current.positionY,
+    }
+  })
+
+  for (const node of local) {
+    if (!serverIds.has(node.id)) {
+      merged.push(node)
+    }
+  }
+
+  return merged
 }
 
 function toFlowNodes(
   nodes: RoadmapNode[],
   items: ChecklistItem[]
-): RoadmapFlowNode[] {
+): CanvasFlowNode[] {
   return nodes.map((node) => {
+    if (isLabelNode(node)) {
+      return {
+        id: node.id,
+        type: "label" as const,
+        position: { x: node.positionX, y: node.positionY },
+        data: { title: node.title },
+      }
+    }
+
     const progress = nodeProgress(items, node.id)
     return {
       id: node.id,
-      type: "roadmap",
+      type: "roadmap" as const,
       position: { x: node.positionX, y: node.positionY },
       data: {
         title: node.title,
@@ -82,6 +154,7 @@ function toFlowNodes(
         icon: node.icon,
         handleKind: node.handleKind,
         percent: progress.percent,
+        total: progress.total,
         status: progress.status,
       },
     }
@@ -90,7 +163,7 @@ function toFlowNodes(
 
 function toFlowEdges(nodes: RoadmapNode[]): Edge[] {
   return nodes
-    .filter((node) => node.parentId)
+    .filter((node) => node.parentId && isSkillNode(node))
     .map((node) => ({
       id: `${node.parentId}->${node.id}`,
       source: node.parentId as string,
@@ -100,9 +173,9 @@ function toFlowEdges(nodes: RoadmapNode[]): Edge[] {
 }
 
 function mergeFlowNodes(
-  current: RoadmapFlowNode[],
-  next: RoadmapFlowNode[]
-): RoadmapFlowNode[] {
+  current: CanvasFlowNode[],
+  next: CanvasFlowNode[]
+): CanvasFlowNode[] {
   const currentById = new Map(current.map((node) => [node.id, node]))
 
   return next.map((node) => {
@@ -113,9 +186,10 @@ function mergeFlowNodes(
 
     return {
       ...previous,
+      type: node.type,
       position: previous.position,
       data: node.data,
-    }
+    } as CanvasFlowNode
   })
 }
 
@@ -133,11 +207,43 @@ function isValidConnectionForNodes(
 
   const source = nodes.find((node) => node.id === connection.source)
   const target = nodes.find((node) => node.id === connection.target)
-  if (!source || !target) {
+  if (!source || !target || isLabelNode(source) || isLabelNode(target)) {
     return false
   }
 
   return nodeCanHaveChildren(source.handleKind) && nodeCanHaveParent(target.handleKind)
+}
+
+function nextSortOrder(nodes: RoadmapNode[], parentId: string | null) {
+  const siblings = nodes.filter((node) => node.parentId === parentId)
+  if (siblings.length === 0) {
+    return 0
+  }
+
+  return Math.max(...siblings.map((node) => node.sortOrder)) + 1
+}
+
+function createLocalNode(input: {
+  id: string
+  roleId: string
+  parentId: string | null
+  kind: RoadmapNode["kind"]
+  title: string
+  description: string | null
+  icon: string
+  handleKind: NodeHandleKind
+  incomingEdgeAnimated: boolean
+  positionX: number
+  positionY: number
+  sortOrder: number
+}): RoadmapNode {
+  const now = new Date().toISOString()
+  return {
+    ...input,
+    notes: null,
+    createdAt: now,
+    updatedAt: now,
+  }
 }
 
 function RoadmapCanvasInner({
@@ -156,9 +262,11 @@ function RoadmapCanvasInner({
   const router = useRouter()
   const { resolvedTheme } = useTheme()
   const [themeReady, setThemeReady] = useState(false)
+  const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
+  const [links, setLinks] = useState<NodeLink[]>(serverLinks ?? [])
   const [initialViewport] = useState(() => readStoredViewport(roleId))
-  const [flowNodes, setFlowNodes] = useState<RoadmapFlowNode[]>(() =>
+  const [flowNodes, setFlowNodes] = useState<CanvasFlowNode[]>(() =>
     toFlowNodes(serverNodes, serverItems)
   )
   const [edges, setEdges] = useState<Edge[]>(() => toFlowEdges(serverNodes))
@@ -166,50 +274,53 @@ function RoadmapCanvasInner({
   const [configNodeId, setConfigNodeId] = useState<string | null>(null)
   const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [labelMode, setLabelMode] = useState<LabelDialogMode | null>(null)
+  const [labelOpen, setLabelOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
-    // Client-only mount flag to avoid an SSR/client colorMode mismatch;
-    // this can only be known after hydration, so an effect is required.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeReady(true)
   }, [])
 
   useEffect(() => {
-    // Re-sync local, optimistically-mutable checklist state whenever the
-    // server payload changes (e.g. after router.refresh()).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(serverItems)
+    setNodes((current) => mergeNodes(serverNodes, current))
+  }, [serverNodes])
+
+  useEffect(() => {
+    setItems((current) => mergeById(serverItems, current))
   }, [serverItems])
 
   useEffect(() => {
-    // Recompute derived React Flow nodes/edges when server nodes or
-    // checklist-derived progress changes, without clobbering in-flight
-    // drag positions (see mergeFlowNodes).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(serverNodes, items)))
-    setEdges(toFlowEdges(serverNodes))
-  }, [serverNodes, items])
+    setLinks((current) => mergeById(serverLinks, current))
+  }, [serverLinks])
+
+  useEffect(() => {
+    setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(nodes, items)))
+    setEdges(toFlowEdges(nodes))
+  }, [nodes, items])
 
   const selectedNode = useMemo(
-    () => serverNodes.find((node) => node.id === selectedId) ?? null,
-    [serverNodes, selectedId]
+    () => nodes.find((node) => node.id === selectedId) ?? null,
+    [nodes, selectedId]
   )
 
-  const configNode = useMemo(
-    () => serverNodes.find((node) => node.id === configNodeId) ?? null,
-    [serverNodes, configNodeId]
-  )
+  const configNode = useMemo(() => {
+    const node = nodes.find((item) => item.id === configNodeId) ?? null
+    if (!node || isLabelNode(node)) {
+      return null
+    }
+    return node
+  }, [nodes, configNodeId])
   const sheetOpen = Boolean(configNode)
 
   useEffect(() => {
     if (configNodeId && !configNode) {
-      // The selected node was deleted or reparented out from under us;
-      // close the config panel rather than pointing at stale data.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setConfigNodeId(null)
+      const selected = nodes.find((node) => node.id === configNodeId)
+      if (!selected || isSkillNode(selected)) {
+        setConfigNodeId(null)
+      }
     }
-  }, [configNode, configNodeId])
+  }, [configNode, configNodeId, nodes])
 
   const selectedItems = useMemo(
     () => items.filter((item) => item.nodeId === configNodeId),
@@ -217,14 +328,18 @@ function RoadmapCanvasInner({
   )
 
   const selectedLinks = useMemo(
-    () => serverLinks.filter((link) => link.nodeId === configNodeId),
-    [serverLinks, configNodeId]
+    () => links.filter((link) => link.nodeId === configNodeId),
+    [links, configNodeId]
   )
 
-  const overallProgress = useMemo(() => roadmapProgress(items), [items])
+  const skillNodes = useMemo(() => nodes.filter(isSkillNode), [nodes])
+  const overallProgress = useMemo(() => {
+    const skillIds = new Set(skillNodes.map((node) => node.id))
+    return roadmapProgress(items.filter((item) => skillIds.has(item.nodeId)))
+  }, [items, skillNodes])
   const statusCounts = useMemo(
-    () => nodeStatusCounts(serverNodes, items),
-    [serverNodes, items]
+    () => nodeStatusCounts(skillNodes, items),
+    [skillNodes, items]
   )
   const selectedNodeProgress = useMemo(
     () => (configNodeId ? nodeProgress(items, configNodeId) : nodeProgress([], "")),
@@ -233,12 +348,12 @@ function RoadmapCanvasInner({
   const selectedSubtreeProgress = useMemo(
     () =>
       configNodeId
-        ? subtreeProgress(serverNodes, items, configNodeId)
+        ? subtreeProgress(skillNodes, items, configNodeId)
         : nodeProgress([], ""),
-    [items, configNodeId, serverNodes]
+    [items, configNodeId, skillNodes]
   )
 
-  const onNodesChange = useCallback((changes: NodeChange<RoadmapFlowNode>[]) => {
+  const onNodesChange = useCallback((changes: NodeChange<CanvasFlowNode>[]) => {
     setFlowNodes((current) => applyNodeChanges(changes, current))
   }, [])
 
@@ -247,19 +362,38 @@ function RoadmapCanvasInner({
   }, [])
 
   const onSelectionChange = useCallback(
-    ({ nodes: selected }: { nodes: RoadmapFlowNode[] }) => {
+    ({ nodes: selected }: { nodes: CanvasFlowNode[] }) => {
       const nextId = selected[0]?.id ?? null
       setSelectedId((current) => (current === nextId ? current : nextId))
     },
     []
   )
 
-  const onNodeClick = useCallback(
-    (_event: unknown, node: { id: string }) => {
+  const onNodeClick = useCallback((_event: unknown, node: CanvasFlowNode) => {
+    setSelectedId(node.id)
+    if (node.type === "label") {
+      setConfigNodeId(null)
+      return
+    }
+    setConfigNodeId(node.id)
+  }, [])
+
+  const onNodeDoubleClick = useCallback(
+    (_event: unknown, node: CanvasFlowNode) => {
       setSelectedId(node.id)
+      if (node.type === "label") {
+        const label = nodes.find((item) => item.id === node.id)
+        if (!label) {
+          return
+        }
+        setConfigNodeId(null)
+        setLabelMode({ kind: "edit", nodeId: label.id, title: label.title })
+        setLabelOpen(true)
+        return
+      }
       setConfigNodeId(node.id)
     },
-    []
+    [nodes]
   )
 
   const onBeforeDelete = useCallback(
@@ -279,8 +413,16 @@ function RoadmapCanvasInner({
     []
   )
 
-  const persistPosition: OnNodeDrag<RoadmapFlowNode> = useCallback(
+  const persistPosition: OnNodeDrag<CanvasFlowNode> = useCallback(
     async (_event, node) => {
+      setNodes((current) =>
+        current.map((item) =>
+          item.id === node.id
+            ? { ...item, positionX: node.position.x, positionY: node.position.y }
+            : item
+        )
+      )
+
       const result = await moveNodeAction({
         roleId,
         nodeId: node.id,
@@ -290,46 +432,34 @@ function RoadmapCanvasInner({
 
       if (!result.ok) {
         toast.error(result.message)
-        const persisted = serverNodes.find((item) => item.id === node.id)
-        if (persisted) {
-          setFlowNodes((current) =>
-            current.map((item) =>
-              item.id === node.id
-                ? {
-                    ...item,
-                    position: { x: persisted.positionX, y: persisted.positionY },
-                  }
-                : item
-            )
-          )
-        } else {
-          router.refresh()
-        }
+        router.refresh()
       }
     },
-    [roleId, router, serverNodes]
+    [roleId, router]
   )
 
   const onConnect: OnConnect = useCallback(
-    async (connection: Connection) => {
+    (connection: Connection) => {
       if (!connection.source || !connection.target) {
         return
       }
 
-      const result = await reparentNodeAction({
-        roleId,
-        nodeId: connection.target,
-        parentId: connection.source,
-      })
-
-      if (!result.ok) {
-        toast.error(result.message)
+      if (!isValidConnectionForNodes(nodes, connection)) {
         return
       }
 
+      const previous = nodes
+      const sortOrder = nextSortOrder(nodes, connection.source)
+      setNodes((current) =>
+        current.map((node) =>
+          node.id === connection.target
+            ? { ...node, parentId: connection.source, sortOrder }
+            : node
+        )
+      )
       setEdges((current) => {
         const withoutIncoming = current.filter((edge) => edge.target !== connection.target)
-        const target = serverNodes.find((node) => node.id === connection.target)
+        const target = nodes.find((node) => node.id === connection.target)
         return addEdge(
           {
             ...connection,
@@ -338,38 +468,52 @@ function RoadmapCanvasInner({
           withoutIncoming
         )
       })
-      toast.success("Node moved in the tree")
-      router.refresh()
+
+      void reparentNodeAction({
+        roleId,
+        nodeId: connection.target,
+        parentId: connection.source,
+      }).then((result) => {
+        if (!result.ok) {
+          setNodes(previous)
+          toast.error(result.message)
+        }
+      })
     },
-    [roleId, router, serverNodes]
+    [nodes, roleId]
   )
 
   const onEdgesDelete: OnEdgesDelete = useCallback(
-    async (deleted) => {
-      for (const edge of deleted) {
-        const result = await reparentNodeAction({
-          roleId,
-          nodeId: edge.target,
-          parentId: null,
-        })
+    (deleted) => {
+      const previous = nodes
+      const deletedTargets = new Set(deleted.map((edge) => edge.target))
+      setNodes((current) =>
+        current.map((node) =>
+          deletedTargets.has(node.id) ? { ...node, parentId: null } : node
+        )
+      )
 
-        if (!result.ok) {
-          toast.error(result.message)
-          router.refresh()
-          return
+      void (async () => {
+        for (const edge of deleted) {
+          const result = await reparentNodeAction({
+            roleId,
+            nodeId: edge.target,
+            parentId: null,
+          })
+          if (!result.ok) {
+            setNodes(previous)
+            toast.error(result.message)
+            return
+          }
         }
-      }
-
-      toast.success("Node is now a root")
-      router.refresh()
+      })()
     },
-    [roleId, router]
+    [nodes, roleId]
   )
 
   const onValidConnection = useCallback(
-    (connection: Connection | Edge) =>
-      isValidConnectionForNodes(serverNodes, connection),
-    [serverNodes]
+    (connection: Connection | Edge) => isValidConnectionForNodes(nodes, connection),
+    [nodes]
   )
 
   const onMoveEnd: OnMoveEnd = useCallback(
@@ -389,7 +533,7 @@ function RoadmapCanvasInner({
     setConfigNodeId(nodeId)
   }
 
-  async function handleDialogSubmit(input: {
+  function handleDialogSubmit(input: {
     title: string
     description: string
     icon: string
@@ -400,26 +544,64 @@ function RoadmapCanvasInner({
       return { ok: false as const, code: "unexpected" as const, message: "Nothing to save." }
     }
 
-    const result = await createNodeAction({
-      roleId,
-      parentId: dialogMode.parentId,
-      title: input.title,
-      description: input.description,
-      icon: input.icon,
-      handleKind: input.handleKind,
-      incomingEdgeAnimated: input.incomingEdgeAnimated,
-    })
-
-    if (result.ok && "node" in result) {
-      toast.success("Node created")
-      setDialogOpen(false)
-      router.refresh()
+    const title = displayNodeTitle(input.title)
+    if (!title) {
+      return {
+        ok: false as const,
+        code: "validation" as const,
+        message: "Node title cannot be empty.",
+      }
     }
 
-    return result
+    const parentId = dialogMode.parentId
+    const parent = parentId ? nodes.find((node) => node.id === parentId) : null
+    const id = crypto.randomUUID()
+    const positionX = parent
+      ? parent.positionX
+      : skillNodes.length * ROOT_OFFSET_X
+    const positionY = parent ? parent.positionY + CHILD_OFFSET_Y : 0
+    const node = createLocalNode({
+      id,
+      roleId,
+      parentId,
+      kind: "skill",
+      title,
+      description: input.description.trim() || null,
+      icon: normalizeNodeIcon(input.icon),
+      handleKind: input.handleKind,
+      incomingEdgeAnimated: input.incomingEdgeAnimated,
+      positionX,
+      positionY,
+      sortOrder: nextSortOrder(nodes, parentId),
+    })
+
+    setNodes((current) => [...current, node])
+    setDialogOpen(false)
+    toast.success("Node created")
+
+    void createNodeAction({
+      id,
+      roleId,
+      parentId,
+      kind: "skill",
+      title,
+      description: node.description,
+      icon: node.icon,
+      handleKind: node.handleKind,
+      incomingEdgeAnimated: node.incomingEdgeAnimated,
+      positionX,
+      positionY,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes((current) => current.filter((item) => item.id !== id))
+        toast.error(result.message)
+      }
+    })
+
+    return { ok: true as const, node }
   }
 
-  async function handleSaveDetails(input: {
+  function handleSaveDetails(input: {
     title: string
     description: string
     icon: string
@@ -428,48 +610,88 @@ function RoadmapCanvasInner({
     incomingEdgeAnimated: boolean
   }) {
     if (!configNode) {
-      return { ok: false as const, code: "unexpected" as const, message: "Select a node first." }
+      return {
+        ok: false as const,
+        code: "unexpected" as const,
+        message: "Select a node first.",
+      }
     }
 
-    const result = await updateNodeAction({
-      roleId,
-      nodeId: configNode.id,
-      title: input.title,
-      description: input.description,
-      icon: input.icon,
-      notes: input.notes,
+    const title = displayNodeTitle(input.title)
+    if (!title) {
+      return {
+        ok: false as const,
+        code: "validation" as const,
+        message: "Node title cannot be empty.",
+      }
+    }
+
+    const previous = configNode
+    const next: RoadmapNode = {
+      ...configNode,
+      title,
+      description: input.description.trim() || null,
+      icon: normalizeNodeIcon(input.icon),
+      notes: input.notes.trim() || null,
       handleKind: input.handleKind,
       incomingEdgeAnimated: input.incomingEdgeAnimated,
+    }
+    setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
+
+    void updateNodeAction({
+      roleId,
+      nodeId: next.id,
+      title: next.title,
+      description: next.description,
+      icon: next.icon,
+      notes: next.notes,
+      handleKind: next.handleKind,
+      incomingEdgeAnimated: next.incomingEdgeAnimated,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes((current) =>
+          current.map((node) => (node.id === previous.id ? previous : node))
+        )
+        toast.error(result.message)
+      }
     })
 
-    if (result.ok) {
-      router.refresh()
-    }
-
-    return result
+    return { ok: true as const, node: next }
   }
 
-  async function handleParentChange(parentId: string | null) {
+  function handleParentChange(parentId: string | null) {
     if (!configNode) {
       return
     }
 
-    const result = await reparentNodeAction({
-      roleId,
-      nodeId: configNode.id,
-      parentId,
-    })
-
-    if (!result.ok) {
-      toast.error(result.message)
+    if (parentId && wouldCreateCycle(nodes, configNode.id, parentId)) {
+      toast.error("A node cannot be its own ancestor.")
       return
     }
 
-    toast.success(parentId ? "Parent updated" : "Node is now a root")
-    router.refresh()
+    const previous = nodes
+    const sortOrder = nextSortOrder(nodes, parentId)
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === configNode.id ? { ...node, parentId, sortOrder } : node
+      )
+    )
+
+    void reparentNodeAction({
+      roleId,
+      nodeId: configNode.id,
+      parentId,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes(previous)
+        toast.error(result.message)
+        return
+      }
+      toast.success(parentId ? "Parent updated" : "Node is now a root")
+    })
   }
 
-  async function handleToggleChecklist(itemId: string, isCompleted: boolean) {
+  function handleToggleChecklist(itemId: string, isCompleted: boolean) {
     const previous = items
     setItems((current) =>
       current.map((item) =>
@@ -477,40 +699,330 @@ function RoadmapCanvasInner({
       )
     )
 
-    const result = await setChecklistItemCompletedAction({
+    void setChecklistItemCompletedAction({
       roleId,
       nodeId: configNodeId ?? "",
       itemId,
       isCompleted,
+    }).then((result) => {
+      if (!result.ok) {
+        setItems(previous)
+        toast.error(result.message)
+      }
     })
-
-    if (!result.ok) {
-      setItems(previous)
-      toast.error(result.message)
-      router.refresh()
-    }
   }
 
-  async function handleDelete() {
+  function handleCreateChecklist(input: { title: string; description: string }) {
+    const title = displayChecklistTitle(input.title)
+    if (!title || !configNodeId) {
+      return { ok: false as const, message: "Checklist title cannot be empty." }
+    }
+
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const sortOrder =
+      selectedItems.length === 0
+        ? 0
+        : Math.max(...selectedItems.map((item) => item.sortOrder)) + 1
+    const item: ChecklistItem = {
+      id,
+      nodeId: configNodeId,
+      title,
+      description: input.description.trim() || null,
+      isCompleted: false,
+      sortOrder,
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+    }
+    setItems((current) => [...current, item])
+
+    void createChecklistItemAction({
+      id,
+      roleId,
+      nodeId: configNodeId,
+      title,
+      description: item.description,
+    }).then((result) => {
+      if (!result.ok) {
+        setItems((current) => current.filter((entry) => entry.id !== id))
+        toast.error(result.message)
+      }
+    })
+
+    return { ok: true as const }
+  }
+
+  function handleUpdateChecklist(item: ChecklistItem, title: string, description: string) {
+    const nextTitle = displayChecklistTitle(title)
+    if (!nextTitle) {
+      toast.error("Checklist title cannot be empty.")
+      return
+    }
+
+    const previous = item
+    const nextDescription = description.trim() || null
+    setItems((current) =>
+      current.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, title: nextTitle, description: nextDescription }
+          : entry
+      )
+    )
+
+    void updateChecklistItemAction({
+      roleId,
+      nodeId: item.nodeId,
+      itemId: item.id,
+      title: nextTitle,
+      description: nextDescription,
+    }).then((result) => {
+      if (!result.ok) {
+        setItems((current) =>
+          current.map((entry) => (entry.id === previous.id ? previous : entry))
+        )
+        toast.error(result.message)
+      }
+    })
+  }
+
+  function handleDeleteChecklist(itemId: string) {
+    const previous = items
+    setItems((current) => current.filter((item) => item.id !== itemId))
+
+    void deleteChecklistItemAction({
+      roleId,
+      nodeId: configNodeId ?? "",
+      itemId,
+    }).then((result) => {
+      if (!result.ok) {
+        setItems(previous)
+        toast.error(result.message)
+      }
+    })
+  }
+
+  function handleReorderChecklist(orderedIds: string[]) {
+    const previous = items
+    setItems((current) =>
+      current.map((item) => {
+        const index = orderedIds.indexOf(item.id)
+        return index >= 0 ? { ...item, sortOrder: index } : item
+      })
+    )
+
+    void reorderChecklistItemsAction({
+      roleId,
+      nodeId: configNodeId ?? "",
+      orderedIds,
+    }).then((result) => {
+      if (!result.ok) {
+        setItems(previous)
+        toast.error(result.message)
+      }
+    })
+  }
+
+  function handleCreateLink(input: { label: string; url: string }) {
+    const label = displayLinkLabel(input.label)
+    const url = normalizeLinkUrl(input.url)
+    if (!label) {
+      return "Link label cannot be empty."
+    }
+    if (!url || !isValidHttpUrl(url)) {
+      return "Enter a valid http or https URL."
+    }
+    if (!configNodeId) {
+      return "Select a node first."
+    }
+
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const link: NodeLink = {
+      id,
+      nodeId: configNodeId,
+      label,
+      url,
+      createdAt: now,
+      updatedAt: now,
+    }
+    setLinks((current) => [...current, link])
+
+    void createNodeLinkAction({
+      id,
+      roleId,
+      nodeId: configNodeId,
+      label,
+      url,
+    }).then((result) => {
+      if (!result.ok) {
+        setLinks((current) => current.filter((entry) => entry.id !== id))
+        toast.error(result.message)
+      }
+    })
+
+    return null
+  }
+
+  function handleUpdateLink(link: NodeLink, label: string, url: string) {
+    const nextLabel = displayLinkLabel(label)
+    const nextUrl = normalizeLinkUrl(url)
+    if (!nextLabel) {
+      return "Link label cannot be empty."
+    }
+    if (!nextUrl || !isValidHttpUrl(nextUrl)) {
+      return "Enter a valid http or https URL."
+    }
+
+    const previous = link
+    setLinks((current) =>
+      current.map((entry) =>
+        entry.id === link.id ? { ...entry, label: nextLabel, url: nextUrl } : entry
+      )
+    )
+
+    void updateNodeLinkAction({
+      roleId,
+      nodeId: link.nodeId,
+      linkId: link.id,
+      label: nextLabel,
+      url: nextUrl,
+    }).then((result) => {
+      if (!result.ok) {
+        setLinks((current) =>
+          current.map((entry) => (entry.id === previous.id ? previous : entry))
+        )
+        toast.error(result.message)
+      }
+    })
+
+    return null
+  }
+
+  function handleDeleteLink(linkId: string) {
+    const previous = links
+    setLinks((current) => current.filter((link) => link.id !== linkId))
+
+    void deleteNodeLinkAction({
+      roleId,
+      nodeId: configNodeId ?? "",
+      linkId,
+    }).then((result) => {
+      if (!result.ok) {
+        setLinks(previous)
+        toast.error(result.message)
+      }
+    })
+  }
+
+  function handleLabelSubmit(title: string) {
+    const text = displayNodeTitle(title)
+    if (!text) {
+      return { ok: false as const, message: "Label text cannot be empty." }
+    }
+
+    if (!labelMode) {
+      return { ok: false as const, message: "Nothing to save." }
+    }
+
+    if (labelMode.kind === "edit") {
+      const previous = nodes.find((node) => node.id === labelMode.nodeId)
+      if (!previous) {
+        return { ok: false as const, message: "That label no longer exists." }
+      }
+
+      setNodes((current) =>
+        current.map((node) => (node.id === previous.id ? { ...node, title: text } : node))
+      )
+      setLabelOpen(false)
+
+      void updateNodeAction({
+        roleId,
+        nodeId: previous.id,
+        title: text,
+        description: previous.description,
+        icon: previous.icon,
+        notes: previous.notes,
+        handleKind: previous.handleKind,
+        incomingEdgeAnimated: previous.incomingEdgeAnimated,
+      }).then((result) => {
+        if (!result.ok) {
+          setNodes((current) =>
+            current.map((node) => (node.id === previous.id ? previous : node))
+          )
+          toast.error(result.message)
+        }
+      })
+
+      return { ok: true as const }
+    }
+
+    const id = crypto.randomUUID()
+    const labels = nodes.filter(isLabelNode)
+    const node = createLocalNode({
+      id,
+      roleId,
+      parentId: null,
+      kind: "label",
+      title: text,
+      description: null,
+      icon: DEFAULT_NODE_ICON,
+      handleKind: "regular",
+      incomingEdgeAnimated: false,
+      positionX: labels.length * LABEL_OFFSET_X,
+      positionY: LABEL_ORIGIN_Y,
+      sortOrder: nextSortOrder(nodes, null),
+    })
+    setNodes((current) => [...current, node])
+    setLabelOpen(false)
+    toast.success("Label added")
+
+    void createNodeAction({
+      id,
+      roleId,
+      parentId: null,
+      kind: "label",
+      title: text,
+      positionX: node.positionX,
+      positionY: node.positionY,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes((current) => current.filter((item) => item.id !== id))
+        toast.error(result.message)
+      }
+    })
+
+    return { ok: true as const }
+  }
+
+  function handleDelete() {
     if (!selectedNode) {
       return
     }
 
-    const result = await deleteNodeAction({
-      roleId,
-      nodeId: selectedNode.id,
-    })
-
-    if (!result.ok) {
-      toast.error(result.message)
-      return
-    }
-
-    toast.success("Node deleted")
+    const removing = subtreeNodeIds(nodes, selectedNode.id)
+    const previousNodes = nodes
+    const previousItems = items
+    const previousLinks = links
+    setNodes((current) => current.filter((node) => !removing.has(node.id)))
+    setItems((current) => current.filter((item) => !removing.has(item.nodeId)))
+    setLinks((current) => current.filter((link) => !removing.has(link.nodeId)))
     setDeleteOpen(false)
     setConfigNodeId(null)
     setSelectedId(null)
-    router.refresh()
+    toast.success(isLabelNode(selectedNode) ? "Label deleted" : "Node deleted")
+
+    void deleteNodeAction({
+      roleId,
+      nodeId: selectedNode.id,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes(previousNodes)
+        setItems(previousItems)
+        setLinks(previousLinks)
+        toast.error(result.message)
+      }
+    })
   }
 
   const canvas = (
@@ -526,12 +1038,12 @@ function RoadmapCanvasInner({
         onBeforeDelete={onBeforeDelete}
         onNodeDragStop={persistPosition}
         onNodeClick={onNodeClick}
-        onNodeDoubleClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onSelectionChange={onSelectionChange}
         onMoveEnd={onMoveEnd}
         isValidConnection={onValidConnection}
         defaultViewport={initialViewport ?? undefined}
-        fitView={serverNodes.length > 0 && !initialViewport}
+        fitView={nodes.length > 0 && !initialViewport}
         deleteKeyCode={["Backspace", "Delete"]}
         colorMode={themeReady && resolvedTheme === "dark" ? "dark" : "light"}
         minZoom={0.2}
@@ -542,13 +1054,35 @@ function RoadmapCanvasInner({
       </ReactFlow>
       <CanvasToolbar
         hasSelection={Boolean(selectedNode)}
-        canAddChild={Boolean(selectedNode && nodeCanHaveChildren(selectedNode.handleKind))}
+        canAddChild={Boolean(
+          selectedNode &&
+            isSkillNode(selectedNode) &&
+            nodeCanHaveChildren(selectedNode.handleKind)
+        )}
         onAddRoot={() => openCreate(null)}
-        onAddChild={() => selectedNode && openCreate(selectedNode.id)}
-        onEdit={() => selectedNode && openSheet(selectedNode.id)}
+        onAddLabel={() => {
+          setLabelMode({ kind: "create" })
+          setLabelOpen(true)
+        }}
+        onAddChild={() => selectedNode && isSkillNode(selectedNode) && openCreate(selectedNode.id)}
+        onEdit={() => {
+          if (!selectedNode) {
+            return
+          }
+          if (isLabelNode(selectedNode)) {
+            setLabelMode({
+              kind: "edit",
+              nodeId: selectedNode.id,
+              title: selectedNode.title,
+            })
+            setLabelOpen(true)
+            return
+          }
+          openSheet(selectedNode.id)
+        }}
         onDelete={() => selectedNode && setDeleteOpen(true)}
       />
-      {serverNodes.length > 0 ? (
+      {skillNodes.length > 0 ? (
         <div className="pointer-events-none absolute top-3 right-3 z-10">
           <RoadmapProgressCard
             roleName={roleName}
@@ -557,7 +1091,7 @@ function RoadmapCanvasInner({
           />
         </div>
       ) : null}
-      {serverNodes.length === 0 ? (
+      {nodes.length === 0 ? (
         <EmptyRoadmap onCreate={() => openCreate(null)} />
       ) : null}
     </div>
@@ -581,17 +1115,24 @@ function RoadmapCanvasInner({
                       setConfigNodeId(null)
                     }
                   }}
-                  roleId={roleId}
                   node={configNode}
-                  nodes={serverNodes}
+                  nodes={skillNodes}
                   checklistItems={selectedItems}
                   links={selectedLinks}
                   nodeProgress={selectedNodeProgress}
                   subtreeProgress={selectedSubtreeProgress}
-                  onSaveDetails={handleSaveDetails}
-                  onParentChange={handleParentChange}
-                  onToggleChecklist={handleToggleChecklist}
-                  onRefresh={() => router.refresh()}
+                  onSaveDetails={async (input) => handleSaveDetails(input)}
+                  onParentChange={async (parentId) => handleParentChange(parentId)}
+                  onToggleChecklist={async (itemId, isCompleted) =>
+                    handleToggleChecklist(itemId, isCompleted)
+                  }
+                  onCreateChecklist={handleCreateChecklist}
+                  onUpdateChecklist={handleUpdateChecklist}
+                  onDeleteChecklist={handleDeleteChecklist}
+                  onReorderChecklist={handleReorderChecklist}
+                  onCreateLink={handleCreateLink}
+                  onUpdateLink={handleUpdateLink}
+                  onDeleteLink={handleDeleteLink}
                 />
               </div>
             </ResizablePanel>
@@ -602,13 +1143,21 @@ function RoadmapCanvasInner({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
-        onSubmit={handleDialogSubmit}
+        onSubmit={async (input) => handleDialogSubmit(input)}
+      />
+      <LabelDialog
+        open={labelOpen}
+        onOpenChange={setLabelOpen}
+        mode={labelMode}
+        onSubmit={handleLabelSubmit}
       />
       <DeleteNodeAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         nodeTitle={selectedNode?.title ?? configNode?.title ?? ""}
-        onConfirm={handleDelete}
+        onConfirm={async () => {
+          handleDelete()
+        }}
       />
     </div>
   )

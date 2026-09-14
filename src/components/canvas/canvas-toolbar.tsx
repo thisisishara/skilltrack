@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Type,
   ZoomIn,
   ZoomOut,
 } from "lucide-react"
@@ -55,6 +56,7 @@ export function CanvasToolbar({
   hasSelection,
   canAddChild,
   onAddRoot,
+  onAddLabel,
   onAddChild,
   onEdit,
   onDelete,
@@ -62,6 +64,7 @@ export function CanvasToolbar({
   hasSelection: boolean
   canAddChild: boolean
   onAddRoot: () => void
+  onAddLabel: () => void
   onAddChild: () => void
   onEdit: () => void
   onDelete: () => void
@@ -72,6 +75,9 @@ export function CanvasToolbar({
     <div className="pointer-events-auto absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1 rounded-xl border bg-background/90 p-1 shadow-sm backdrop-blur-sm">
       <ToolbarButton label="Add node" onClick={onAddRoot}>
         <Plus />
+      </ToolbarButton>
+      <ToolbarButton label="Add label" onClick={onAddLabel}>
+        <Type />
       </ToolbarButton>
       <ToolbarButton label="Add child" disabled={!canAddChild} onClick={onAddChild}>
         <GitBranch />

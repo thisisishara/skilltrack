@@ -4,12 +4,6 @@ import { useEffect, useState, type FormEvent } from "react"
 import { ArrowDown, ArrowUp, ListChecks, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
-import {
-  createChecklistItemAction,
-  deleteChecklistItemAction,
-  reorderChecklistItemsAction,
-  updateChecklistItemAction,
-} from "@/application/checklists/actions"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -25,36 +19,31 @@ import { Input } from "@/components/ui/input"
 import type { ChecklistItem } from "@/domain/checklists/types"
 
 export function NodeChecklistSection({
-  roleId,
-  nodeId,
   items,
   onToggle,
-  onRefresh,
+  onCreate,
+  onUpdate,
+  onDelete,
+  onReorder,
 }: {
-  roleId: string
-  nodeId: string
   items: ChecklistItem[]
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
-  onRefresh: () => void
+  onCreate: (input: { title: string; description: string }) => {
+    ok: true
+  } | { ok: false; message: string }
+  onUpdate: (item: ChecklistItem, title: string, description: string) => void
+  onDelete: (itemId: string) => void
+  onReorder: (orderedIds: string[]) => void
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [adding, setAdding] = useState(false)
-  const [pending, setPending] = useState(false)
 
   const ordered = [...items].sort((a, b) => a.sortOrder - b.sortOrder)
 
-  async function handleAdd(event: FormEvent) {
+  function handleAdd(event: FormEvent) {
     event.preventDefault()
-    setPending(true)
-    const result = await createChecklistItemAction({
-      roleId,
-      nodeId,
-      title,
-      description,
-    })
-    setPending(false)
-
+    const result = onCreate({ title, description })
     if (!result.ok) {
       toast.error(result.message)
       return
@@ -64,10 +53,9 @@ export function NodeChecklistSection({
     setTitle("")
     setDescription("")
     setAdding(false)
-    onRefresh()
   }
 
-  async function handleSaveItem(item: ChecklistItem, nextTitle: string, nextDescription: string) {
+  function handleSaveItem(item: ChecklistItem, nextTitle: string, nextDescription: string) {
     if (
       nextTitle.trim() === item.title &&
       (nextDescription.trim() || null) === item.description
@@ -75,36 +63,10 @@ export function NodeChecklistSection({
       return
     }
 
-    const result = await updateChecklistItemAction({
-      roleId,
-      nodeId,
-      itemId: item.id,
-      title: nextTitle,
-      description: nextDescription,
-    })
-
-    if (!result.ok) {
-      toast.error(result.message)
-      onRefresh()
-      return
-    }
-
-    toast.success("Checklist item updated")
-    onRefresh()
+    onUpdate(item, nextTitle, nextDescription)
   }
 
-  async function handleDelete(itemId: string) {
-    const result = await deleteChecklistItemAction({ roleId, nodeId, itemId })
-    if (!result.ok) {
-      toast.error(result.message)
-      return
-    }
-
-    toast.success("Checklist item deleted")
-    onRefresh()
-  }
-
-  async function move(itemId: string, direction: -1 | 1) {
+  function move(itemId: string, direction: -1 | 1) {
     const ids = ordered.map((item) => item.id)
     const index = ids.indexOf(itemId)
     const nextIndex = index + direction
@@ -121,20 +83,7 @@ export function NodeChecklistSection({
 
     swapped[index] = neighbor
     swapped[nextIndex] = current
-
-    const result = await reorderChecklistItemsAction({
-      roleId,
-      nodeId,
-      orderedIds: swapped,
-    })
-
-    if (!result.ok) {
-      toast.error(result.message)
-      onRefresh()
-      return
-    }
-
-    onRefresh()
+    onReorder(swapped)
   }
 
   if (ordered.length === 0 && !adding) {
@@ -169,7 +118,7 @@ export function NodeChecklistSection({
             isLast={index === ordered.length - 1}
             onToggle={onToggle}
             onSave={handleSaveItem}
-            onDelete={handleDelete}
+            onDelete={onDelete}
             onMove={move}
           />
         ))}
@@ -198,8 +147,8 @@ export function NodeChecklistSection({
               />
             </Field>
             <div className="flex gap-2">
-              <Button type="submit" size="sm" disabled={pending}>
-                {pending ? "Adding…" : "Add item"}
+              <Button type="submit" size="sm">
+                Add item
               </Button>
               <Button
                 type="button"
@@ -239,16 +188,16 @@ function ChecklistRow({
   isFirst: boolean
   isLast: boolean
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
-  onSave: (item: ChecklistItem, title: string, description: string) => Promise<void>
-  onDelete: (itemId: string) => Promise<void>
-  onMove: (itemId: string, direction: -1 | 1) => Promise<void>
+  onSave: (item: ChecklistItem, title: string, description: string) => void
+  onDelete: (itemId: string) => void
+  onMove: (itemId: string, direction: -1 | 1) => void
 }) {
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description ?? "")
 
   useEffect(() => {
     // Re-sync editable fields when the underlying item changes (e.g. after
-    // a reorder or refresh), without resetting on every keystroke.
+    // a reorder), without resetting on every keystroke.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(item.title)
     setDescription(item.description ?? "")
@@ -268,7 +217,7 @@ function ChecklistRow({
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            onBlur={() => void onSave(item, title, description)}
+            onBlur={() => onSave(item, title, description)}
             aria-label="Checklist title"
             autoComplete="off"
           />
@@ -276,7 +225,7 @@ function ChecklistRow({
             className="mt-2"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            onBlur={() => void onSave(item, title, description)}
+            onBlur={() => onSave(item, title, description)}
             placeholder="Optional detail"
             aria-label="Checklist description"
             autoComplete="off"
@@ -289,7 +238,7 @@ function ChecklistRow({
             variant="ghost"
             disabled={isFirst}
             aria-label="Move up"
-            onClick={() => void onMove(item.id, -1)}
+            onClick={() => onMove(item.id, -1)}
           >
             <ArrowUp />
           </Button>
@@ -299,7 +248,7 @@ function ChecklistRow({
             variant="ghost"
             disabled={isLast}
             aria-label="Move down"
-            onClick={() => void onMove(item.id, 1)}
+            onClick={() => onMove(item.id, 1)}
           >
             <ArrowDown />
           </Button>
@@ -308,7 +257,7 @@ function ChecklistRow({
             size="icon-sm"
             variant="ghost"
             aria-label="Delete item"
-            onClick={() => void onDelete(item.id)}
+            onClick={() => onDelete(item.id)}
           >
             <Trash2 />
           </Button>

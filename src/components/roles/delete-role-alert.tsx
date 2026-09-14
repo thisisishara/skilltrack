@@ -15,13 +15,9 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group"
+import { Button } from "@/components/ui/button"
+import { Field, FieldGroup } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 export function DeleteRoleAlert({
   open,
@@ -87,37 +83,36 @@ export function DeleteRoleAlert({
             </AlertDialogMedia>
             <AlertDialogTitle>Delete this role?</AlertDialogTitle>
             <AlertDialogDescription>
-              {roleName
-                ? `This permanently deletes “${roleName}” and its roadmap. Type the role name to confirm.`
-                : "This role and its roadmap will be permanently deleted."}
+              This permanently deletes the role and its roadmap. Type the name
+              to confirm.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <FieldGroup>
+            <div className="flex items-center gap-2">
+              <p className="min-w-0 flex-1 truncate font-mono text-sm">
+                {roleName}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Copy role name"
+                disabled={pending || !roleName}
+                onClick={() => void copyRoleName()}
+              >
+                {copied ? <CheckIcon /> : <CopyIcon />}
+              </Button>
+            </div>
             <Field>
-              <FieldLabel htmlFor="delete-role-confirmation">
-                Role name
-              </FieldLabel>
-              <InputGroup>
-                <InputGroupInput
-                  id="delete-role-confirmation"
-                  className="font-mono"
-                  value={confirmation}
-                  onChange={(event) => setConfirmation(event.target.value)}
-                  autoComplete="off"
-                  autoFocus
-                  disabled={pending}
-                />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton
-                    size="icon-xs"
-                    aria-label="Copy role name"
-                    disabled={pending || !roleName}
-                    onClick={() => void copyRoleName()}
-                  >
-                    {copied ? <CheckIcon /> : <CopyIcon />}
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
+              <Input
+                id="delete-role-confirmation"
+                className="font-mono"
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
+                autoComplete="off"
+                autoFocus
+                disabled={pending}
+              />
             </Field>
           </FieldGroup>
           <AlertDialogFooter>

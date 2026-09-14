@@ -253,6 +253,28 @@ function sameIds(left: string[], right: string[]) {
   return left.length === right.length && left.every((id, index) => id === right[index])
 }
 
+function isSelectAllShortcut(event: KeyboardEvent) {
+  return (
+    (event.ctrlKey || event.metaKey) &&
+    !event.altKey &&
+    !event.shiftKey &&
+    event.key.toLowerCase() === "a"
+  )
+}
+
+function isEditableKeyboardTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  if (target.isContentEditable) {
+    return true
+  }
+
+  const tag = target.tagName
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+}
+
 function selectedRootIds(nodes: RoadmapNode[], selectedIds: string[]) {
   const selected = new Set(selectedIds)
   const byId = new Map(nodes.map((node) => [node.id, node]))
@@ -488,6 +510,61 @@ function RoadmapCanvasInner({
     },
     []
   )
+
+  const selectAllNodes = useCallback(() => {
+    setFlowNodes((current) => {
+      if (current.length === 0) {
+        return current
+      }
+
+      const nextIds = current.map((node) => node.id)
+      setSelectedIds((ids) => (sameIds(ids, nextIds) ? ids : nextIds))
+      if (nextIds.length !== 1) {
+        setConfigNodeId(null)
+      }
+
+      let changed = false
+      const next = current.map((node) => {
+        if (node.selected) {
+          return node
+        }
+        changed = true
+        return { ...node, selected: true }
+      })
+      return changed ? next : current
+    })
+    setEdges((current) => {
+      let changed = false
+      const next = current.map((edge) => {
+        if (!edge.selected) {
+          return edge
+        }
+        changed = true
+        return { ...edge, selected: false }
+      })
+      return changed ? next : current
+    })
+  }, [])
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!isSelectAllShortcut(event) || event.repeat) {
+        return
+      }
+      if (isEditableKeyboardTarget(event.target)) {
+        return
+      }
+      if (dialogOpen || labelOpen || deleteOpen || importOpen) {
+        return
+      }
+
+      event.preventDefault()
+      selectAllNodes()
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [deleteOpen, dialogOpen, importOpen, labelOpen, selectAllNodes])
 
   const onNodeClick = useCallback(
     (event: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean }, node: CanvasFlowNode) => {

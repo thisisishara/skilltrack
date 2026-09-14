@@ -53,12 +53,14 @@ function ToolbarButton({
 
 export function CanvasToolbar({
   hasSelection,
+  canAddChild,
   onAddRoot,
   onAddChild,
   onEdit,
   onDelete,
 }: {
   hasSelection: boolean
+  canAddChild: boolean
   onAddRoot: () => void
   onAddChild: () => void
   onEdit: () => void
@@ -71,7 +73,7 @@ export function CanvasToolbar({
       <ToolbarButton label="Add node" onClick={onAddRoot}>
         <Plus />
       </ToolbarButton>
-      <ToolbarButton label="Add child" disabled={!hasSelection} onClick={onAddChild}>
+      <ToolbarButton label="Add child" disabled={!canAddChild} onClick={onAddChild}>
         <GitBranch />
       </ToolbarButton>
       <ToolbarButton label="Edit node" disabled={!hasSelection} onClick={onEdit}>

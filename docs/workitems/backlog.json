@@ -749,6 +749,66 @@
               "status": "done"
             }
           ]
+        },
+        {
+          "id": "E05-P05",
+          "title": "Input, output, and regular node handles",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E05-P05-S01",
+              "title": "Persist handle kind regular | input | output on each node",
+              "status": "done"
+            },
+            {
+              "id": "E05-P05-S02",
+              "title": "Choose handle kind when creating or editing a node",
+              "status": "done"
+            },
+            {
+              "id": "E05-P05-S03",
+              "title": "Render only valid React Flow handles; reject illegal connections",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E05-P06",
+          "title": "Animated parent-child edges",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E05-P06-S01",
+              "title": "Persist incoming-edge animation flag per node",
+              "status": "done"
+            },
+            {
+              "id": "E05-P06-S02",
+              "title": "Toggle animation when creating or editing a node",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E05-P07",
+          "title": "Keep canvas positions across refresh",
+          "status": "done",
+          "spec": [
+            "§19"
+          ],
+          "subtasks": [
+            {
+              "id": "E05-P07-S01",
+              "title": "Do not overwrite dragged positions with stale server coordinates",
+              "status": "done"
+            }
+          ]
         }
       ]
     },

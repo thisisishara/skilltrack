@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import type { NodeActionResult } from "@/application/nodes/actions"
 import { IconPicker } from "@/components/canvas/icon-picker"
+import { NodeHandleFields } from "@/components/canvas/node-handle-fields"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,6 +23,10 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  DEFAULT_NODE_HANDLE_KIND,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import { DEFAULT_NODE_ICON } from "@/domain/nodes/icon"
 
 export type NodeDialogMode =
@@ -41,11 +46,15 @@ export function NodeDialog({
     title: string
     description: string
     icon: string
+    handleKind: NodeHandleKind
+    incomingEdgeAnimated: boolean
   }) => Promise<NodeActionResult>
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState(DEFAULT_NODE_ICON)
+  const [handleKind, setHandleKind] = useState<NodeHandleKind>(DEFAULT_NODE_HANDLE_KIND)
+  const [incomingEdgeAnimated, setIncomingEdgeAnimated] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,13 +79,21 @@ export function NodeDialog({
     setTitle("")
     setDescription("")
     setIcon(DEFAULT_NODE_ICON)
+    setHandleKind(DEFAULT_NODE_HANDLE_KIND)
+    setIncomingEdgeAnimated(false)
   }, [open, mode])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setPending(true)
     setError(null)
-    const result = await onSubmit({ title, description, icon })
+    const result = await onSubmit({
+      title,
+      description,
+      icon,
+      handleKind,
+      incomingEdgeAnimated,
+    })
     setPending(false)
 
     if (!result.ok) {
@@ -127,6 +144,15 @@ export function NodeDialog({
               <FieldLabel>Icon</FieldLabel>
               <IconPicker value={icon} onChange={setIcon} />
             </Field>
+            <NodeHandleFields
+              handleKind={handleKind}
+              incomingEdgeAnimated={incomingEdgeAnimated}
+              onHandleKindChange={setHandleKind}
+              onIncomingEdgeAnimatedChange={setIncomingEdgeAnimated}
+              allowInput
+              allowOutput={!isChild}
+              idPrefix="create-node"
+            />
           </FieldGroup>
           <DialogFooter>
             <Button

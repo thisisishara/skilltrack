@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import type { NodeActionResult } from "@/application/nodes/actions"
 import { IconPicker } from "@/components/canvas/icon-picker"
 import { NodeChecklistSection } from "@/components/canvas/node-checklist-section"
+import { NodeHandleFields } from "@/components/canvas/node-handle-fields"
 import { NodeLinksSection } from "@/components/canvas/node-links-section"
 import { ProgressStatusBadge } from "@/components/canvas/progress-status-badge"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,11 @@ import { Textarea } from "@/components/ui/textarea"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
+import {
+  nodeCanHaveChildren,
+  nodeCanHaveParent,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import type { ProgressSnapshot } from "@/domain/progress/progress"
 
@@ -80,6 +86,8 @@ export function NodeConfigSheet({
     description: string
     icon: string
     notes: string
+    handleKind: NodeHandleKind
+    incomingEdgeAnimated: boolean
   }) => Promise<NodeActionResult>
   onParentChange: (parentId: string | null) => Promise<void>
   onToggleChecklist: (itemId: string, isCompleted: boolean) => Promise<void>
@@ -88,6 +96,8 @@ export function NodeConfigSheet({
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState("circle-dot")
+  const [handleKind, setHandleKind] = useState<NodeHandleKind>("regular")
+  const [incomingEdgeAnimated, setIncomingEdgeAnimated] = useState(false)
   const [notes, setNotes] = useState("")
   const [editingNotes, setEditingNotes] = useState(false)
   const [pending, setPending] = useState(false)
@@ -101,6 +111,8 @@ export function NodeConfigSheet({
     setTitle(node.title)
     setDescription(node.description ?? "")
     setIcon(node.icon)
+    setHandleKind(node.handleKind)
+    setIncomingEdgeAnimated(node.incomingEdgeAnimated)
     setNotes(node.notes ?? "")
     setEditingNotes(Boolean(node.notes))
     setPending(false)
@@ -113,8 +125,16 @@ export function NodeConfigSheet({
     }
 
     const options: ParentOption[] = [{ id: ROOT_PARENT, title: "No parent" }]
+    if (!nodeCanHaveParent(handleKind)) {
+      return options
+    }
+
     for (const candidate of nodes) {
       if (candidate.id === node.id) {
+        continue
+      }
+
+      if (!nodeCanHaveChildren(candidate.handleKind)) {
         continue
       }
 
@@ -126,7 +146,7 @@ export function NodeConfigSheet({
     }
 
     return options
-  }, [node, nodes])
+  }, [node, nodes, handleKind])
 
   const selectedParent =
     parentOptions.find((option) => option.id === (node?.parentId ?? ROOT_PARENT)) ??
@@ -136,7 +156,14 @@ export function NodeConfigSheet({
     event.preventDefault()
     setPending(true)
     setError(null)
-    const result = await onSaveDetails({ title, description, icon, notes })
+    const result = await onSaveDetails({
+      title,
+      description,
+      icon,
+      notes,
+      handleKind,
+      incomingEdgeAnimated,
+    })
     setPending(false)
 
     if (!result.ok) {
@@ -164,7 +191,14 @@ export function NodeConfigSheet({
       return
     }
 
-    const result = await onSaveDetails({ title, description, icon, notes })
+    const result = await onSaveDetails({
+      title,
+      description,
+      icon,
+      notes,
+      handleKind,
+      incomingEdgeAnimated,
+    })
     if (!result.ok) {
       toast.error(result.message)
       return
@@ -253,6 +287,15 @@ export function NodeConfigSheet({
                       <FieldLabel>Icon</FieldLabel>
                       <IconPicker value={icon} onChange={setIcon} />
                     </Field>
+                    <NodeHandleFields
+                      handleKind={handleKind}
+                      incomingEdgeAnimated={incomingEdgeAnimated}
+                      onHandleKindChange={setHandleKind}
+                      onIncomingEdgeAnimatedChange={setIncomingEdgeAnimated}
+                      allowInput={!nodes.some((item) => item.parentId === node.id)}
+                      allowOutput={!node.parentId}
+                      idPrefix="sheet-node"
+                    />
                     <Field>
                       <FieldLabel>Parent</FieldLabel>
                       <Combobox

@@ -47,6 +47,11 @@ import {
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
+import {
+  nodeCanHaveChildren,
+  nodeCanHaveParent,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import {
   nodeProgress,
@@ -73,6 +78,7 @@ function toFlowNodes(
         title: node.title,
         description: node.description,
         icon: node.icon,
+        handleKind: node.handleKind,
         percent: progress.percent,
         status: progress.status,
       },
@@ -87,6 +93,7 @@ function toFlowEdges(nodes: RoadmapNode[]): Edge[] {
       id: `${node.parentId}->${node.id}`,
       source: node.parentId as string,
       target: node.id,
+      animated: node.incomingEdgeAnimated,
     }))
 }
 
@@ -104,18 +111,31 @@ function mergeFlowNodes(
 
     return {
       ...previous,
-      position: node.position,
+      position: previous.position,
       data: node.data,
     }
   })
 }
 
-function isValidConnection(connection: Connection | Edge) {
-  return (
-    Boolean(connection.source) &&
-    Boolean(connection.target) &&
-    connection.source !== connection.target
-  )
+function isValidConnectionForNodes(
+  nodes: RoadmapNode[],
+  connection: Connection | Edge
+) {
+  if (
+    !connection.source ||
+    !connection.target ||
+    connection.source === connection.target
+  ) {
+    return false
+  }
+
+  const source = nodes.find((node) => node.id === connection.source)
+  const target = nodes.find((node) => node.id === connection.target)
+  if (!source || !target) {
+    return false
+  }
+
+  return nodeCanHaveChildren(source.handleKind) && nodeCanHaveParent(target.handleKind)
 }
 
 function RoadmapCanvasInner({
@@ -254,10 +274,24 @@ function RoadmapCanvasInner({
 
       if (!result.ok) {
         toast.error(result.message)
-        router.refresh()
+        const persisted = serverNodes.find((item) => item.id === node.id)
+        if (persisted) {
+          setFlowNodes((current) =>
+            current.map((item) =>
+              item.id === node.id
+                ? {
+                    ...item,
+                    position: { x: persisted.positionX, y: persisted.positionY },
+                  }
+                : item
+            )
+          )
+        } else {
+          router.refresh()
+        }
       }
     },
-    [roleId, router]
+    [roleId, router, serverNodes]
   )
 
   const onConnect: OnConnect = useCallback(
@@ -279,12 +313,19 @@ function RoadmapCanvasInner({
 
       setEdges((current) => {
         const withoutIncoming = current.filter((edge) => edge.target !== connection.target)
-        return addEdge(connection, withoutIncoming)
+        const target = serverNodes.find((node) => node.id === connection.target)
+        return addEdge(
+          {
+            ...connection,
+            animated: target?.incomingEdgeAnimated ?? false,
+          },
+          withoutIncoming
+        )
       })
       toast.success("Node moved in the tree")
       router.refresh()
     },
-    [roleId, router]
+    [roleId, router, serverNodes]
   )
 
   const onEdgesDelete: OnEdgesDelete = useCallback(
@@ -309,6 +350,12 @@ function RoadmapCanvasInner({
     [roleId, router]
   )
 
+  const onValidConnection = useCallback(
+    (connection: Connection | Edge) =>
+      isValidConnectionForNodes(serverNodes, connection),
+    [serverNodes]
+  )
+
   function openCreate(parentId: string | null) {
     setDialogMode({ kind: "create", parentId })
     setDialogOpen(true)
@@ -323,6 +370,8 @@ function RoadmapCanvasInner({
     title: string
     description: string
     icon: string
+    handleKind: NodeHandleKind
+    incomingEdgeAnimated: boolean
   }) {
     if (!dialogMode || dialogMode.kind !== "create") {
       return { ok: false as const, code: "unexpected" as const, message: "Nothing to save." }
@@ -334,6 +383,8 @@ function RoadmapCanvasInner({
       title: input.title,
       description: input.description,
       icon: input.icon,
+      handleKind: input.handleKind,
+      incomingEdgeAnimated: input.incomingEdgeAnimated,
     })
 
     if (result.ok && "node" in result) {
@@ -350,6 +401,8 @@ function RoadmapCanvasInner({
     description: string
     icon: string
     notes: string
+    handleKind: NodeHandleKind
+    incomingEdgeAnimated: boolean
   }) {
     if (!configNode) {
       return { ok: false as const, code: "unexpected" as const, message: "Select a node first." }
@@ -362,6 +415,8 @@ function RoadmapCanvasInner({
       description: input.description,
       icon: input.icon,
       notes: input.notes,
+      handleKind: input.handleKind,
+      incomingEdgeAnimated: input.incomingEdgeAnimated,
     })
 
     if (result.ok) {
@@ -450,7 +505,7 @@ function RoadmapCanvasInner({
         onNodeClick={onNodeClick}
         onNodeDoubleClick={onNodeClick}
         onSelectionChange={onSelectionChange}
-        isValidConnection={isValidConnection}
+        isValidConnection={onValidConnection}
         fitView={serverNodes.length > 0}
         deleteKeyCode={["Backspace", "Delete"]}
         colorMode={themeReady && resolvedTheme === "dark" ? "dark" : "light"}
@@ -462,6 +517,7 @@ function RoadmapCanvasInner({
       </ReactFlow>
       <CanvasToolbar
         hasSelection={Boolean(selectedNode)}
+        canAddChild={Boolean(selectedNode && nodeCanHaveChildren(selectedNode.handleKind))}
         onAddRoot={() => openCreate(null)}
         onAddChild={() => selectedNode && openCreate(selectedNode.id)}
         onEdit={() => selectedNode && openSheet(selectedNode.id)}

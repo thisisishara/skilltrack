@@ -78,6 +78,8 @@ export type Database = {
           description: string | null
           notes: string | null
           icon: string
+          handle_kind: string
+          incoming_edge_animated: boolean
           position_x: number
           position_y: number
           sort_order: number
@@ -92,6 +94,8 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
+          handle_kind?: string
+          incoming_edge_animated?: boolean
           position_x?: number
           position_y?: number
           sort_order?: number
@@ -106,6 +110,8 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
+          handle_kind?: string
+          incoming_edge_animated?: boolean
           position_x?: number
           position_y?: number
           sort_order?: number

@@ -2,6 +2,12 @@ import "server-only"
 
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
+import {
+  childrenLinkError,
+  normalizeNodeHandleKind,
+  parentLinkError,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
 import { normalizeNodeIcon } from "@/domain/nodes/icon"
 import { displayNodeTitle } from "@/domain/nodes/title"
@@ -33,6 +39,26 @@ function nextSortOrder(nodes: RoadmapNode[], parentId: string | null) {
   }
 
   return Math.max(...siblings.map((node) => node.sortOrder)) + 1
+}
+
+function assertParentAssignment(
+  nodes: RoadmapNode[],
+  childKind: NodeHandleKind,
+  parentId: string | null
+) {
+  if (!parentId) {
+    return
+  }
+
+  const parent = nodes.find((node) => node.id === parentId)
+  if (!parent) {
+    throw new ApplicationError("validation", "Parent node was not found.")
+  }
+
+  const message = parentLinkError(childKind, parent.handleKind, parentId)
+  if (message) {
+    throw new ApplicationError("validation", message)
+  }
 }
 
 async function requireOwnedRole(userId: string, roleId: string) {
@@ -69,15 +95,18 @@ export async function createNode(
     title: string
     description?: string | null
     icon?: string | null
+    handleKind?: string | null
+    incomingEdgeAnimated?: boolean
   }
 ) {
   await requireOwnedRole(userId, input.roleId)
   const title = requireTitle(input.title)
+  const handleKind = normalizeNodeHandleKind(input.handleKind)
   const nodes = await nodesRepository.listByRoleId(input.roleId)
 
   let positionX = 0
   let positionY = 0
-  let parentId: string | null = input.parentId
+  const parentId: string | null = input.parentId
 
   if (parentId) {
     const parent = nodes.find((node) => node.id === parentId)
@@ -93,6 +122,8 @@ export async function createNode(
       )
     }
 
+    assertParentAssignment(nodes, handleKind, parentId)
+
     positionX = parent.positionX
     positionY = parent.positionY + CHILD_OFFSET_Y
   } else {
@@ -107,6 +138,8 @@ export async function createNode(
     title,
     description: optionalDescription(input.description),
     icon: normalizeNodeIcon(input.icon),
+    handleKind,
+    incomingEdgeAnimated: Boolean(input.incomingEdgeAnimated),
     positionX,
     positionY,
     sortOrder: nextSortOrder(nodes, parentId),
@@ -122,9 +155,23 @@ export async function updateNodeDetails(
     description?: string | null
     icon?: string | null
     notes?: string | null
+    handleKind?: string | null
+    incomingEdgeAnimated?: boolean
   }
 ) {
-  await requireOwnedNode(userId, roleId, nodeId)
+  const node = await requireOwnedNode(userId, roleId, nodeId)
+  const nodes = await nodesRepository.listByRoleId(roleId)
+  const handleKind =
+    input.handleKind !== undefined
+      ? normalizeNodeHandleKind(input.handleKind)
+      : node.handleKind
+  const childCount = nodes.filter((item) => item.parentId === nodeId).length
+  const childrenError = childrenLinkError(handleKind, childCount)
+  if (childrenError) {
+    throw new ApplicationError("validation", childrenError)
+  }
+
+  assertParentAssignment(nodes, handleKind, node.parentId)
 
   return nodesRepository.updateDetails(roleId, nodeId, {
     title: requireTitle(input.title),
@@ -132,6 +179,10 @@ export async function updateNodeDetails(
     icon: normalizeNodeIcon(input.icon),
     ...(input.notes !== undefined
       ? { notes: optionalDescription(input.notes) }
+      : {}),
+    ...(input.handleKind !== undefined ? { handleKind } : {}),
+    ...(input.incomingEdgeAnimated !== undefined
+      ? { incomingEdgeAnimated: Boolean(input.incomingEdgeAnimated) }
       : {}),
   })
 }
@@ -181,6 +232,8 @@ export async function reparentNode(
         "A node cannot be its own ancestor."
       )
     }
+
+    assertParentAssignment(nodes, node.handleKind, parentId)
   }
 
   return nodesRepository.updateParent(

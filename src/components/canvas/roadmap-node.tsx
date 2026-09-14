@@ -4,6 +4,11 @@ import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 
 import { NodeLucideIcon } from "@/components/canvas/lucide-icon"
 import { ProgressStatusBadge } from "@/components/canvas/progress-status-badge"
+import {
+  nodeCanHaveChildren,
+  nodeCanHaveParent,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import type { ProgressStatus } from "@/domain/progress/progress"
 
 export type RoadmapFlowNode = Node<
@@ -11,6 +16,7 @@ export type RoadmapFlowNode = Node<
     title: string
     description: string | null
     icon: string
+    handleKind: NodeHandleKind
     percent: number
     status: ProgressStatus
   },
@@ -24,11 +30,13 @@ export function RoadmapNodeCard({ data, selected }: NodeProps<RoadmapFlowNode>) 
         selected ? "border-ring ring-3 ring-ring/50" : "border-border"
       }`}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!size-2 !border-0 !bg-primary"
-      />
+      {nodeCanHaveParent(data.handleKind) ? (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!size-2 !border-0 !bg-primary"
+        />
+      ) : null}
       <div className="flex items-start gap-2">
         <span className="mt-0.5 text-muted-foreground">
           <NodeLucideIcon name={data.icon} />
@@ -45,11 +53,13 @@ export function RoadmapNodeCard({ data, selected }: NodeProps<RoadmapFlowNode>) 
           </div>
         </div>
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!size-2 !border-0 !bg-primary"
-      />
+      {nodeCanHaveChildren(data.handleKind) ? (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="!size-2 !border-0 !bg-primary"
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,10 @@
 import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
+import {
+  normalizeNodeHandleKind,
+  type NodeHandleKind,
+} from "@/domain/nodes/handle"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import type { Database } from "@/lib/supabase/database"
@@ -17,6 +21,8 @@ function toNode(row: NodeRow): RoadmapNode {
     description: row.description,
     notes: row.notes,
     icon: row.icon,
+    handleKind: normalizeNodeHandleKind(row.handle_kind),
+    incomingEdgeAnimated: Boolean(row.incoming_edge_animated),
     positionX: row.position_x,
     positionY: row.position_y,
     sortOrder: row.sort_order,
@@ -75,6 +81,8 @@ export async function insert(input: {
   title: string
   description: string | null
   icon: string
+  handleKind: NodeHandleKind
+  incomingEdgeAnimated: boolean
   positionX: number
   positionY: number
   sortOrder: number
@@ -88,6 +96,8 @@ export async function insert(input: {
       title: displayNodeTitle(input.title),
       description: input.description,
       icon: input.icon,
+      handle_kind: input.handleKind,
+      incoming_edge_animated: input.incomingEdgeAnimated,
       position_x: input.positionX,
       position_y: input.positionY,
       sort_order: input.sortOrder,
@@ -110,6 +120,8 @@ export async function updateDetails(
     description: string | null
     icon: string
     notes?: string | null
+    handleKind?: NodeHandleKind
+    incomingEdgeAnimated?: boolean
   }
 ) {
   const supabase = getSupabaseServerClient()
@@ -120,6 +132,10 @@ export async function updateDetails(
       description: input.description,
       icon: input.icon,
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.handleKind !== undefined ? { handle_kind: input.handleKind } : {}),
+      ...(input.incomingEdgeAnimated !== undefined
+        ? { incoming_edge_animated: input.incomingEdgeAnimated }
+        : {}),
     })
     .eq("role_id", roleId)
     .eq("id", nodeId)

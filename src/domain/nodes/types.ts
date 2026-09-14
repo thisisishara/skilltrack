@@ -1,3 +1,5 @@
+import type { NodeHandleKind } from "@/domain/nodes/handle"
+
 export type RoadmapNode = {
   id: string
   roleId: string
@@ -6,6 +8,8 @@ export type RoadmapNode = {
   description: string | null
   notes: string | null
   icon: string
+  handleKind: NodeHandleKind
+  incomingEdgeAnimated: boolean
   positionX: number
   positionY: number
   sortOrder: number

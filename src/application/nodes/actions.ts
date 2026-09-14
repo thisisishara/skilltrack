@@ -44,6 +44,8 @@ export async function createNodeAction(input: {
   title: string
   description?: string | null
   icon?: string | null
+  handleKind?: string | null
+  incomingEdgeAnimated?: boolean
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId) {
@@ -66,6 +68,8 @@ export async function updateNodeAction(input: {
   description?: string | null
   icon?: string | null
   notes?: string | null
+  handleKind?: string | null
+  incomingEdgeAnimated?: boolean
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {

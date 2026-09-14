@@ -22,12 +22,24 @@ export async function getRoleForUser(userId: string, roleId: string) {
   return rolesRepository.getByIdForUser(userId, roleId)
 }
 
-export async function createEmptyRole(userId: string, name: string) {
-  return rolesRepository.insert(userId, requireName(name))
+export async function createEmptyRole(
+  userId: string,
+  name: string,
+  description: string | null = null
+) {
+  return rolesRepository.insert(userId, requireName(name), description)
 }
 
 export async function renameRole(userId: string, roleId: string, name: string) {
   return rolesRepository.updateName(userId, roleId, requireName(name))
+}
+
+export async function updateRoleDescription(
+  userId: string,
+  roleId: string,
+  description: string | null
+) {
+  return rolesRepository.updateDescription(userId, roleId, description)
 }
 
 export async function deleteRole(userId: string, roleId: string) {

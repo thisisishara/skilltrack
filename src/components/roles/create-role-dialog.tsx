@@ -5,7 +5,18 @@ import { CircleAlert } from "lucide-react"
 import { toast } from "sonner"
 
 import type { RoleActionResult } from "@/application/roles/actions"
+import { ImportJsonFields } from "@/components/roles/import-json-fields"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,38 +41,58 @@ type CreateMode = "empty" | "import"
 export function CreateRoleDialog({
   open,
   onOpenChange,
-  onSubmit,
+  onCreateEmpty,
+  onImport,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string) => Promise<RoleActionResult>
+  onCreateEmpty: (name: string) => Promise<RoleActionResult>
+  onImport: (json: string, nameOverride?: string) => Promise<RoleActionResult>
 }) {
   const [name, setName] = useState("")
+  const [json, setJson] = useState("")
   const [mode, setMode] = useState<CreateMode>("empty")
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [discardOpen, setDiscardOpen] = useState(false)
 
   useEffect(() => {
     if (open) {
       // Reset the form each time the dialog opens for a fresh role.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName("")
+      setJson("")
       setMode("empty")
       setError(null)
       setPending(false)
+      setDiscardOpen(false)
     }
   }, [open])
 
+  function requestClose() {
+    if (mode === "import" && json.trim()) {
+      setDiscardOpen(true)
+      return
+    }
+    onOpenChange(false)
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (mode !== "empty") {
-      setError("JSON import is not available yet.")
+    setPending(true)
+    setError(null)
+
+    if (mode === "import" && !json.trim()) {
+      setPending(false)
+      setError("Choose a JSON file or paste a roadmap document.")
       return
     }
 
-    setPending(true)
-    setError(null)
-    const result = await onSubmit(name)
+    const result =
+      mode === "empty"
+        ? await onCreateEmpty(name)
+        : await onImport(json, name.trim() ? name : undefined)
+
     setPending(false)
 
     if (!result.ok) {
@@ -73,78 +104,129 @@ export function CreateRoleDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Role</DialogTitle>
-          <DialogDescription>
-            Start an empty roadmap for this role. Importing JSON will be
-            available later.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <FieldGroup>
-            <Field>
-              <FieldLabel>How to start</FieldLabel>
-              <ToggleGroup
-                value={[mode]}
-                onValueChange={(value) => {
-                  const next = Array.isArray(value) ? value[0] : value
-                  if (next === "empty" || next === "import") {
-                    setMode(next)
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) {
+            requestClose()
+            return
+          }
+          onOpenChange(true)
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Role</DialogTitle>
+            <DialogDescription>
+              Start an empty roadmap or import a canonical JSON document.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <FieldGroup>
+              <Field>
+                <FieldLabel>How to start</FieldLabel>
+                <ToggleGroup
+                  value={[mode]}
+                  onValueChange={(value) => {
+                    const next = Array.isArray(value) ? value[0] : value
+                    if (next === "empty" || next === "import") {
+                      setMode(next)
+                      setError(null)
+                    }
+                  }}
+                  variant="outline"
+                  spacing={0}
+                  className="w-full"
+                >
+                  <ToggleGroupItem value="empty" className="flex-1">
+                    Empty roadmap
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="import" className="flex-1">
+                    Import JSON
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <FieldDescription>
+                  Import onto a new role, or later onto a role that still has no
+                  nodes.
+                </FieldDescription>
+              </Field>
+              <Field data-invalid={error && mode === "empty" ? true : undefined}>
+                <FieldLabel htmlFor="create-role-name">
+                  {mode === "import" ? "Name override (optional)" : "Name"}
+                </FieldLabel>
+                <Input
+                  id="create-role-name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Senior AI Engineer"
+                  autoComplete="off"
+                  aria-invalid={error && mode === "empty" ? true : undefined}
+                />
+                {mode === "empty" && error ? <FieldError>{error}</FieldError> : (
+                  <FieldDescription>
+                    {mode === "import"
+                      ? "Leave blank to use the name from the JSON document."
+                      : "Unique per account, case-insensitive."}
+                  </FieldDescription>
+                )}
+              </Field>
+              {mode === "import" ? (
+                <ImportJsonFields
+                  json={json}
+                  error={error}
+                  onJsonChange={(value) => {
+                    setJson(value)
                     setError(null)
-                  }
-                }}
-                variant="outline"
-                spacing={0}
-                className="w-full"
-              >
-                <ToggleGroupItem value="empty" className="flex-1">
-                  Empty roadmap
-                </ToggleGroupItem>
-                <ToggleGroupItem value="import" className="flex-1" disabled>
-                  Import JSON
-                </ToggleGroupItem>
-              </ToggleGroup>
-              <FieldDescription>
-                Import is only allowed while creating a role, and lands in a
-                later phase.
-              </FieldDescription>
-            </Field>
-            <Field data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="create-role-name">Name</FieldLabel>
-              <Input
-                id="create-role-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Senior AI Engineer"
-                autoComplete="off"
-                aria-invalid={error ? true : undefined}
-              />
-              {error ? <FieldError>{error}</FieldError> : null}
-            </Field>
-          </FieldGroup>
-          {error && error === "JSON import is not available yet." ? (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertTitle>Import unavailable</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+                  }}
+                />
+              ) : null}
+            </FieldGroup>
+            {error && mode === "import" ? (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertTitle>Import failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={requestClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending
+                  ? mode === "import"
+                    ? "Importing…"
+                    : "Creating…"
+                  : mode === "import"
+                    ? "Import role"
+                    : "Create role"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this import?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The JSON you entered will not be saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDiscardOpen(false)
+                onOpenChange(false)
+              }}
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create role"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

@@ -41,6 +41,7 @@ import {
   reparentNodeAction,
   updateNodeAction,
 } from "@/application/nodes/actions"
+import { exportRoadmapAction, importRoadmapAction } from "@/application/import-export/actions"
 import { CanvasToolbar } from "@/components/canvas/canvas-toolbar"
 import { DeleteNodeAlert } from "@/components/canvas/delete-node-alert"
 import { EmptyRoadmap } from "@/components/canvas/empty-roadmap"
@@ -48,6 +49,7 @@ import { LabelDialog, type LabelDialogMode } from "@/components/canvas/label-dia
 import { LabelNodeCard, type LabelFlowNode } from "@/components/canvas/label-node"
 import { NodeConfigSheet } from "@/components/canvas/node-config-sheet"
 import { NodeDialog, type NodeDialogMode } from "@/components/canvas/node-dialog"
+import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import {
   RoadmapNodeCard,
   type RoadmapFlowNode,
@@ -83,6 +85,7 @@ import {
 } from "@/domain/nodes/layout"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
+import { downloadTextFile } from "@/lib/roadmap/download"
 import {
   incomingEdgeAppearance,
   nodeProgress,
@@ -282,24 +285,32 @@ function RoadmapCanvasInner({
   const [labelMode, setLabelMode] = useState<LabelDialogMode | null>(null)
   const [labelOpen, setLabelOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   useEffect(() => {
+    // Theme is read after mount so SSR and the first client paint match.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeReady(true)
   }, [])
 
   useEffect(() => {
+    // Merge server snapshots into the optimistic canvas session.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNodes((current) => mergeNodes(serverNodes, current))
   }, [serverNodes])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems((current) => mergeById(serverItems, current))
   }, [serverItems])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLinks((current) => mergeById(serverLinks, current))
   }, [serverLinks])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFlowNodes((current) => mergeFlowNodes(current, toFlowNodes(nodes, items)))
     setEdges(toFlowEdges(nodes, items))
   }, [nodes, items])
@@ -322,6 +333,7 @@ function RoadmapCanvasInner({
     if (configNodeId && !configNode) {
       const selected = nodes.find((node) => node.id === configNodeId)
       if (!selected || isSkillNode(selected)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setConfigNodeId(null)
       }
     }
@@ -357,6 +369,17 @@ function RoadmapCanvasInner({
         : nodeProgress([], ""),
     [items, configNodeId, skillNodes]
   )
+
+  async function handleExport() {
+    const result = await exportRoadmapAction(roleId)
+    if (!result.ok) {
+      toast.error(result.message)
+      return
+    }
+
+    downloadTextFile(result.filename, result.json)
+    toast.success("Roadmap exported")
+  }
 
   const onNodesChange = useCallback((changes: NodeChange<CanvasFlowNode>[]) => {
     setFlowNodes((current) => applyNodeChanges(changes, current))
@@ -1085,6 +1108,7 @@ function RoadmapCanvasInner({
           openSheet(selectedNode.id)
         }}
         onDelete={() => selectedNode && setDeleteOpen(true)}
+        onExport={() => void handleExport()}
       />
       {skillNodes.length > 0 ? (
         <div className="pointer-events-none absolute top-3 right-3 z-10">
@@ -1096,7 +1120,10 @@ function RoadmapCanvasInner({
         </div>
       ) : null}
       {nodes.length === 0 ? (
-        <EmptyRoadmap onCreate={() => openCreate(null)} />
+        <EmptyRoadmap
+          onCreate={() => openCreate(null)}
+          onImport={() => setImportOpen(true)}
+        />
       ) : null}
     </div>
   )
@@ -1161,6 +1188,18 @@ function RoadmapCanvasInner({
         nodeTitle={selectedNode?.title ?? configNode?.title ?? ""}
         onConfirm={async () => {
           handleDelete()
+        }}
+      />
+      <ImportRoadmapDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={async (json) => {
+          const result = await importRoadmapAction({ json, roleId })
+          if (result.ok && "role" in result) {
+            toast.success("Roadmap imported")
+            router.refresh()
+          }
+          return result
         }}
       />
     </div>

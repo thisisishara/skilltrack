@@ -12,7 +12,13 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 
-export function EmptyRoadmap({ onCreate }: { onCreate: () => void }) {
+export function EmptyRoadmap({
+  onCreate,
+  onImport,
+}: {
+  onCreate: () => void
+  onImport: () => void
+}) {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
       <Empty className="pointer-events-auto max-w-sm border bg-background/90 shadow-sm backdrop-blur-sm">
@@ -22,12 +28,15 @@ export function EmptyRoadmap({ onCreate }: { onCreate: () => void }) {
           </EmptyMedia>
           <EmptyTitle>This roadmap is empty</EmptyTitle>
           <EmptyDescription>
-            Create the first node to start mapping skills for this role.
+            Create the first node or import a canonical JSON roadmap.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button type="button" onClick={onCreate}>
             Create first node
+          </Button>
+          <Button type="button" variant="outline" onClick={onImport}>
+            Import JSON
           </Button>
         </EmptyContent>
       </Empty>

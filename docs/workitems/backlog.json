@@ -1013,7 +1013,7 @@
         {
           "id": "E07-P01",
           "title": "Versioned roadmap JSON schema",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§23",
             "§24"
@@ -1022,19 +1022,19 @@
             {
               "id": "E07-P01-S01",
               "title": "Encode skilltrack.roadmap.v1 in src/schemas",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E07-P01-S02",
-              "title": "Validate schema version, UUIDs, nodes, checklists, links, notes, positions",
-              "status": "pending"
+              "title": "Validate schema version, UUIDs, skills, labels, handles, checklists, links, notes, positions",
+              "status": "done"
             }
           ]
         },
         {
           "id": "E07-P02",
-          "title": "Import only while creating a role",
-          "status": "pending",
+          "title": "Import on create or empty roadmap",
+          "status": "done",
           "spec": [
             "§21",
             "§30"
@@ -1043,34 +1043,39 @@
             {
               "id": "E07-P02-S01",
               "title": "Create-role Dialog option to import JSON",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E07-P02-S02",
-              "title": "Disallow import onto an existing role (no silent merge)",
-              "status": "pending"
+              "title": "Disallow import onto a non-empty role (no silent merge)",
+              "status": "done"
             },
             {
               "id": "E07-P02-S03",
               "title": "Transactional import with rollback on any failure",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E07-P02-S04",
-              "title": "Reject invalid JSON, schema, duplicate names, cycles, bad parents, malformed links",
-              "status": "pending"
+              "title": "Reject invalid JSON, schema, duplicate names, cycles, bad parents, illegal labels, malformed links",
+              "status": "done"
             },
             {
               "id": "E07-P02-S05",
               "title": "Empty/no-file Empty state in the import picker",
-              "status": "pending"
+              "status": "done"
+            },
+            {
+              "id": "E07-P02-S06",
+              "title": "Import onto an existing role only when it has zero nodes including labels",
+              "status": "done"
             }
           ]
         },
         {
           "id": "E07-P03",
           "title": "Export roadmap JSON",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§31",
             "§49 Export"
@@ -1078,17 +1083,49 @@
           "subtasks": [
             {
               "id": "E07-P03-S01",
-              "title": "Export metadata, nodes, checklists, links, notes, icons, positions",
-              "status": "pending"
+              "title": "Export metadata, skills, labels, checklists, links, notes, icons, handles, animation, positions",
+              "status": "done"
             },
             {
               "id": "E07-P03-S02",
               "title": "Never include auth tokens or credentials",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E07-P03-S03",
-              "title": "Re-import of an export preserves hierarchy and evidence state",
+              "title": "Re-import of an export preserves hierarchy, labels, chrome, and evidence state",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E07-P04",
+          "title": "Roadmap JSON editor mode",
+          "status": "pending",
+          "spec": [
+            "§22",
+            "§23",
+            "§24"
+          ],
+          "subtasks": [
+            {
+              "id": "E07-P04-S01",
+              "title": "Canvas / JSON toggle on the roadmap view",
+              "status": "pending"
+            },
+            {
+              "id": "E07-P04-S02",
+              "title": "Show the current canonical document from the export serializer",
+              "status": "pending"
+            },
+            {
+              "id": "E07-P04-S03",
+              "title": "Live syntax, schema, and invariant diagnostics",
+              "status": "pending"
+            },
+            {
+              "id": "E07-P04-S04",
+              "title": "Apply with AlertDialog; reject invalid JSON; transactional replace of the role graph",
               "status": "pending"
             }
           ]

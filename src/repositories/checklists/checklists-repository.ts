@@ -93,6 +93,68 @@ export async function insert(input: {
   return toItem(data)
 }
 
+export async function insertMany(
+  rows: {
+    id: string
+    nodeId: string
+    title: string
+    description: string | null
+    sortOrder: number
+    isCompleted: boolean
+    completedAt: string | null
+  }[]
+) {
+  if (rows.length === 0) {
+    return []
+  }
+
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("checklist_items")
+    .insert(
+      rows.map((row) => ({
+        id: row.id,
+        node_id: row.nodeId,
+        title: displayChecklistTitle(row.title),
+        description: row.description,
+        sort_order: row.sortOrder,
+        is_completed: row.isCompleted,
+        completed_at: row.completedAt,
+      }))
+    )
+    .select()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  return (data ?? []).map(toItem)
+}
+
+export async function listExistingIds(ids: string[]) {
+  const found = new Set<string>()
+  if (ids.length === 0) {
+    return found
+  }
+
+  const supabase = getSupabaseServerClient()
+  for (let index = 0; index < ids.length; index += 100) {
+    const chunk = ids.slice(index, index + 100)
+    const { data, error } = await supabase
+      .from("checklist_items")
+      .select("id")
+      .in("id", chunk)
+    if (error) {
+      throwFromSupabase(error)
+    }
+    for (const row of data ?? []) {
+      found.add(row.id)
+    }
+  }
+
+  return found
+}
+
 export async function updateDetails(
   nodeId: string,
   itemId: string,

@@ -8,6 +8,7 @@ import {
   deleteRoleAction,
   renameRoleAction,
 } from "@/application/roles/actions"
+import { exportRoadmapAction } from "@/application/import-export/actions"
 import { DeleteRoleAlert } from "@/components/roles/delete-role-alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,6 +33,7 @@ import {
   writeStoredActiveRoleId,
 } from "@/lib/roles/active-role"
 import { useRolesUi } from "@/components/roles/roles-workspace"
+import { downloadTextFile } from "@/lib/roadmap/download"
 
 export function RoleSettings({ role }: { role: Role }) {
   const router = useRouter()
@@ -40,6 +42,7 @@ export function RoleSettings({ role }: { role: Role }) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [exportPending, setExportPending] = useState(false)
 
   useEffect(() => {
     // Re-sync the name field when a different role is selected/renamed
@@ -66,6 +69,20 @@ export function RoleSettings({ role }: { role: Role }) {
 
     toast.success("Role renamed")
     router.refresh()
+  }
+
+  async function handleExport() {
+    setExportPending(true)
+    const result = await exportRoadmapAction(role.id)
+    setExportPending(false)
+
+    if (!result.ok) {
+      toast.error(result.message)
+      return
+    }
+
+    downloadTextFile(result.filename, result.json)
+    toast.success("Roadmap exported")
   }
 
   async function handleDelete() {
@@ -134,6 +151,21 @@ export function RoleSettings({ role }: { role: Role }) {
             </Button>
           </CardFooter>
         </form>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Export roadmap</CardTitle>
+          <CardDescription>
+            Download skilltrack.roadmap.v1 JSON. Re-import it into a new role or
+            an empty roadmap.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button type="button" variant="outline" disabled={exportPending} onClick={() => void handleExport()}>
+            {exportPending ? "Exporting…" : "Export JSON"}
+          </Button>
+        </CardFooter>
       </Card>
 
       <Card>

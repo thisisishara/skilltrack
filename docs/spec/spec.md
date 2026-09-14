@@ -878,13 +878,14 @@ Create empty roadmap
 Import JSON
 ```
 
-Importing is allowed only during creation.
+Importing is allowed while creating a role, and onto an **existing role that has zero nodes** (including labels). That is not a merge: there is no graph to overwrite.
 
-Once the role exists:
+Once the role has any node:
 
 - Existing role cannot be overwritten through import.
 - Import must not silently merge data.
-- Export is always available.
+
+Export is always available.
 
 This prevents accidental destruction of an existing roadmap.
 
@@ -898,11 +899,15 @@ The exported format must contain:
 
 - schema version
 - roadmap metadata
-- nodes
+- nodes (skills and canvas labels)
+- node kind
+- handle kind and incoming-edge animation for skill nodes
 - checklist items
 - links
 - notes
-- layout positions
+- layout positions (`position.x` / `position.y`)
+
+Edges are not stored. They are derived from `parent_id` (labels never participate).
 
 The exported JSON must not contain:
 
@@ -911,6 +916,8 @@ The exported JSON must not contain:
 - Supabase credentials
 - internal session data
 - other users' information
+- React Flow runtime fields (`selected`, `dragging`, `measured`, internals, edge objects)
+- canvas viewport / camera (session chrome, not roadmap content)
 
 ---
 
@@ -969,26 +976,40 @@ Required:
 
 Optional:
 
+- `kind` (`skill` | `label`; omitted `kind` is `skill`)
 - `parent_id`
 - `description`
 - `icon`
+- `handle_kind` (`regular` | `input` | `output`; default `regular`; skill nodes only)
+- `incoming_edge_animated` (boolean; default `false`; skill nodes only)
 - `position`
 - `checklist`
 - `notes`
 - `links`
 
+### Labels
+
+Nodes with `kind = label` are canvas annotations:
+
+- `parent_id` must be omitted or `null`.
+- Must not be referenced as a parent.
+- Must not include `checklist`, `links`, `notes`, `description`, `icon`, `handle_kind`, or `incoming_edge_animated`.
+
 ### Node ID
 
 - UUID string.
 - Unique within the imported document.
-- Parent references must reference an existing node or be `null`.
+- Parent references must reference an existing **skill** node or be `null`.
 
 ### Parent Rules
 
-- Root node: `parent_id = null`
-- Child node: `parent_id` references another node.
+- Root skill or label: `parent_id = null`
+- Child skill: `parent_id` references another skill node.
 - No self-parenting.
 - No circular parent relationships.
+- `output` nodes cannot have a parent.
+- `input` nodes cannot have children.
+- Labels are excluded from the skill tree.
 
 ### Checklist
 
@@ -1033,7 +1054,7 @@ Both values must be finite numbers.
 
 ### Unknown Fields
 
-Import should reject malformed required fields but may ignore unknown optional fields for forward compatibility.
+The published schema sets `additionalProperties` to `false`. Unknown keys and malformed required fields fail validation.
 
 ---
 
@@ -1146,9 +1167,20 @@ Import should reject malformed required fields but may ignore unknown optional f
         "description": {
           "type": "string"
         },
+        "kind": {
+          "type": "string",
+          "enum": ["skill", "label"]
+        },
         "icon": {
           "type": "string",
           "description": "Lucide kebab-case icon name (e.g. brain, circle-dot). Unknown values fall back to circle-dot."
+        },
+        "handle_kind": {
+          "type": "string",
+          "enum": ["regular", "input", "output"]
+        },
+        "incoming_edge_animated": {
+          "type": "boolean"
         },
         "position": {
           "$ref": "#/$defs/position"
@@ -1174,7 +1206,7 @@ Import should reject malformed required fields but may ignore unknown optional f
 }
 ```
 
-Implementation note: JSON Schema validators differ in how they interpret `format` for nullable values. Application-level validation must explicitly validate `parent_id` when it is non-null.
+Implementation note: JSON Schema validators differ in how they interpret `format` for nullable values. Application-level validation must explicitly validate `parent_id` when it is non-null, plus label and handle-kind invariants.
 
 ---
 
@@ -1490,7 +1522,7 @@ The following rules belong in application/domain logic rather than UI-only valid
 7. Links must be valid URLs.
 8. Imported data must conform to the supported schema.
 9. Users cannot access another user's role.
-10. Imported roadmaps cannot overwrite existing roles.
+10. Imported roadmaps cannot overwrite a role that already has nodes.
 11. Progress is derived from checklist state.
 
 ---
@@ -1503,17 +1535,18 @@ The following rules belong in application/domain logic rather than UI-only valid
 3. Validate schema version
 4. Validate JSON Schema
 5. Validate UUID uniqueness
-6. Validate parent references
+6. Validate parent references, labels, and handle kinds
 7. Validate no cycles
 8. Validate links
-9. Validate roadmap name
-10. Check name collision for current user
-11. Create role
-12. Create nodes
-13. Create checklist items
-14. Create links
-15. Commit transaction
-16. Return created roadmap
+9. If creating a role: validate roadmap name and check name collision
+10. If importing onto an existing role: require zero nodes (including labels); do not rename
+11. Remap all document IDs if any collide with existing rows
+12. Create role (create path) or keep the empty role
+13. Create nodes (parents before children)
+14. Create checklist items
+15. Create links
+16. On any write failure, roll back so no partial roadmap remains
+17. Return the role
 ```
 
 Import must be transactional.
@@ -2561,11 +2594,12 @@ SkillTrack MVP is complete when a user can:
 ### Import
 
 - Create a new roadmap from valid JSON.
+- Import onto an existing role only when it has zero nodes (including labels).
 - Reject invalid JSON.
 - Reject invalid schema.
-- Reject duplicate roadmap names.
+- Reject duplicate roadmap names (create path).
 - Reject cycles.
-- Reject invalid parent references.
+- Reject invalid parent references, labels-with-parents, and illegal handle wiring.
 - Reject malformed links.
 - Roll back failed imports.
 
@@ -2574,6 +2608,8 @@ SkillTrack MVP is complete when a user can:
 - Export a complete roadmap.
 - Re-import the exported JSON into a new roadmap.
 - Preserve hierarchy.
+- Preserve canvas labels (text and positions; still parentless).
+- Preserve handle kind and incoming-edge animation.
 - Preserve checklist state.
 - Preserve notes.
 - Preserve links.

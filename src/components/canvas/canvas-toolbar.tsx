@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import {
+  Download,
   GitBranch,
   Maximize2,
   Pencil,
@@ -60,6 +61,7 @@ export function CanvasToolbar({
   onAddChild,
   onEdit,
   onDelete,
+  onExport,
 }: {
   hasSelection: boolean
   canAddChild: boolean
@@ -68,6 +70,7 @@ export function CanvasToolbar({
   onAddChild: () => void
   onEdit: () => void
   onDelete: () => void
+  onExport: () => void
 }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
@@ -96,6 +99,9 @@ export function CanvasToolbar({
       </ToolbarButton>
       <ToolbarButton label="Fit roadmap" onClick={() => void fitView({ padding: 0.2 })}>
         <Maximize2 />
+      </ToolbarButton>
+      <ToolbarButton label="Export JSON" onClick={onExport}>
+        <Download />
       </ToolbarButton>
     </div>
   )

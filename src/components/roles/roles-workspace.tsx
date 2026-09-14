@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { createRoleAction } from "@/application/roles/actions"
+import { importRoadmapAction } from "@/application/import-export/actions"
 import type { Role } from "@/domain/roles/types"
 import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
@@ -76,6 +77,20 @@ export function RolesWorkspace({
     return result
   }
 
+  async function handleImport(json: string, nameOverride?: string) {
+    const result = await importRoadmapAction({ json, nameOverride })
+    if (!result.ok) {
+      return result
+    }
+    if ("role" in result) {
+      writeStoredActiveRoleId(result.role.id)
+      toast.success("Roadmap imported")
+      setCreateOpen(false)
+      router.push(`/dashboard/roles/${result.role.id}`)
+    }
+    return result
+  }
+
   const value = useMemo(
     () => ({
       roles,
@@ -92,7 +107,8 @@ export function RolesWorkspace({
       <CreateRoleDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onSubmit={handleCreate}
+        onCreateEmpty={handleCreate}
+        onImport={handleImport}
       />
     </RolesUiContext.Provider>
   )

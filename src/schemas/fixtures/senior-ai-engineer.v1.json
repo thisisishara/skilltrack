@@ -1,0 +1,353 @@
+{
+  "schema": "skilltrack.roadmap.v1",
+  "roadmap": {
+    "name": "Senior AI Engineer",
+    "description": "Comprehensive roadmap covering software engineering, AI/ML engineering, LLM systems, distributed systems, cloud, security, observability, testing, architecture, leadership, product thinking, and AI-assisted development."
+  },
+  "nodes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "title": "Software Engineering",
+      "icon": "code",
+      "position": { "x": 0, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000001", "title": "Write production-quality Python", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000002", "title": "Understand clean code and maintainability", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000003", "title": "Apply SOLID principles pragmatically", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000004", "title": "Use dependency injection effectively", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000005", "title": "Understand common design patterns", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000006", "title": "Design maintainable Python package structures", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000007", "title": "Write unit and integration tests", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000008", "title": "Understand async programming and event loops", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "title": "Python Engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000001",
+      "icon": "terminal",
+      "position": { "x": 280, "y": -180 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000009", "title": "Type hints and modern Python typing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000010", "title": "Context managers and resource lifecycle", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000011", "title": "Generators and iterators", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000012", "title": "Concurrency with asyncio", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000013", "title": "Packaging with pyproject.toml", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000014", "title": "Dependency management and reproducible environments", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "title": "Architecture & Design",
+      "parent_id": "00000000-0000-4000-8000-000000000001",
+      "icon": "network",
+      "position": { "x": 280, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000015", "title": "Understand modular monolith architecture", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000016", "title": "Understand microservices tradeoffs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000017", "title": "Understand layered architecture", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000018", "title": "Understand hexagonal/ports-and-adapters architecture", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000019", "title": "Use ADRs for important decisions", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000020", "title": "Create architecture diagrams", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000021", "title": "Perform architecture tradeoff analysis", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "title": "APIs & Backend Engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000001",
+      "icon": "server",
+      "position": { "x": 280, "y": 180 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000022", "title": "Design REST APIs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000023", "title": "API versioning", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000024", "title": "Authentication and authorization", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000025", "title": "Input validation and API contracts", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000026", "title": "Rate limiting", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000027", "title": "Idempotency", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "title": "Databases",
+      "icon": "database",
+      "position": { "x": 0, "y": 320 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000028", "title": "Relational database fundamentals", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000029", "title": "SQL", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000030", "title": "Indexes and query planning", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000031", "title": "Transactions and isolation levels", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000032", "title": "Constraints and referential integrity", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000033", "title": "Connection pooling", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000034", "title": "Caching strategies", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "title": "Distributed Systems",
+      "icon": "network",
+      "position": { "x": 0, "y": 640 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000035", "title": "Understand CAP theorem", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000036", "title": "Understand consistency models", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000037", "title": "Queues and asynchronous processing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000038", "title": "At-least-once delivery", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000039", "title": "Retries and exponential backoff", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000040", "title": "Dead-letter queues", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000041", "title": "Leases and visibility timeouts", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000042", "title": "Distributed locking", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000043", "title": "Idempotent consumers", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000044", "title": "Circuit breakers", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000045", "title": "Backpressure", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000046", "title": "Failure isolation", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "title": "Cloud Engineering",
+      "icon": "cloud",
+      "position": { "x": 0, "y": 960 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000047", "title": "AWS fundamentals", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000048", "title": "Azure fundamentals", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000049", "title": "IAM", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000050", "title": "Object storage", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000051", "title": "Serverless compute", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000052", "title": "Containers", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000053", "title": "Infrastructure as code", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000054", "title": "Cloud networking", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "title": "Docker & Deployment",
+      "parent_id": "00000000-0000-4000-8000-000000000007",
+      "icon": "box",
+      "position": { "x": 280, "y": 820 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000055", "title": "Build production Docker images", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000056", "title": "Multi-stage builds", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000057", "title": "Container security", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000058", "title": "Health checks", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000059", "title": "CI/CD deployment pipelines", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "title": "Security",
+      "icon": "shield",
+      "position": { "x": 640, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000060", "title": "OWASP Top 10", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000061", "title": "OWASP API Security Top 10", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000062", "title": "Authentication vs authorization", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000063", "title": "JWT security", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000064", "title": "Secrets management", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000065", "title": "Least privilege", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000066", "title": "Tenant isolation", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000067", "title": "Data encryption at rest and in transit", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000068", "title": "Prompt injection and LLM security", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000069", "title": "Supply-chain security", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "title": "Testing & Quality",
+      "icon": "flask-conical",
+      "position": { "x": 640, "y": 320 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000070", "title": "Unit testing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000071", "title": "Integration testing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000072", "title": "End-to-end testing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000073", "title": "Contract testing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000074", "title": "Load testing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000075", "title": "Failure injection", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000076", "title": "Regression testing", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "title": "Observability",
+      "icon": "chart-column",
+      "position": { "x": 640, "y": 640 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000077", "title": "Structured logging", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000078", "title": "Metrics", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000079", "title": "Distributed tracing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000080", "title": "Correlation IDs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000081", "title": "Trace IDs and spans", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000082", "title": "SLIs, SLOs and SLAs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000083", "title": "Alerting", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000084", "title": "Production debugging", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "title": "Machine Learning Engineering",
+      "icon": "brain",
+      "position": { "x": 1000, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000085", "title": "Supervised learning fundamentals", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000086", "title": "Evaluation metrics", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000087", "title": "Train/validation/test methodology", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000088", "title": "Data leakage", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000089", "title": "Model deployment", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000090", "title": "Model monitoring", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000091", "title": "Experiment tracking", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000013",
+      "title": "LLM Engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000012",
+      "icon": "bot",
+      "position": { "x": 1280, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000092", "title": "Transformer architecture", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000093", "title": "Tokenization", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000094", "title": "Inference parameters", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000095", "title": "Prompt engineering", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000096", "title": "Structured outputs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000097", "title": "Function/tool calling", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000098", "title": "Fine-tuning and LoRA/QLoRA", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000099", "title": "Model selection and routing", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000100", "title": "LLM cost and latency optimization", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
+      "title": "RAG",
+      "parent_id": "00000000-0000-4000-8000-000000000013",
+      "icon": "search",
+      "position": { "x": 1560, "y": 0 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000101", "title": "Document ingestion", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000102", "title": "Chunking strategies", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000103", "title": "Embedding models", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000104", "title": "Vector databases", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000105", "title": "Similarity search", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000106", "title": "Hybrid retrieval", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000107", "title": "Reranking", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000108", "title": "Retrieval evaluation", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000109", "title": "RAG observability", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000015",
+      "title": "AI Evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000013",
+      "icon": "chart-column",
+      "position": { "x": 1560, "y": 320 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000110", "title": "Define task-specific metrics", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000111", "title": "Build representative evaluation datasets", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000112", "title": "Regression evaluation", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000113", "title": "LLM-as-judge limitations", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000114", "title": "Error analysis", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000115", "title": "Cost/quality/latency tradeoffs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000116", "title": "Production feedback loops", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000016",
+      "title": "Agentic AI",
+      "parent_id": "00000000-0000-4000-8000-000000000013",
+      "icon": "bot",
+      "position": { "x": 1560, "y": 640 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000117", "title": "Tool use", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000118", "title": "Agent state", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000119", "title": "Planning and reasoning patterns", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000120", "title": "Human-in-the-loop systems", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000121", "title": "Agent evaluation", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000122", "title": "Agent security", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000017",
+      "title": "MLOps & AI Infrastructure",
+      "icon": "server",
+      "position": { "x": 1000, "y": 720 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000123", "title": "Model serving", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000124", "title": "GPU inference basics", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000125", "title": "Batch vs online inference", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000126", "title": "Model versioning", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000127", "title": "Feature/data pipelines", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000128", "title": "Drift and monitoring", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000018",
+      "title": "Product & Business Thinking",
+      "icon": "chart-column",
+      "position": { "x": 1000, "y": 1040 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000129", "title": "Translate product requirements into technical requirements", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000130", "title": "Define measurable success criteria", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000131", "title": "Understand ROI", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000132", "title": "Cost/quality tradeoffs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000133", "title": "Prioritization", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000134", "title": "Communicate technical tradeoffs to non-engineers", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000019",
+      "title": "Leadership & Team Engineering",
+      "icon": "users",
+      "position": { "x": 1000, "y": 1360 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000135", "title": "Conduct effective code reviews", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000136", "title": "Mentor engineers", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000137", "title": "Delegate effectively", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000138", "title": "Resolve technical disagreements", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000139", "title": "Run technical design discussions", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000140", "title": "Give actionable feedback", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000141", "title": "Manage delivery risk", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000142", "title": "Lead incident reviews", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000020",
+      "title": "Technical Communication",
+      "icon": "book",
+      "position": { "x": 1000, "y": 1680 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000143", "title": "Write technical specifications", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000144", "title": "Write ADRs", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000145", "title": "Document architecture decisions", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000146", "title": "Explain complex systems clearly", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000147", "title": "Write useful incident reports", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000021",
+      "title": "AI-Assisted Development",
+      "icon": "bot",
+      "position": { "x": 1360, "y": 1360 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000148", "title": "Use coding agents effectively", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000149", "title": "Write implementation-ready specifications", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000150", "title": "Use repository-level context effectively", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000151", "title": "Review AI-generated code critically", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000152", "title": "Use AI for test generation and analysis", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000153", "title": "Use AI for debugging without surrendering system understanding", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000154", "title": "Establish AI coding policies and guardrails", "completed": false }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000022",
+      "title": "Career & Engineering Growth",
+      "icon": "chart-column",
+      "position": { "x": 1360, "y": 1680 },
+      "checklist": [
+        { "id": "10000000-0000-4000-8000-000000000155", "title": "Understand senior engineer expectations", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000156", "title": "Build evidence of technical ownership", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000157", "title": "Build evidence of mentoring", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000158", "title": "Build evidence of architecture ownership", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000159", "title": "Build evidence of production ownership", "completed": false },
+        { "id": "10000000-0000-4000-8000-000000000160", "title": "Analyze senior job descriptions", "completed": false }
+      ]
+    }
+  ]
+}

@@ -70,13 +70,18 @@ export async function getByIdForUser(userId: string, roleId: string) {
   return data ? toRole(data) : null
 }
 
-export async function insert(userId: string, name: string) {
+export async function insert(
+  userId: string,
+  name: string,
+  description: string | null = null
+) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
     .from("roles")
     .insert({
       user_id: userId,
       name: displayRoleName(name),
+      description,
     })
     .select()
     .single()
@@ -93,6 +98,31 @@ export async function updateName(userId: string, roleId: string, name: string) {
   const { data, error } = await supabase
     .from("roles")
     .update({ name: displayRoleName(name) })
+    .eq("user_id", userId)
+    .eq("id", roleId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That role no longer exists.")
+  }
+
+  return toRole(data)
+}
+
+export async function updateDescription(
+  userId: string,
+  roleId: string,
+  description: string | null
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roles")
+    .update({ description })
     .eq("user_id", userId)
     .eq("id", roleId)
     .select()

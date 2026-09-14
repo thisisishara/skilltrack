@@ -118,6 +118,89 @@ export async function insert(input: {
   return toNode(data)
 }
 
+export async function insertMany(
+  rows: {
+    id: string
+    roleId: string
+    parentId: string | null
+    kind: NodeKind
+    title: string
+    description: string | null
+    notes: string | null
+    icon: string
+    handleKind: NodeHandleKind
+    incomingEdgeAnimated: boolean
+    positionX: number
+    positionY: number
+    sortOrder: number
+  }[]
+) {
+  if (rows.length === 0) {
+    return []
+  }
+
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roadmap_nodes")
+    .insert(
+      rows.map((row) => ({
+        id: row.id,
+        role_id: row.roleId,
+        parent_id: row.parentId,
+        kind: row.kind,
+        title: displayNodeTitle(row.title),
+        description: row.description,
+        notes: row.notes,
+        icon: row.icon,
+        handle_kind: row.handleKind,
+        incoming_edge_animated: row.incomingEdgeAnimated,
+        position_x: row.positionX,
+        position_y: row.positionY,
+        sort_order: row.sortOrder,
+      }))
+    )
+    .select()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  return (data ?? []).map(toNode)
+}
+
+export async function listExistingIds(ids: string[]) {
+  const found = new Set<string>()
+  if (ids.length === 0) {
+    return found
+  }
+
+  const supabase = getSupabaseServerClient()
+  for (let index = 0; index < ids.length; index += 100) {
+    const chunk = ids.slice(index, index + 100)
+    const { data, error } = await supabase
+      .from("roadmap_nodes")
+      .select("id")
+      .in("id", chunk)
+    if (error) {
+      throwFromSupabase(error)
+    }
+    for (const row of data ?? []) {
+      found.add(row.id)
+    }
+  }
+
+  return found
+}
+
+export async function deleteAllForRole(roleId: string) {
+  const supabase = getSupabaseServerClient()
+  const { error } = await supabase.from("roadmap_nodes").delete().eq("role_id", roleId)
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+}
+
 export async function updateDetails(
   roleId: string,
   nodeId: string,

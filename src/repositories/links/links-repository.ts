@@ -71,6 +71,59 @@ export async function insert(input: {
   return toLink(data)
 }
 
+export async function insertMany(
+  rows: {
+    id: string
+    nodeId: string
+    label: string
+    url: string
+  }[]
+) {
+  if (rows.length === 0) {
+    return []
+  }
+
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("node_links")
+    .insert(
+      rows.map((row) => ({
+        id: row.id,
+        node_id: row.nodeId,
+        label: displayLinkLabel(row.label),
+        url: normalizeLinkUrl(row.url),
+      }))
+    )
+    .select()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  return (data ?? []).map(toLink)
+}
+
+export async function listExistingIds(ids: string[]) {
+  const found = new Set<string>()
+  if (ids.length === 0) {
+    return found
+  }
+
+  const supabase = getSupabaseServerClient()
+  for (let index = 0; index < ids.length; index += 100) {
+    const chunk = ids.slice(index, index + 100)
+    const { data, error } = await supabase.from("node_links").select("id").in("id", chunk)
+    if (error) {
+      throwFromSupabase(error)
+    }
+    for (const row of data ?? []) {
+      found.add(row.id)
+    }
+  }
+
+  return found
+}
+
 export async function update(
   nodeId: string,
   linkId: string,

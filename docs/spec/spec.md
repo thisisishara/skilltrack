@@ -270,7 +270,7 @@ Required environment variables:
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
-ALLOWED_GITHUB_USERNAME=
+ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 ```
 
 The exact production redirect/proxy configuration should follow the chosen Auth.js deployment configuration for Vercel.
@@ -329,10 +329,10 @@ The unauthenticated login screen is a shadcn `Card` with Inter typography, Lucid
 
 ## 6.2 Allowed User
 
-The MVP uses an allow-list containing one configured GitHub username. if a wildcard * is there, any account is allowed.
+The MVP uses an allow-list of configured GitHub usernames. If a wildcard `*` is present, any account is allowed.
 
 ```env
-ALLOWED_GITHUB_USERNAME=thisisishara
+ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 ```
 
 The application must never rely on a client-provided username for authorization.

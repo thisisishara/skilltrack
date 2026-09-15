@@ -18,13 +18,13 @@ Required environment variables:
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
-ALLOWED_GITHUB_USERNAME=
+ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 AUTH_TRUST_HOST=true
 ```
 
 Rules:
 
-- `ALLOWED_GITHUB_USERNAME` is one GitHub login, or `*` to allow any GitHub account.
+- `ALLOWED_GITHUB_USERNAMES` is a comma-separated list of GitHub logins, or `*` to allow any GitHub account.
 - Sessions are validated server-side; cookies are secure.
 - Production callback/proxy follows Auth.js + Vercel guidance.
 - GitHub username and GitHub user id are stored on the session after allow-list checks.

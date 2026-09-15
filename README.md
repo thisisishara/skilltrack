@@ -18,7 +18,7 @@ Personal skill-roadmap tracker. GitHub OAuth signs you in; two Supabase projects
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
-ALLOWED_GITHUB_USERNAME=
+ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 AUTH_TRUST_HOST=true
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -27,7 +27,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 Optional helpers such as `SUPABASE_PROD_URL`, `SUPABASE_PROD_ANON_KEY`, and `SUPABASE_PROD_SERVICE_ROLE_KEY` can live in `.env.local` as a notepad for the production project. The Next.js app never reads those names. Vercel Production must get the **same unsuffixed names**, with the prod values copied in.
 
-`ALLOWED_GITHUB_USERNAME` is a single GitHub login. Use `*` to allow any GitHub account.
+`ALLOWED_GITHUB_USERNAMES` is a comma-separated list of GitHub logins. Use `*` to allow any GitHub account.
 
 `AUTH_TRUST_HOST=true` is required on Vercel so Auth.js trusts the forwarded host. The app also sets `trustHost: true` in Auth.js.
 

@@ -1,13 +1,18 @@
 export function isGithubUsernameAllowed(
   username: string | null | undefined
 ): boolean {
-  const allowed = process.env.ALLOWED_GITHUB_USERNAME?.trim()
+  const raw = process.env.ALLOWED_GITHUB_USERNAMES?.trim()
 
-  if (!allowed) {
+  if (!raw) {
     return false
   }
 
-  if (allowed === "*") {
+  const allowed = raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+  if (allowed.includes("*")) {
     return Boolean(username)
   }
 
@@ -15,5 +20,6 @@ export function isGithubUsernameAllowed(
     return false
   }
 
-  return username.toLowerCase() === allowed.toLowerCase()
+  const lowered = username.toLowerCase()
+  return allowed.some((entry) => entry.toLowerCase() === lowered)
 }

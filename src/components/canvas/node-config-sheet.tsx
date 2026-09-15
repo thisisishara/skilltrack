@@ -6,7 +6,10 @@ import { toast } from "sonner"
 
 import type { NodeActionResult } from "@/application/nodes/actions"
 import { IconPicker } from "@/components/canvas/icon-picker"
-import { NodeChecklistSection } from "@/components/canvas/node-checklist-section"
+import {
+  NodeChecklistSection,
+  type NodeChecklistCopy,
+} from "@/components/canvas/node-checklist-section"
 import { NodeHandleFields } from "@/components/canvas/node-handle-fields"
 import { NodeLinksSection } from "@/components/canvas/node-links-section"
 import { ProgressStatusBadge } from "@/components/canvas/progress-status-badge"
@@ -77,6 +80,11 @@ export function NodeConfigSheet({
   onCreateLink,
   onUpdateLink,
   onDeleteLink,
+  showChecklist = true,
+  showHandleKind = true,
+  subtitle,
+  checklistHeading = "Evidence checklist",
+  checklistCopy,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -104,6 +112,11 @@ export function NodeConfigSheet({
   onCreateLink: (input: { label: string; url: string }) => string | null
   onUpdateLink: (link: NodeLink, label: string, url: string) => string | null
   onDeleteLink: (linkId: string) => void
+  showChecklist?: boolean
+  showHandleKind?: boolean
+  subtitle?: string
+  checklistHeading?: string
+  checklistCopy?: NodeChecklistCopy
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -265,7 +278,7 @@ export function NodeConfigSheet({
                     {node.title}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Configure evidence, notes, and links for this skill.
+                    {subtitle ?? "Configure evidence, notes, and links for this skill."}
                   </p>
                 </div>
                 <Button
@@ -279,23 +292,29 @@ export function NodeConfigSheet({
                 </Button>
               </div>
               <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <ProgressStatusBadge
-                    status={nodeProgress.status}
-                    percent={nodeProgress.percent}
-                  />
-                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                    {nodeProgress.completed}/{nodeProgress.total} evidence
-                  </span>
-                </div>
-                <Progress value={nodeProgress.percent}>
-                  <ProgressLabel className="font-mono text-xs">Node</ProgressLabel>
-                  <ProgressValue className="font-mono text-xs">
-                    {() => `${nodeProgress.percent}%`}
-                  </ProgressValue>
-                </Progress>
+                {showChecklist ? (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ProgressStatusBadge
+                        status={nodeProgress.status}
+                        percent={nodeProgress.percent}
+                      />
+                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                        {nodeProgress.completed}/{nodeProgress.total} evidence
+                      </span>
+                    </div>
+                    <Progress value={nodeProgress.percent}>
+                      <ProgressLabel className="font-mono text-xs">Node</ProgressLabel>
+                      <ProgressValue className="font-mono text-xs">
+                        {() => `${nodeProgress.percent}%`}
+                      </ProgressValue>
+                    </Progress>
+                  </>
+                ) : null}
                 <Progress value={subtreeProgress.percent}>
-                  <ProgressLabel className="font-mono text-xs">Subtree</ProgressLabel>
+                  <ProgressLabel className="font-mono text-xs">
+                    {showChecklist ? "Subtree" : "Overall"}
+                  </ProgressLabel>
                   <ProgressValue className="font-mono text-xs">
                     {() => `${subtreeProgress.percent}%`}
                   </ProgressValue>
@@ -345,15 +364,17 @@ export function NodeConfigSheet({
                         }}
                       />
                     </Field>
-                    <NodeHandleFields
-                      handleKind={handleKind}
-                      onHandleKindChange={(next) => {
-                        setHandleKind(next)
-                        persistDetailsNow({ handleKind: next })
-                      }}
-                      allowInput={!nodes.some((item) => item.parentId === node.id)}
-                      allowOutput={!node.parentId}
-                    />
+                    {showHandleKind ? (
+                      <NodeHandleFields
+                        handleKind={handleKind}
+                        onHandleKindChange={(next) => {
+                          setHandleKind(next)
+                          persistDetailsNow({ handleKind: next })
+                        }}
+                        allowInput={!nodes.some((item) => item.parentId === node.id)}
+                        allowOutput={!node.parentId}
+                      />
+                    ) : null}
                     <Field>
                       <FieldLabel>Parent</FieldLabel>
                       <Combobox
@@ -431,18 +452,23 @@ export function NodeConfigSheet({
                     </Field>
                   )}
                 </section>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-sm font-medium">Evidence checklist</h3>
-                  <NodeChecklistSection
-                    items={checklistItems}
-                    onToggle={onToggleChecklist}
-                    onCreate={onCreateChecklist}
-                    onUpdate={onUpdateChecklist}
-                    onDelete={onDeleteChecklist}
-                    onReorder={onReorderChecklist}
-                  />
-                </section>
+                {showChecklist ? (
+                  <>
+                    <Separator />
+                    <section className="flex flex-col gap-3">
+                      <h3 className="text-sm font-medium">{checklistHeading}</h3>
+                      <NodeChecklistSection
+                        items={checklistItems}
+                        onToggle={onToggleChecklist}
+                        onCreate={onCreateChecklist}
+                        onUpdate={onUpdateChecklist}
+                        onDelete={onDeleteChecklist}
+                        onReorder={onReorderChecklist}
+                        copy={checklistCopy}
+                      />
+                    </section>
+                  </>
+                ) : null}
                 <Separator />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Links</h3>

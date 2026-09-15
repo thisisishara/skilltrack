@@ -1,6 +1,7 @@
 import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
+import { logEvent } from "@/lib/observability/log"
 import {
   normalizeNodeHandleKind,
   type NodeHandleKind,
@@ -34,12 +35,9 @@ function toNode(row: NodeRow): RoadmapNode {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  console.error(
-    JSON.stringify({
-      event: "database.roadmap_nodes.failed",
-      code: error?.code ?? null,
-    })
-  )
+  logEvent("error", "database.roadmap_nodes.failed", {
+    code: error?.code ?? null,
+  })
   throw new ApplicationError("database", "Could not update roadmap nodes.", {
     cause: error,
   })

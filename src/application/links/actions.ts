@@ -7,12 +7,9 @@ import {
   deleteNodeLink,
   updateNodeLink,
 } from "@/application/links/links-service"
-import {
-  ApplicationError,
-  type ApplicationErrorCode,
-  isApplicationError,
-} from "@/domain/errors"
+import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { NodeLink } from "@/domain/links/types"
+import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
 export type LinkActionResult =
@@ -21,15 +18,7 @@ export type LinkActionResult =
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 function fail(error: unknown): LinkActionResult {
-  if (isApplicationError(error)) {
-    return { ok: false, code: error.code, message: error.message }
-  }
-
-  return {
-    ok: false,
-    code: "unexpected",
-    message: "Something went wrong. Try again.",
-  }
+  return failAction(error, "links.action_failed")
 }
 
 function revalidateRole(roleId: string) {

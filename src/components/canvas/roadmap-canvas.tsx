@@ -91,6 +91,7 @@ import {
 } from "@/domain/nodes/layout"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
+import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { downloadTextFile } from "@/lib/roadmap/download"
 import {
   incomingEdgeAppearance,
@@ -262,19 +263,6 @@ function isSelectAllShortcut(event: KeyboardEvent) {
   )
 }
 
-function isEditableKeyboardTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  if (target.isContentEditable) {
-    return true
-  }
-
-  const tag = target.tagName
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
-}
-
 function selectedRootIds(nodes: RoadmapNode[], selectedIds: string[]) {
   const selected = new Set(selectedIds)
   const byId = new Map(nodes.map((node) => [node.id, node]))
@@ -329,15 +317,17 @@ function RoadmapCanvasInner({
   nodes: serverNodes,
   checklistItems: serverItems,
   links: serverLinks,
+  focusNodeId,
 }: {
   roleId: string
   roleName: string
   nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
   links: NodeLink[]
+  focusNodeId?: string
 }) {
   const router = useRouter()
-  const { getNodes } = useReactFlow()
+  const { getNodes, fitView } = useReactFlow()
   const { resolvedTheme } = useTheme()
   const [themeReady, setThemeReady] = useState(false)
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
@@ -361,6 +351,7 @@ function RoadmapCanvasInner({
   const [importSeedJson, setImportSeedJson] = useState("")
   const [importSeedError, setImportSeedError] = useState<string | null>(null)
   const importDropLock = useRef(false)
+  const focusedNodeRef = useRef<string | null>(null)
 
   useEffect(() => {
     // Theme is read after mount so SSR and the first client paint match.
@@ -419,6 +410,36 @@ function RoadmapCanvasInner({
       }
     }
   }, [configNode, configNodeId, nodes])
+
+  useEffect(() => {
+    if (!focusNodeId || focusedNodeRef.current === focusNodeId) {
+      return
+    }
+
+    const node = nodes.find((item) => item.id === focusNodeId)
+    if (!node) {
+      return
+    }
+
+    focusedNodeRef.current = focusNodeId
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedIds([focusNodeId])
+    setFlowNodes((current) =>
+      current.map((item) => ({ ...item, selected: item.id === focusNodeId }))
+    )
+    setConfigNodeId(isSkillNode(node) ? focusNodeId : null)
+
+    const frame = requestAnimationFrame(() => {
+      void fitView({
+        nodes: [{ id: focusNodeId }],
+        padding: 0.45,
+        duration: 250,
+      })
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [fitView, focusNodeId, nodes])
 
   const selectedItems = useMemo(
     () => items.filter((item) => item.nodeId === configNodeId),
@@ -1462,12 +1483,14 @@ export function RoadmapCanvas({
   nodes,
   checklistItems,
   links,
+  focusNodeId,
 }: {
   roleId: string
   roleName: string
   nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
   links: NodeLink[]
+  focusNodeId?: string
 }) {
   return (
     <ReactFlowProvider>
@@ -1477,6 +1500,7 @@ export function RoadmapCanvas({
         nodes={nodes}
         checklistItems={checklistItems}
         links={links}
+        focusNodeId={focusNodeId}
       />
     </ReactFlowProvider>
   )

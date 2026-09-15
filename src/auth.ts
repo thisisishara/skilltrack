@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
 
 import { isGithubUsernameAllowed } from "@/lib/auth/allowlist"
+import { logEvent } from "@/lib/observability/log"
 
 function githubLoginFromProfile(profile: unknown): string | undefined {
   if (
@@ -42,7 +43,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         pathname === "/login" ||
         pathname === "/access-denied" ||
         pathname === "/skilltrack-icon.png" ||
-        pathname.startsWith("/favicon/")
+        pathname.startsWith("/favicon/") ||
+        pathname.startsWith("/api/e2e/")
 
       if (isPublicPath) {
         if (isLoggedIn && pathname === "/login") {
@@ -58,12 +60,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const githubUsername = githubLoginFromProfile(profile)
 
       if (!isGithubUsernameAllowed(githubUsername)) {
-        console.warn(
-          JSON.stringify({
-            event: "auth.denied",
-            githubUsername: githubUsername ?? null,
-          })
-        )
+        logEvent("warn", "auth.denied", {
+          githubUsername: githubUsername ?? null,
+        })
         return false
       }
 

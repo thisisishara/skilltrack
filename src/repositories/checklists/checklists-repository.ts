@@ -5,6 +5,7 @@ import { displayChecklistTitle } from "@/domain/checklists/title"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { logEvent } from "@/lib/observability/log"
 
 type ChecklistRow = Database["public"]["Tables"]["checklist_items"]["Row"]
 
@@ -23,12 +24,9 @@ function toItem(row: ChecklistRow): ChecklistItem {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  console.error(
-    JSON.stringify({
-      event: "database.checklist_items.failed",
-      code: error?.code ?? null,
-    })
-  )
+  logEvent("error", "database.checklist_items.failed", {
+    code: error?.code ?? null,
+  })
   throw new ApplicationError("database", "Could not update checklist items.", {
     cause: error,
   })

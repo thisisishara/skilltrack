@@ -5,6 +5,7 @@ import { displayRoleName } from "@/domain/roles/name"
 import type { Role } from "@/domain/roles/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { logEvent } from "@/lib/observability/log"
 
 type RoleRow = Database["public"]["Tables"]["roles"]["Row"]
 
@@ -28,12 +29,9 @@ function throwFromSupabase(error: { code?: string; message?: string } | null): n
     )
   }
 
-  console.error(
-    JSON.stringify({
-      event: "database.roles.failed",
-      code: error?.code ?? null,
-    })
-  )
+  logEvent("error", "database.roles.failed", {
+    code: error?.code ?? null,
+  })
   throw new ApplicationError("database", "Could not update roles.", {
     cause: error,
   })

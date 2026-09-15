@@ -5,6 +5,7 @@ import { ensureApplicationUser } from "@/application/users/users-service"
 import { auth } from "@/auth"
 import { ApplicationError } from "@/domain/errors"
 import type { ApplicationUser } from "@/domain/users/types"
+import { logFailure } from "@/lib/observability/log"
 
 export const requireSession = cache(async () => {
   const session = await auth()
@@ -25,6 +26,7 @@ export const requireSession = cache(async () => {
       avatarUrl: session.user.image,
     })
   } catch (error) {
+    logFailure("auth.account_load_failed", error)
     if (error instanceof ApplicationError) {
       throw error
     }

@@ -4,6 +4,7 @@ import { ApplicationError } from "@/domain/errors"
 import type { ApplicationUser, GithubProfileInput } from "@/domain/users/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { logEvent } from "@/lib/observability/log"
 
 type UserRow = Database["public"]["Tables"]["users"]["Row"]
 
@@ -36,11 +37,7 @@ export async function upsertByGithubProfile(input: GithubProfileInput) {
     .single()
 
   if (error || !data) {
-    console.error(
-      JSON.stringify({
-        event: "database.users.upsert_failed",
-      })
-    )
+    logEvent("error", "database.users.upsert_failed")
     throw new ApplicationError(
       "database",
       "Could not load your SkillTrack account.",

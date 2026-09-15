@@ -1,7 +1,7 @@
 {
   "project": "SkillTrack",
   "spec": "docs/spec/spec.md",
-  "updated": "2026-09-14",
+  "updated": "2026-09-16",
   "statusValues": [
     "pending",
     "done"
@@ -205,6 +205,26 @@
             {
               "id": "E01-P06-S05",
               "title": "Add login/dashboard Skeleton while session restores",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E01-P07",
+          "title": "Light and dark color modes",
+          "status": "done",
+          "spec": [
+            "§5 UI System"
+          ],
+          "subtasks": [
+            {
+              "id": "E01-P07-S01",
+              "title": "Use next-themes class strategy with existing semantic light/dark tokens",
+              "status": "done"
+            },
+            {
+              "id": "E01-P07-S02",
+              "title": "Add a Light / Dark / System toggle in dashboard and login chrome",
               "status": "done"
             }
           ]
@@ -1232,12 +1252,12 @@
         "§38",
         "§40"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E09-P01",
           "title": "Command search",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§35"
           ],
@@ -1245,19 +1265,19 @@
             {
               "id": "E09-P01-S01",
               "title": "Search roles, nodes, and jobs via Command",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E09-P01-S02",
               "title": "Zero hits use Empty with clear-search action",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E09-P02",
           "title": "Typed error presentation",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§38"
           ],
@@ -1265,24 +1285,24 @@
             {
               "id": "E09-P02-S01",
               "title": "Map validation, auth, not found, conflict, database, unexpected errors",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E09-P02-S02",
               "title": "Field errors via Field data-invalid; page errors via Alert; mutations via sonner",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E09-P02-S03",
               "title": "Do not leak internal database details to the client",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E09-P03",
           "title": "MVP structured logging",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§40"
           ],
@@ -1295,12 +1315,12 @@
             {
               "id": "E09-P03-S02",
               "title": "Log import failures and important database failures",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E09-P03-S03",
               "title": "Structured server-side errors without secrets",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }
@@ -1314,12 +1334,12 @@
         "§41",
         "§49"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E10-P01",
           "title": "Unit tests for domain rules",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§41 Unit Tests",
             "§29"
@@ -1328,29 +1348,29 @@
             {
               "id": "E10-P01-S01",
               "title": "Progress calculations",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P01-S02",
               "title": "Hierarchy, cycle detection, name normalization",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P01-S03",
               "title": "Import validation and deterministic skill matching",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P01-S04",
               "title": "GitHub allow-list helper",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E10-P02",
           "title": "Integration tests",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§41 Integration Tests"
           ],
@@ -1358,24 +1378,24 @@
             {
               "id": "E10-P02-S01",
               "title": "Repository operations and RLS isolation",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P02-S02",
               "title": "Role/node/checklist persistence",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P02-S03",
               "title": "Import transaction rollback and export round-trip",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E10-P03",
           "title": "End-to-end tests",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§41 End-to-End Tests"
           ],
@@ -1383,12 +1403,12 @@
             {
               "id": "E10-P03-S01",
               "title": "Login → create role → node → checklist → progress → reload",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E10-P03-S02",
               "title": "Import JSON preserves hierarchy, checklist, and progress",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }

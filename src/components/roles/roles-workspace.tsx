@@ -4,16 +4,19 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { createRoleAction } from "@/application/roles/actions"
 import { importRoadmapAction } from "@/application/import-export/actions"
+import { adjacentRoleId, roleHrefForCurrentView } from "@/domain/roles/cycle"
 import type { Role } from "@/domain/roles/types"
+import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
 import { CreateRoleDialog } from "@/components/roles/create-role-dialog"
@@ -43,6 +46,7 @@ export function RolesWorkspace({
   children: ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const params = useParams<{ roleId?: string }>()
   const [createOpen, setCreateOpen] = useState(false)
 
@@ -62,6 +66,36 @@ export function RolesWorkspace({
   const openCreate = useCallback(() => {
     setCreateOpen(true)
   }, [])
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) {
+        return
+      }
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+        return
+      }
+      if (event.repeat || isEditableKeyboardTarget(event.target)) {
+        return
+      }
+
+      event.preventDefault()
+      const nextId = adjacentRoleId(
+        roles.map((role) => role.id),
+        activeRole?.id,
+        event.key === "ArrowDown" ? 1 : -1
+      )
+      if (!nextId) {
+        return
+      }
+
+      writeStoredActiveRoleId(nextId)
+      router.push(roleHrefForCurrentView(nextId, pathname, activeRole?.id))
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [activeRole?.id, pathname, roles, router])
 
   async function handleCreate(name: string) {
     const result = await createRoleAction(name)

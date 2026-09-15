@@ -18,6 +18,16 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import type { ChecklistItem } from "@/domain/checklists/types"
 
+export type NodeChecklistCopy = {
+  emptyTitle?: string
+  emptyDescription?: string
+  emptyAddLabel?: string
+  addedToast?: string
+  titleFieldLabel?: string
+  titlePlaceholder?: string
+  addButtonLabel?: string
+}
+
 export function NodeChecklistSection({
   items,
   onToggle,
@@ -25,6 +35,7 @@ export function NodeChecklistSection({
   onUpdate,
   onDelete,
   onReorder,
+  copy,
 }: {
   items: ChecklistItem[]
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
@@ -34,7 +45,17 @@ export function NodeChecklistSection({
   onUpdate: (item: ChecklistItem, title: string, description: string) => void
   onDelete: (itemId: string) => void
   onReorder: (orderedIds: string[]) => void
+  copy?: NodeChecklistCopy
 }) {
+  const {
+    emptyTitle = "No evidence items",
+    emptyDescription = "Add checklist items to track progress for this node.",
+    emptyAddLabel = "Add a checklist item",
+    addedToast = "Checklist item added",
+    titleFieldLabel = "Item title",
+    titlePlaceholder = "Understand CAP theorem",
+    addButtonLabel = "Add item",
+  } = copy ?? {}
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [adding, setAdding] = useState(false)
@@ -49,7 +70,7 @@ export function NodeChecklistSection({
       return
     }
 
-    toast.success("Checklist item added")
+    toast.success(addedToast)
     setTitle("")
     setDescription("")
     setAdding(false)
@@ -93,14 +114,12 @@ export function NodeChecklistSection({
           <EmptyMedia variant="icon">
             <ListChecks />
           </EmptyMedia>
-          <EmptyTitle>No evidence items</EmptyTitle>
-          <EmptyDescription>
-            Add checklist items to track progress for this node.
-          </EmptyDescription>
+          <EmptyTitle>{emptyTitle}</EmptyTitle>
+          <EmptyDescription>{emptyDescription}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button type="button" size="sm" onClick={() => setAdding(true)}>
-            Add a checklist item
+            {emptyAddLabel}
           </Button>
         </EmptyContent>
       </Empty>
@@ -127,12 +146,12 @@ export function NodeChecklistSection({
         <form onSubmit={handleAdd} className="rounded-lg border p-3">
           <FieldGroup className="gap-3">
             <Field>
-              <FieldLabel htmlFor="checklist-title">Item title</FieldLabel>
+              <FieldLabel htmlFor="checklist-title">{titleFieldLabel}</FieldLabel>
               <Input
                 id="checklist-title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Understand CAP theorem"
+                placeholder={titlePlaceholder}
                 autoComplete="off"
               />
             </Field>
@@ -168,7 +187,7 @@ export function NodeChecklistSection({
       ) : (
         <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
           <Plus data-icon="inline-start" />
-          Add item
+          {addButtonLabel}
         </Button>
       )}
     </div>

@@ -5,6 +5,7 @@ import { displayLinkLabel, normalizeLinkUrl } from "@/domain/links/url"
 import type { NodeLink } from "@/domain/links/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { logEvent } from "@/lib/observability/log"
 
 type LinkRow = Database["public"]["Tables"]["node_links"]["Row"]
 
@@ -20,12 +21,9 @@ function toLink(row: LinkRow): NodeLink {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  console.error(
-    JSON.stringify({
-      event: "database.node_links.failed",
-      code: error?.code ?? null,
-    })
-  )
+  logEvent("error", "database.node_links.failed", {
+    code: error?.code ?? null,
+  })
   throw new ApplicationError("database", "Could not update node links.", {
     cause: error,
   })

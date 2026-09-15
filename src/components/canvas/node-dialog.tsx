@@ -33,11 +33,24 @@ export type NodeDialogMode =
   | { kind: "create"; parentId: string | null }
   | { kind: "edit"; nodeId: string; title: string; description: string | null; icon: string }
 
+export type NodeDialogCopy = {
+  createTitle?: string
+  createDescription?: string
+  childTitle?: string
+  childDescription?: string
+  editTitle?: string
+  editDescription?: string
+  titlePlaceholder?: string
+  descriptionPlaceholder?: string
+  submitCreateLabel?: string
+}
+
 export function NodeDialog({
   open,
   onOpenChange,
   mode,
   onSubmit,
+  copy,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -48,7 +61,19 @@ export function NodeDialog({
     icon: string
     handleKind: NodeHandleKind
   }) => Promise<NodeActionResult>
+  copy?: NodeDialogCopy
 }) {
+  const {
+    createTitle = "Create node",
+    createDescription = "Add a root node to this roadmap.",
+    childTitle = "Add child",
+    childDescription = "Create a child node under the selected parent.",
+    editTitle = "Edit node",
+    editDescription = "Update this node without changing its identity or progress.",
+    titlePlaceholder = "Retrieval",
+    descriptionPlaceholder = "Optional notes about this skill",
+    submitCreateLabel = "Create node",
+  } = copy ?? {}
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState(DEFAULT_NODE_ICON)
@@ -107,13 +132,9 @@ export function NodeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit node" : isChild ? "Add child" : "Create node"}</DialogTitle>
+          <DialogTitle>{isEdit ? editTitle : isChild ? childTitle : createTitle}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update this node without changing its identity or progress."
-              : isChild
-                ? "Create a child node under the selected parent."
-                : "Add a root node to this roadmap."}
+            {isEdit ? editDescription : isChild ? childDescription : createDescription}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
@@ -124,7 +145,7 @@ export function NodeDialog({
                 id="node-title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Retrieval"
+                placeholder={titlePlaceholder}
                 autoComplete="off"
                 aria-invalid={error ? true : undefined}
               />
@@ -136,7 +157,7 @@ export function NodeDialog({
                 id="node-description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Optional notes about this skill"
+                placeholder={descriptionPlaceholder}
               />
             </Field>
             <Field>
@@ -159,7 +180,7 @@ export function NodeDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : isEdit ? "Save" : "Create node"}
+              {pending ? "Saving…" : isEdit ? "Save" : submitCreateLabel}
             </Button>
           </DialogFooter>
         </form>

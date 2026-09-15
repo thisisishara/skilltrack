@@ -7,12 +7,9 @@ import {
   deleteRole,
   renameRole,
 } from "@/application/roles/roles-service"
-import {
-  ApplicationError,
-  type ApplicationErrorCode,
-  isApplicationError,
-} from "@/domain/errors"
+import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { Role } from "@/domain/roles/types"
+import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
 export type RoleActionResult =
@@ -21,15 +18,7 @@ export type RoleActionResult =
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 function fail(error: unknown): RoleActionResult {
-  if (isApplicationError(error)) {
-    return { ok: false, code: error.code, message: error.message }
-  }
-
-  return {
-    ok: false,
-    code: "unexpected",
-    message: "Something went wrong. Try again.",
-  }
+  return failAction(error, "roles.action_failed")
 }
 
 function revalidateRoles() {

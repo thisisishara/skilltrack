@@ -23,6 +23,7 @@ export const CHANGELOG: ChangelogRelease[] = [
         items: [
           "GitHub OAuth sign-in and a dashboard shell with a collapsible sidebar.",
           "Role CRUD, a searchable role switcher, and a persisted active role.",
+          "Ctrl/⌘ + ↑ / ↓ cycles the role list while keeping canvas, tree, or settings.",
           "React Flow skill roadmaps with nodes, labels, hierarchy, and Lucide icons.",
           "Evidence checklists, links, notes, and derived node and roadmap progress.",
           "Canonical skilltrack.roadmap.v1 JSON import and export, including file drop.",

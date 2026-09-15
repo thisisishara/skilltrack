@@ -1,6 +1,7 @@
 import Image from "next/image"
 
 import { SignInButton } from "@/components/auth/sign-in-button"
+import { ModeToggle } from "@/components/layout/mode-toggle"
 import {
   Card,
   CardContent,
@@ -10,7 +11,10 @@ import {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-full flex-1 items-center justify-center p-6">
+    <main className="relative flex min-h-full flex-1 items-center justify-center p-6">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <Card className="w-full max-w-sm gap-6 py-6">
         <CardContent className="flex flex-col items-center gap-6">
           <div className="flex flex-col items-center gap-3 text-center">

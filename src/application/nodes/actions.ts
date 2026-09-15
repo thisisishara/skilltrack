@@ -9,12 +9,9 @@ import {
   reparentNode,
   updateNodeDetails,
 } from "@/application/nodes/nodes-service"
-import {
-  ApplicationError,
-  type ApplicationErrorCode,
-  isApplicationError,
-} from "@/domain/errors"
+import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { RoadmapNode } from "@/domain/nodes/types"
+import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
 export type NodeActionResult =
@@ -23,15 +20,7 @@ export type NodeActionResult =
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 function fail(error: unknown): NodeActionResult {
-  if (isApplicationError(error)) {
-    return { ok: false, code: error.code, message: error.message }
-  }
-
-  return {
-    ok: false,
-    code: "unexpected",
-    message: "Something went wrong. Try again.",
-  }
+  return failAction(error, "nodes.action_failed")
 }
 
 function revalidateRole(roleId: string) {

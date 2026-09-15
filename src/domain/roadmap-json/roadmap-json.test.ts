@@ -182,6 +182,13 @@ describe("parseRoadmapJson", () => {
     )
   })
 
+  it("rejects an empty roadmap name", () => {
+    expectValidation(
+      JSON.stringify({ schema: "skilltrack.roadmap.v1", roadmap: { name: "  " }, nodes: [] }),
+      "roadmap.name cannot be empty"
+    )
+  })
+
   it("rejects a malformed link url", () => {
     expectValidation(
       JSON.stringify({

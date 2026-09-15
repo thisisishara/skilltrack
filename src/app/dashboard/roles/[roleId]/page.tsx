@@ -17,10 +17,13 @@ import { requireSession } from "@/lib/auth/session"
 
 export default async function RoleDashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ roleId: string }>
+  searchParams: Promise<{ node?: string }>
 }) {
   const { roleId } = await params
+  const { node: focusNodeId } = await searchParams
   const { applicationUser } = await requireSession()
   const role = await getRoleForUser(applicationUser.id, roleId)
 
@@ -58,6 +61,7 @@ export default async function RoleDashboardPage({
         nodes={nodes}
         checklistItems={checklistItems}
         links={links}
+        focusNodeId={focusNodeId}
       />
     </div>
   )

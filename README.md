@@ -76,7 +76,9 @@ Open [http://localhost:3000](http://localhost:3000). Unauthenticated users are s
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs **checks only**: lint, typecheck, unit tests, a placeholder integration skip until E10, a committed-migrations file check, and `next build`. It does **not** deploy and does **not** `supabase db push`.
+GitHub Actions (`.github/workflows/ci.yml`) runs **checks only**: lint, typecheck, unit tests, integration tests (skipped without a live Supabase URL), Playwright (login page unless `E2E_SECRET` is set), a committed-migrations file check, and `next build`. It does **not** deploy and does **not** `supabase db push`.
+
+`npm run test:integration` loads `.env.local` and talks to skilltrack-dev when `NEXT_PUBLIC_SUPABASE_URL` is not the CI placeholder. `npm run test:e2e` starts the app and covers `/login`; set `E2E_SECRET` locally to also run create-role and import flows.
 
 Apply schema to **skilltrack-dev** and **skilltrack-prod** with `npm run db:push` as in [Apply database migrations](#apply-database-migrations).
 

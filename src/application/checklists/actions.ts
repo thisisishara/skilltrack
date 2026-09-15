@@ -9,12 +9,9 @@ import {
   setChecklistItemCompleted,
   updateChecklistItem,
 } from "@/application/checklists/checklists-service"
-import {
-  ApplicationError,
-  type ApplicationErrorCode,
-  isApplicationError,
-} from "@/domain/errors"
+import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { ChecklistItem } from "@/domain/checklists/types"
+import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
 export type ChecklistActionResult =
@@ -23,15 +20,7 @@ export type ChecklistActionResult =
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 function fail(error: unknown): ChecklistActionResult {
-  if (isApplicationError(error)) {
-    return { ok: false, code: error.code, message: error.message }
-  }
-
-  return {
-    ok: false,
-    code: "unexpected",
-    message: "Something went wrong. Try again.",
-  }
+  return failAction(error, "checklists.action_failed")
 }
 
 function revalidateRole(roleId: string) {

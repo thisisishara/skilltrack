@@ -1402,12 +1402,12 @@
         "§42",
         "§50 Phase 8"
       ],
-      "status": "pending",
+      "status": "done",
       "pbis": [
         {
           "id": "E11-P01",
           "title": "PR pipeline",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§42"
           ],
@@ -1415,19 +1415,19 @@
             {
               "id": "E11-P01-S01",
               "title": "Lint, typecheck, unit tests, integration tests, build on PRs",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E11-P01-S02",
               "title": "Apply Supabase migrations from committed files",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E11-P02",
           "title": "Vercel production deploy",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§5 Hosting",
             "§50 Phase 8"
@@ -1436,24 +1436,24 @@
             {
               "id": "E11-P02-S01",
               "title": "Deploy app to Vercel free tier",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E11-P02-S02",
               "title": "Set production env vars and GitHub OAuth callback",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E11-P02-S03",
               "title": "Point Supabase free tier at production",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
         {
           "id": "E11-P03",
           "title": "Final UX polish against UI system",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§5 UI System",
             "§49 UI system"
@@ -1462,17 +1462,17 @@
             {
               "id": "E11-P03-S01",
               "title": "Audit screens for Inter, Lucide, and shadcn composition",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E11-P03-S02",
               "title": "Confirm every empty surface uses Empty",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E11-P03-S03",
               "title": "Confirm node editor is a Sheet and toasts use sonner",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }

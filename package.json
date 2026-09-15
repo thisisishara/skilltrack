@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "node scripts/ci/skip-integration.mjs",
+    "check:migrations": "node scripts/ci/check-migrations.mjs",
     "db:push": "npx supabase db push"
   },
   "dependencies": {

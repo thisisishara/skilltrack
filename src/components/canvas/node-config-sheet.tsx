@@ -251,11 +251,17 @@ export function NodeConfigSheet({
   }
 
   return (
-    <aside className="flex h-full min-h-0 flex-col bg-background">
+    <aside
+      className="flex h-full min-h-0 flex-col bg-background"
+      aria-labelledby="node-config-title"
+    >
             <div className="flex flex-col gap-3 border-b p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h2 className="font-heading truncate text-base font-medium">
+                  <h2
+                    id="node-config-title"
+                    className="font-heading truncate text-base font-medium"
+                  >
                     {node.title}
                   </h2>
                   <p className="text-sm text-muted-foreground">

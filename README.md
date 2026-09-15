@@ -74,11 +74,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Unauthenticated users are sent to login; allowed GitHub users land on `/dashboard`. The first dashboard load upserts a `users` row in **skilltrack-dev**. Confirm it in the Table Editor (`public.users`). Production should stay empty until you sign in on the production URL.
 
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs **checks only**: lint, typecheck, unit tests, a placeholder integration skip until E10, a committed-migrations file check, and `next build`. It does **not** deploy and does **not** `supabase db push`.
+
+Apply schema to **skilltrack-dev** and **skilltrack-prod** with `npm run db:push` as in [Apply database migrations](#apply-database-migrations).
+
 ## Deploy
 
-### Git (automatic)
-
-The GitHub repository is connected to the Vercel project. Pushes to the default branch create a production deployment; pull requests get preview URLs.
+Continuous deploy is Vercel’s Git integration (not GitHub Actions). Pushes to the default branch create a production deployment; pull requests get preview URLs.
 
 Set Auth.js variables on Production, Preview, and Development. Set Supabase variables as follows:
 

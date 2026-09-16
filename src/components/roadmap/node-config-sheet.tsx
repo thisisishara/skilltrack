@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NotebookPen, Pencil, Trash2, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -23,15 +23,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox"
 import {
   Empty,
   EmptyContent,
@@ -58,34 +49,19 @@ import {
 } from "@/components/ui/dialog"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
-import {
-  nodeCanHaveChildren,
-  nodeCanHaveParent,
-  type NodeHandleKind,
-} from "@/domain/nodes/handle"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { ProgressSnapshot } from "@/domain/progress/progress"
-
-const ROOT_PARENT = "__none__"
-
-type ParentOption = {
-  id: string
-  title: string
-}
 
 export function NodeConfigSheet({
   open,
   onOpenChange,
   node,
-  nodes,
   checklistItems,
   links,
   nodeProgress: _nodeProgress,
   subtreeProgress,
   onSaveDetails,
-  onParentChange,
   onToggleChecklist: _onToggleChecklist,
   onCreateChecklist,
   onUpdateChecklist: _onUpdateChecklist,
@@ -99,6 +75,7 @@ export function NodeConfigSheet({
   showIcon = true,
   showClose = true,
   showProgressBar = true,
+  editMode = false,
   mode = "topic",
   fallbackTitle,
   subtitle,
@@ -109,7 +86,6 @@ export function NodeConfigSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
   node: RoadmapNode | null
-  nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
   links: NodeLink[]
   nodeProgress: ProgressSnapshot
@@ -120,9 +96,7 @@ export function NodeConfigSheet({
     icon: string
     notes: string
     accentColor: string | null
-    handleKind: NodeHandleKind
   }) => Promise<NodeActionResult>
-  onParentChange: (parentId: string | null) => Promise<void>
   onToggleChecklist: (itemId: string, isCompleted: boolean) => Promise<void>
   onCreateChecklist: (input: { title: string; description: string }) => {
     ok: true
@@ -138,6 +112,7 @@ export function NodeConfigSheet({
   showIcon?: boolean
   showClose?: boolean
   showProgressBar?: boolean
+  editMode?: boolean
   mode?: "overview" | "topic"
   fallbackTitle?: string
   subtitle?: string
@@ -149,7 +124,6 @@ export function NodeConfigSheet({
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState("circle-dot")
   const [accentColor, setAccentColor] = useState<string | null>(null)
-  const [handleKind, setHandleKind] = useState<NodeHandleKind>("regular")
   const [notes, setNotes] = useState("")
   const [notesOpen, setNotesOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -181,7 +155,6 @@ export function NodeConfigSheet({
     setDescription(node.description ?? "")
     setIcon(node.icon)
     setAccentColor(node.accentColor)
-    setHandleKind(node.handleKind)
     setNotes(node.notes ?? "")
     setNotesOpen(false)
     setError(null)
@@ -190,46 +163,12 @@ export function NodeConfigSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId, open])
 
-  const parentOptions = useMemo<ParentOption[]>(() => {
-    if (!node) {
-      return [{ id: ROOT_PARENT, title: "No parent" }]
-    }
-
-    const options: ParentOption[] = [{ id: ROOT_PARENT, title: "No parent" }]
-    if (!nodeCanHaveParent(node.handleKind)) {
-      return options
-    }
-
-    for (const candidate of nodes) {
-      if (candidate.id === node.id) {
-        continue
-      }
-
-      if (!nodeCanHaveChildren(candidate.handleKind)) {
-        continue
-      }
-
-      if (wouldCreateCycle(nodes, node.id, candidate.id)) {
-        continue
-      }
-
-      options.push({ id: candidate.id, title: candidate.title })
-    }
-
-    return options
-  }, [node, nodes])
-
-  const selectedParent =
-    parentOptions.find((option) => option.id === (node?.parentId ?? ROOT_PARENT)) ??
-    parentOptions[0]
-
   type DetailSnapshot = {
     title: string
     description: string
     icon: string
     notes: string
     accentColor: string | null
-    handleKind: NodeHandleKind
   }
 
   function snapshotWith(patch: Partial<DetailSnapshot>): DetailSnapshot {
@@ -239,7 +178,6 @@ export function NodeConfigSheet({
       icon: patch.icon ?? icon,
       notes: patch.notes ?? notes,
       accentColor: patch.accentColor !== undefined ? patch.accentColor : accentColor,
-      handleKind: patch.handleKind ?? handleKind,
     }
   }
 
@@ -255,8 +193,7 @@ export function NodeConfigSheet({
       (next.description.trim() || null) === node.description &&
       next.icon === node.icon &&
       (next.notes.trim() || null) === node.notes &&
-      next.accentColor === node.accentColor &&
-      next.handleKind === node.handleKind
+      next.accentColor === node.accentColor
     ) {
       return
     }
@@ -330,6 +267,7 @@ export function NodeConfigSheet({
                 <NotesSection
                   notes={notes}
                   emptyDescription="Capture free-form notes for this roadmap."
+                  editable={editMode}
                   onEdit={() => setNotesOpen(true)}
                 />
                 </section>
@@ -338,6 +276,7 @@ export function NodeConfigSheet({
                   <h3 className="text-sm font-medium">Links</h3>
                   <NodeLinksSection
                     links={links}
+                    editable={editMode}
                     onCreate={onCreateLink}
                     onUpdate={onUpdateLink}
                     onDelete={onDeleteLink}
@@ -423,6 +362,7 @@ export function NodeConfigSheet({
               </p>
             )}
           </div>
+          {editMode ? (
           <FieldGroup>
                     <Field data-invalid={error ? true : undefined}>
                       <FieldLabel htmlFor="sheet-node-title">Title</FieldLabel>
@@ -473,51 +413,19 @@ export function NodeConfigSheet({
                         />
                       </Field>
                     ) : null}
-                    <Field>
-                      <FieldLabel>Parent</FieldLabel>
-                      <Combobox
-                        items={parentOptions}
-                        value={selectedParent}
-                        onValueChange={(option: ParentOption | null) => {
-                          if (!option || !node) {
-                            return
-                          }
-
-                          const parentId = option.id === ROOT_PARENT ? null : option.id
-                          if (parentId === node.parentId) {
-                            return
-                          }
-
-                          void onParentChange(parentId)
-                        }}
-                        itemToStringLabel={(item) => item?.title ?? ""}
-                      >
-                        <ComboboxInput showClear={false} className="w-full" />
-                        <ComboboxContent>
-                          <ComboboxEmpty>No matching nodes.</ComboboxEmpty>
-                          <ComboboxList>
-                            <ComboboxCollection>
-                              {(item: ParentOption) => (
-                                <ComboboxItem key={item.id} value={item}>
-                                  {item.title}
-                                </ComboboxItem>
-                              )}
-                            </ComboboxCollection>
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </Field>
                 </FieldGroup>
+          ) : null}
                 <Separator />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Notes</h3>
                 <NotesSection
                   notes={notes}
                   emptyDescription="Capture free-form notes for this skill."
+                  editable={editMode}
                   onEdit={() => setNotesOpen(true)}
                 />
                 </section>
-                {showChecklist ? (
+                {showChecklist && editMode ? (
                   <>
                     <Separator />
                     <section className="flex flex-col gap-3">
@@ -534,12 +442,13 @@ export function NodeConfigSheet({
                   <h3 className="text-sm font-medium">Links</h3>
                   <NodeLinksSection
                     links={links}
+                    editable={editMode}
                     onCreate={onCreateLink}
                     onUpdate={onUpdateLink}
                     onDelete={onDeleteLink}
                   />
                 </section>
-                {onDelete ? (
+                {editMode && onDelete ? (
                   <>
                     <Separator />
                     <Tooltip>
@@ -578,10 +487,12 @@ export function NodeConfigSheet({
 function NotesSection({
   notes,
   emptyDescription,
+  editable = true,
   onEdit,
 }: {
   notes: string
   emptyDescription: string
+  editable?: boolean
   onEdit: () => void
 }) {
   if (!notes.trim()) {
@@ -594,6 +505,7 @@ function NotesSection({
           <EmptyTitle>No notes</EmptyTitle>
           <EmptyDescription>{emptyDescription}</EmptyDescription>
         </EmptyHeader>
+        {editable ? (
         <EmptyContent>
           <Tooltip>
             <TooltipTrigger
@@ -604,6 +516,7 @@ function NotesSection({
             <TooltipContent>Add notes</TooltipContent>
           </Tooltip>
         </EmptyContent>
+        ) : null}
       </Empty>
     )
   }
@@ -611,6 +524,7 @@ function NotesSection({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm leading-6 text-pretty whitespace-pre-wrap">{notes}</p>
+      {editable ? (
       <Tooltip>
         <TooltipTrigger
           render={
@@ -622,6 +536,7 @@ function NotesSection({
         </TooltipTrigger>
         <TooltipContent>Edit notes</TooltipContent>
       </Tooltip>
+      ) : null}
     </div>
   )
 }

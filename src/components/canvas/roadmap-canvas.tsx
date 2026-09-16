@@ -103,7 +103,12 @@ import {
   subtreeNodeIds,
   subtreeProgress,
 } from "@/domain/progress/progress"
+import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
 import { readStoredViewport, writeStoredViewport } from "@/lib/canvas/viewport-storage"
+import {
+  DETAILS_PANEL_MAX_SIZE,
+  DETAILS_PANEL_MIN_SIZE,
+} from "@/lib/layout/details-panel-storage"
 
 export type CanvasFlowNode = RoadmapFlowNode | LabelFlowNode
 
@@ -313,6 +318,7 @@ function createLocalNode(input: {
 }
 
 function RoadmapCanvasInner({
+  userId,
   roleId,
   roleName,
   nodes: serverNodes,
@@ -320,6 +326,7 @@ function RoadmapCanvasInner({
   links: serverLinks,
   focusNodeId,
 }: {
+  userId: string
   roleId: string
   roleName: string
   nodes: RoadmapNode[]
@@ -330,6 +337,12 @@ function RoadmapCanvasInner({
   const router = useRouter()
   const { getNodes, fitView } = useReactFlow()
   const { resolvedTheme } = useTheme()
+  const {
+    groupKey,
+    mainDefaultSize,
+    detailsDefaultSize,
+    onLayoutChanged,
+  } = useDetailsPanelLayout(userId)
   const [themeReady, setThemeReady] = useState(false)
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
@@ -855,7 +868,6 @@ function RoadmapCanvasInner({
     icon: string
     notes: string
     accentColor: string | null
-    handleKind: NodeHandleKind
   }) {
     if (!configNode) {
       return {
@@ -882,7 +894,6 @@ function RoadmapCanvasInner({
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
       accentColor: input.accentColor,
-      handleKind: input.handleKind,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
 
@@ -905,38 +916,6 @@ function RoadmapCanvasInner({
     })
 
     return { ok: true as const, node: next }
-  }
-
-  function handleParentChange(parentId: string | null) {
-    if (!configNode) {
-      return
-    }
-
-    if (parentId && wouldCreateCycle(nodes, configNode.id, parentId)) {
-      toast.error("A node cannot be its own ancestor.")
-      return
-    }
-
-    const previous = nodes
-    const sortOrder = nextSortOrder(nodes, parentId)
-    setNodes((current) =>
-      current.map((node) =>
-        node.id === configNode.id ? { ...node, parentId, sortOrder } : node
-      )
-    )
-
-    void reparentNodeAction({
-      roleId,
-      nodeId: configNode.id,
-      parentId,
-    }).then((result) => {
-      if (!result.ok) {
-        setNodes(previous)
-        toast.error(result.message)
-        return
-      }
-      toast.success(parentId ? "Parent updated" : "Node is now a root")
-    })
   }
 
   function handleToggleChecklist(itemId: string, isCompleted: boolean) {
@@ -1391,14 +1370,24 @@ function RoadmapCanvasInner({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-        <ResizablePanel id="roadmap-canvas" defaultSize="70%" minSize="40%">
+      <ResizablePanelGroup
+        key={groupKey}
+        orientation="horizontal"
+        className="min-h-0 flex-1"
+        onLayoutChanged={onLayoutChanged}
+      >
+        <ResizablePanel id="roadmap-canvas" defaultSize={mainDefaultSize} minSize="40%">
           {canvas}
         </ResizablePanel>
         {sheetOpen ? (
           <>
             <ResizableHandle withHandle />
-            <ResizablePanel id="node-config" defaultSize="30%" minSize="22%" maxSize="48%">
+            <ResizablePanel
+              id="node-config"
+              defaultSize={detailsDefaultSize}
+              minSize={`${DETAILS_PANEL_MIN_SIZE}%`}
+              maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
+            >
               <div className="h-full min-h-0 overflow-hidden">
                 <NodeConfigSheet
                   open={sheetOpen}
@@ -1408,13 +1397,11 @@ function RoadmapCanvasInner({
                     }
                   }}
                   node={configNode}
-                  nodes={skillNodes}
                   checklistItems={selectedItems}
                   links={selectedLinks}
                   nodeProgress={selectedNodeProgress}
                   subtreeProgress={selectedSubtreeProgress}
                   onSaveDetails={async (input) => handleSaveDetails(input)}
-                  onParentChange={async (parentId) => handleParentChange(parentId)}
                   onToggleChecklist={async (itemId, isCompleted) =>
                     handleToggleChecklist(itemId, isCompleted)
                   }
@@ -1482,6 +1469,7 @@ function RoadmapCanvasInner({
 }
 
 export function RoadmapCanvas({
+  userId,
   roleId,
   roleName,
   nodes,
@@ -1489,6 +1477,7 @@ export function RoadmapCanvas({
   links,
   focusNodeId,
 }: {
+  userId: string
   roleId: string
   roleName: string
   nodes: RoadmapNode[]
@@ -1499,6 +1488,7 @@ export function RoadmapCanvas({
   return (
     <ReactFlowProvider>
       <RoadmapCanvasInner
+        userId={userId}
         roleId={roleId}
         roleName={roleName}
         nodes={nodes}

@@ -33,11 +33,13 @@ import type { NodeLink } from "@/domain/links/types"
 
 export function NodeLinksSection({
   links,
+  editable = true,
   onCreate,
   onUpdate,
   onDelete,
 }: {
   links: NodeLink[]
+  editable?: boolean
   onCreate: (input: { label: string; url: string }) => string | null
   onUpdate: (link: NodeLink, label: string, url: string) => string | null
   onDelete: (linkId: string) => void
@@ -68,6 +70,7 @@ export function NodeLinksSection({
               Add documentation, courses, or references for this skill.
             </EmptyDescription>
           </EmptyHeader>
+          {editable ? (
           <EmptyContent>
             <Tooltip>
               <TooltipTrigger
@@ -78,6 +81,7 @@ export function NodeLinksSection({
               <TooltipContent>Add a link</TooltipContent>
             </Tooltip>
           </EmptyContent>
+          ) : null}
         </Empty>
       ) : (
         <>
@@ -99,6 +103,7 @@ export function NodeLinksSection({
                   </a>
                   <p className="truncate text-xs text-muted-foreground">{link.url}</p>
                 </div>
+                {editable ? (
                 <div className="flex shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
                   <Tooltip>
                     <TooltipTrigger
@@ -136,9 +141,11 @@ export function NodeLinksSection({
                     <TooltipContent>Delete link</TooltipContent>
                   </Tooltip>
                 </div>
+                ) : null}
               </li>
             ))}
           </ul>
+          {editable ? (
           <Tooltip>
             <TooltipTrigger
               render={
@@ -150,6 +157,7 @@ export function NodeLinksSection({
             </TooltipTrigger>
             <TooltipContent>Add link</TooltipContent>
           </Tooltip>
+          ) : null}
         </>
       )}
       <LinkDialog

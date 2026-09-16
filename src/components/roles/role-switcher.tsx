@@ -58,6 +58,7 @@ export function RoleSwitcher() {
             render={
               <SidebarMenuButton
                 size="lg"
+                variant="outline"
                 tooltip={title}
                 className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
               />

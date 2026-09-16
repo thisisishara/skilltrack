@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ChevronsDownUp, ChevronsUpDown, ListTree, Pencil } from "lucide-react"
+import { ChevronsDownUp, ChevronsUpDown, ListTree } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -20,7 +20,6 @@ import {
   createNodeAction,
   deleteNodeAction,
   placeNodeAction,
-  reparentNodeAction,
   updateNodeAction,
 } from "@/application/nodes/actions"
 import { DeleteNodeAlert } from "@/components/roadmap/delete-node-alert"
@@ -46,8 +45,9 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Toggle } from "@/components/ui/toggle"
+import { Switch } from "@/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -61,6 +61,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import { displayChecklistTitle } from "@/domain/checklists/title"
 import type { ChecklistItem } from "@/domain/checklists/types"
@@ -71,7 +72,6 @@ import {
   normalizeLinkUrl,
 } from "@/domain/links/url"
 import type { NodeHandleKind } from "@/domain/nodes/handle"
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
 import { nodeCanHaveChildren, nodeCanHaveParent } from "@/domain/nodes/handle"
 import { normalizeNodeIcon } from "@/domain/nodes/icon"
 import { isSkillNode } from "@/domain/nodes/kind"
@@ -90,6 +90,10 @@ import {
   subtreeNodeIds,
   subtreeProgress,
 } from "@/domain/progress/progress"
+import {
+  DETAILS_PANEL_MAX_SIZE,
+  DETAILS_PANEL_MIN_SIZE,
+} from "@/lib/layout/details-panel-storage"
 import { readExpandedIds, writeExpandedIds } from "@/lib/roadmap/expanded-storage"
 
 const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
@@ -194,6 +198,7 @@ function createLocalNode(input: {
 }
 
 export function Roadmap({
+  userId,
   roleId,
   roleName,
   nodes: serverNodes,
@@ -201,6 +206,7 @@ export function Roadmap({
   links: serverLinks,
   focusNodeId,
 }: {
+  userId: string
   roleId: string
   roleName: string
   nodes: RoadmapNode[]
@@ -218,7 +224,7 @@ export function Roadmap({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteIds, setDeleteIds] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [taskListEditing, setTaskListEditing] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const [compose, setCompose] = useState<{
     type: "task" | "link" | "notes"
     nodeId: string
@@ -230,6 +236,12 @@ export function Roadmap({
   } | null>(null)
   const focusedRef = useRef<string | null>(null)
   const draggedIdRef = useRef<string | null>(null)
+  const {
+    groupKey,
+    mainDefaultSize,
+    detailsDefaultSize,
+    onLayoutChanged,
+  } = useDetailsPanelLayout(userId)
 
   function setDragging(nodeId: string | null) {
     draggedIdRef.current = nodeId
@@ -604,7 +616,6 @@ export function Roadmap({
     icon: string
     notes: string
     accentColor: string | null
-    handleKind: NodeHandleKind
   }) {
     if (!panelNode) {
       return {
@@ -631,7 +642,6 @@ export function Roadmap({
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
       accentColor: input.accentColor,
-      handleKind: input.handleKind,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
 
@@ -685,38 +695,6 @@ export function Roadmap({
         )
         toast.error(result.message)
       }
-    })
-  }
-
-  function handleParentChange(parentId: string | null) {
-    if (!configNode) {
-      return
-    }
-
-    if (parentId && wouldCreateCycle(nodes, configNode.id, parentId)) {
-      toast.error("A topic cannot be its own ancestor.")
-      return
-    }
-
-    const previous = nodes
-    const sortOrder = nextSortOrder(nodes, parentId)
-    setNodes((current) =>
-      current.map((node) =>
-        node.id === configNode.id ? { ...node, parentId, sortOrder } : node
-      )
-    )
-
-    void reparentNodeAction({
-      roleId,
-      nodeId: configNode.id,
-      parentId,
-    }).then((result) => {
-      if (!result.ok) {
-        setNodes(previous)
-        toast.error(result.message)
-        return
-      }
-      toast.success(parentId ? "Parent updated" : "Topic moved to the top level")
     })
   }
 
@@ -980,6 +958,26 @@ export function Roadmap({
           {roleName}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
+          {editMode ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openCreate(primaryParentId, true)
+                    }}
+                  />
+                }
+              >
+                Add Topic Group
+              </TooltipTrigger>
+              <TooltipContent>Add Topic Group</TooltipContent>
+            </Tooltip>
+          ) : null}
           <Button
             type="button"
             size="sm"
@@ -998,35 +996,25 @@ export function Roadmap({
             <ChevronsDownUp data-icon="inline-start" />
             Collapse all
           </Button>
-          <Toggle
-            variant="outline"
-            size="sm"
-            pressed={taskListEditing}
-            onPressedChange={(pressed) => setTaskListEditing(pressed === true)}
-            aria-label="Edit task list"
+          <div
+            className="flex shrink-0 items-center gap-2"
             onClick={(event) => event.stopPropagation()}
           >
-            <Pencil data-icon="inline-start" />
-            Edit task list
-          </Toggle>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    openCreate(primaryParentId, true)
-                  }}
-                />
-              }
+            <Label
+              htmlFor="roadmap-edit-mode"
+              className="text-muted-foreground"
             >
-              Add Topic Group
-            </TooltipTrigger>
-            <TooltipContent>Add Topic Group</TooltipContent>
-          </Tooltip>
+              View
+            </Label>
+            <Switch
+              id="roadmap-edit-mode"
+              size="sm"
+              checked={editMode}
+              onCheckedChange={(checked) => setEditMode(checked === true)}
+              aria-label="Edit mode"
+            />
+            <Label htmlFor="roadmap-edit-mode">Edit</Label>
+          </div>
         </div>
       </div>
       <ScrollArea className="min-h-0 flex-1">
@@ -1039,11 +1027,14 @@ export function Roadmap({
                 </EmptyMedia>
                 <EmptyTitle>No topic groups yet</EmptyTitle>
                 <EmptyDescription>
-                  {singleRoot
-                    ? "Add a topic group to start filling in this roadmap."
-                    : "Add your first topic group to start mapping this roadmap."}
+                  {editMode
+                    ? singleRoot
+                      ? "Add a topic group to start filling in this roadmap."
+                      : "Add your first topic group to start mapping this roadmap."
+                    : "Switch to Edit to add a topic group."}
                 </EmptyDescription>
               </EmptyHeader>
+              {editMode ? (
               <EmptyContent>
                 <Tooltip>
                   <TooltipTrigger
@@ -1060,6 +1051,7 @@ export function Roadmap({
                   <TooltipContent>Add Topic Group</TooltipContent>
                 </Tooltip>
               </EmptyContent>
+              ) : null}
             </Empty>
           ) : (
             <ul className="flex flex-col gap-1.5">
@@ -1077,7 +1069,7 @@ export function Roadmap({
                   onSelect={setConfigNodeId}
                   onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
-                  editingTasks={taskListEditing}
+                  editMode={editMode}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}
@@ -1100,12 +1092,22 @@ export function Roadmap({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-        <ResizablePanel id="roadmap-list" defaultSize="70%" minSize="40%">
+      <ResizablePanelGroup
+        key={groupKey}
+        orientation="horizontal"
+        className="min-h-0 flex-1"
+        onLayoutChanged={onLayoutChanged}
+      >
+        <ResizablePanel id="roadmap-list" defaultSize={mainDefaultSize} minSize="40%">
           {list}
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel id="roadmap-details" defaultSize="30%" minSize="22%" maxSize="48%">
+        <ResizablePanel
+          id="roadmap-details"
+          defaultSize={detailsDefaultSize}
+          minSize={`${DETAILS_PANEL_MIN_SIZE}%`}
+          maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
+        >
           <div className="h-full min-h-0 overflow-hidden">
             <NodeConfigSheet
               open
@@ -1113,7 +1115,6 @@ export function Roadmap({
                 setConfigNodeId(null)
               }}
               node={panelNode}
-              nodes={skillNodes}
               checklistItems={selectedItems}
               links={selectedLinks}
               nodeProgress={selectedNodeProgress}
@@ -1123,13 +1124,17 @@ export function Roadmap({
               showChecklist={!isOverview}
               showIcon={!isPanelSubgroup}
               showProgressBar
+              editMode={editMode}
               fallbackTitle={roleName}
-              subtitle="Configure details, tasks, and links for this topic."
+              subtitle={
+                editMode
+                  ? "Configure details, tasks, and links for this topic."
+                  : "Progress, notes, and links for this topic."
+              }
               checklistHeading="Tasks"
               checklistCopy={TASK_CHECKLIST_COPY}
               deleteLabel={isPanelSubgroup ? "Delete subgroup" : "Delete topic"}
               onSaveDetails={async (input) => handleSaveDetails(input)}
-              onParentChange={async (parentId) => handleParentChange(parentId)}
               onToggleChecklist={configChecklistHandlers.onToggle}
               onCreateChecklist={configChecklistHandlers.onCreate}
               onUpdateChecklist={configChecklistHandlers.onUpdate}
@@ -1139,7 +1144,7 @@ export function Roadmap({
               onUpdateLink={handleUpdateLink}
               onDeleteLink={handleDeleteLink}
               onDelete={
-                !isOverview && panelNode
+                editMode && !isOverview && panelNode
                   ? () => {
                       const nodeId = panelNode.id
                       openDelete(nodeId)

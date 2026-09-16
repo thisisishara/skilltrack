@@ -206,6 +206,7 @@ function TaskTickList({
                   }
                 }}
               >
+                {editing ? (
                 <span
                   draggable
                   aria-label="Reorder task"
@@ -227,6 +228,7 @@ function TaskTickList({
                 >
                   <GripVertical className="size-3.5" />
                 </span>
+                ) : null}
                 <Checkbox
                   checked={item.isCompleted}
                   className={DONE_CHECKBOX_CLASS}
@@ -336,7 +338,7 @@ export function RoadmapNodeRow({
   onSelect,
   onAddItem,
   getChecklistHandlers,
-  editingTasks,
+  editMode,
   subtreeProgressFor,
   draggedId,
   dropHint,
@@ -358,7 +360,7 @@ export function RoadmapNodeRow({
   onSelect: (nodeId: string) => void
   onAddItem: (nodeId: string, kind: TopicAddKind) => void
   getChecklistHandlers: (nodeId: string) => ChecklistHandlers
-  editingTasks: boolean
+  editMode: boolean
   subtreeProgressFor: (nodeId: string) => ProgressSnapshot
   draggedId: string | null
   dropHint: { nodeId: string; position: TreeDropPosition } | null
@@ -379,7 +381,7 @@ export function RoadmapNodeRow({
   const accent = inheritedAccentColor(nodes, node.id)
   const groupCount = children.length + ownItems.length
   const canExpand =
-    Boolean(description) || ownItems.length > 0 || children.length > 0 || editingTasks
+    Boolean(description) || ownItems.length > 0 || children.length > 0 || editMode
   const hasBody = expanded && canExpand
 
   function showTopic() {
@@ -461,13 +463,15 @@ export function RoadmapNodeRow({
     onDragStartNode(node.id)
   }
 
-  const grip = (
+  const grip = editMode ? (
     <span
       aria-hidden
       className="flex size-6 shrink-0 cursor-grab items-center justify-center text-muted-foreground hover:text-foreground"
     >
       <GripVertical className="size-3.5" />
     </span>
+  ) : (
+    <span aria-hidden className="size-6 shrink-0" />
   )
 
   const dropClasses = cn(
@@ -476,16 +480,18 @@ export function RoadmapNodeRow({
     hint === "inside" && "ring-2 ring-primary/50"
   )
 
-  const dragRowProps = {
-    draggable: true,
-    onDragStart: handleRowDragStart,
-    onDragEnd: () => onDragEndNode(),
-    onDragEnter: handleDragOver,
-    onDragOver: handleDragOver,
-    onDrop: handleDrop,
-  } as const
+  const dragRowProps = editMode
+    ? {
+        draggable: true,
+        onDragStart: handleRowDragStart,
+        onDragEnd: () => onDragEndNode(),
+        onDragEnter: handleDragOver,
+        onDragOver: handleDragOver,
+        onDrop: handleDrop,
+      }
+    : {}
 
-  const actions = (
+  const actions = editMode ? (
     <div
       data-no-drag
       className="flex shrink-0 items-center"
@@ -554,7 +560,7 @@ export function RoadmapNodeRow({
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
+  ) : null
 
   const expandIcon = canExpand ? (
     <Button
@@ -701,7 +707,7 @@ export function RoadmapNodeRow({
           ) : null}
           <TaskTickList
             items={ownItems}
-            editing={editingTasks}
+            editing={editMode}
             onToggle={getChecklistHandlers(node.id).onToggle}
             onCreate={getChecklistHandlers(node.id).onCreate}
             onUpdate={getChecklistHandlers(node.id).onUpdate}
@@ -724,7 +730,7 @@ export function RoadmapNodeRow({
                   onSelect={onSelect}
                   onAddItem={onAddItem}
                   getChecklistHandlers={getChecklistHandlers}
-                  editingTasks={editingTasks}
+                  editMode={editMode}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}

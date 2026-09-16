@@ -97,6 +97,7 @@ export function AppSidebar({
                 render={
                   <SidebarMenuButton
                     size="lg"
+                    variant="outline"
                     className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
                   />
                 }

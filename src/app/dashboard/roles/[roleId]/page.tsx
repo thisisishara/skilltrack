@@ -56,6 +56,7 @@ export default async function RoleDashboardPage({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PersistActiveRole roleId={role.id} />
       <Roadmap
+        userId={applicationUser.id}
         roleId={role.id}
         roleName={role.name}
         nodes={nodes}

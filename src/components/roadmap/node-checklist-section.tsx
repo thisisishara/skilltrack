@@ -53,7 +53,7 @@ export function NodeChecklistSection({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm text-muted-foreground">
-        Tasks live on the left. Use Edit task list in the header to change or delete them.
+        Tasks live on the left. Add more from a topic’s + menu or here.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Tooltip>

@@ -462,7 +462,8 @@ export function Roadmap({
     programmaticScrollTimerRef.current = window.setTimeout(() => {
       programmaticScrollRef.current = false
     }, 400)
-    const toolbar = listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]")
+    const toolbar =
+      listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
     scrollToReadingLine(viewport, target, readingLineY(toolbar, viewport))
     focusedRef.current = focusKey
     pendingRevealRef.current = null
@@ -593,7 +594,8 @@ export function Roadmap({
       if (programmaticScrollRef.current) {
         return
       }
-      const toolbar = listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]")
+      const toolbar =
+        listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
       const next = locationFromViewport(
         viewport,
         readingLineY(toolbar, viewport)

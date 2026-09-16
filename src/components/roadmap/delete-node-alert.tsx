@@ -22,8 +22,8 @@ export function DeleteNodeAlert({
   count,
   nodeTitle,
   onConfirm,
-  noun = "node",
-  childNoun = "child nodes",
+  noun = "topic",
+  childNoun = "sub-topics",
   childNames = [],
 }: {
   open: boolean

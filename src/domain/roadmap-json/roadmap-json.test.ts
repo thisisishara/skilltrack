@@ -52,7 +52,7 @@ describe("parseRoadmapJson", () => {
   it("rejects duplicate node ids", () => {
     const json = structuredClone(mixedCanvas)
     json.nodes[1].id = json.nodes[0].id
-    expectValidation(JSON.stringify(json), "Node IDs must be unique")
+    expectValidation(JSON.stringify(json), "Topic IDs must be unique")
   })
 
   it("rejects a cycle", () => {
@@ -73,7 +73,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "cycle"
+      "loop"
     )
   })
 
@@ -90,7 +90,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "Parent references"
+      "Each nested topic must belong to another topic"
     )
   })
 
@@ -112,7 +112,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "Labels cannot have a parent"
+      "Labels cannot nest under a topic"
     )
   })
 
@@ -134,7 +134,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "Labels cannot have children"
+      "Labels cannot contain topics"
     )
   })
 
@@ -156,7 +156,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "Output nodes cannot have a parent"
+      "This topic cannot nest under another topic"
     )
   })
 
@@ -178,7 +178,7 @@ describe("parseRoadmapJson", () => {
           },
         ],
       }),
-      "Input nodes cannot have children"
+      "This topic cannot have sub-topics"
     )
   })
 

@@ -30,11 +30,11 @@ export function parentLinkError(
   }
 
   if (!nodeCanHaveParent(childKind)) {
-    return "Output nodes cannot have a parent."
+    return "This topic cannot nest under another topic."
   }
 
   if (parentKind && !nodeCanHaveChildren(parentKind)) {
-    return "Input nodes cannot have children."
+    return "This topic cannot have sub-topics."
   }
 
   return null
@@ -42,7 +42,7 @@ export function parentLinkError(
 
 export function childrenLinkError(kind: NodeHandleKind, childCount: number) {
   if (childCount > 0 && !nodeCanHaveChildren(kind)) {
-    return "Input nodes cannot have children."
+    return "This topic cannot have sub-topics."
   }
 
   return null

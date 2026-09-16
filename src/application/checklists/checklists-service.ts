@@ -12,7 +12,7 @@ function requireTitle(title: string) {
   const trimmed = displayChecklistTitle(title)
 
   if (!trimmed) {
-    throw new ApplicationError("validation", "Checklist title cannot be empty.")
+    throw new ApplicationError("validation", "Task title cannot be empty.")
   }
 
   return trimmed
@@ -50,7 +50,7 @@ export async function createChecklistItem(
 ) {
   const node = await requireOwnedNode(userId, roleId, nodeId)
   if (isLabelNode(node)) {
-    throw new ApplicationError("validation", "Labels cannot have checklist items.")
+    throw new ApplicationError("validation", "Labels cannot have tasks.")
   }
   const items = await checklistsRepository.listByNodeId(nodeId)
   const sortOrder =
@@ -94,7 +94,7 @@ export async function setChecklistItemCompleted(
   const current = items.find((item) => item.id === itemId)
 
   if (!current) {
-    throw new ApplicationError("not_found", "That checklist item no longer exists.")
+    throw new ApplicationError("not_found", "That task no longer exists.")
   }
 
   const next = applyChecklistCompletion(current, isCompleted)
@@ -117,7 +117,7 @@ export async function reorderChecklistItems(
   const itemIds = new Set(items.map((item) => item.id))
 
   if (orderedIds.length !== items.length || orderedIds.some((id) => !itemIds.has(id))) {
-    throw new ApplicationError("validation", "Checklist order is invalid.")
+    throw new ApplicationError("validation", "Task order is invalid.")
   }
 
   await checklistsRepository.updateSortOrders(

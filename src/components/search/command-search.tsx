@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { getSearchIndexAction } from "@/application/search/actions"
 import type { SearchIndex } from "@/application/search/search-service"
+import { persistTreeLocation } from "@/components/roadmap/tree-location"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +32,7 @@ const emptyIndex: SearchIndex = { roles: [], nodes: [], tasks: [] }
 
 export function CommandSearch() {
   const router = useRouter()
-  const { activeRole } = useRolesUi()
+  const { activeRole, focusTree } = useRolesUi()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [index, setIndex] = useState<SearchIndex>(emptyIndex)
@@ -132,6 +133,21 @@ export function CommandSearch() {
     run()
   }
 
+  function revealInTree(roleId: string, nodeId: string, taskId?: string | null) {
+    closeAnd(() => {
+      if (activeRole?.id === roleId) {
+        persistTreeLocation(nodeId, taskId ?? null)
+        focusTree({ roleId, nodeId, taskId })
+        return
+      }
+
+      const query = taskId
+        ? `?node=${nodeId}&task=${taskId}`
+        : `?node=${nodeId}`
+      router.push(`/dashboard/roles/${roleId}${query}`, { scroll: false })
+    })
+  }
+
   return (
     <>
       <Button
@@ -198,9 +214,7 @@ export function CommandSearch() {
                       key={node.id}
                       value={`node ${node.title} ${node.parentPath} ${node.roleName} ${node.id}`}
                       onSelect={() => {
-                        closeAnd(() => {
-                          router.push(`/dashboard/roles/${node.roleId}?node=${node.id}`)
-                        })
+                        revealInTree(node.roleId, node.id)
                       }}
                     >
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -227,11 +241,7 @@ export function CommandSearch() {
                       key={task.id}
                       value={`task ${task.title} ${task.description ?? ""} ${task.parentPath} ${task.roleName} ${task.id}`}
                       onSelect={() => {
-                        closeAnd(() => {
-                          router.push(
-                            `/dashboard/roles/${task.roleId}?node=${task.nodeId}&task=${task.id}`
-                          )
-                        })
+                        revealInTree(task.roleId, task.nodeId, task.id)
                       }}
                     >
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">

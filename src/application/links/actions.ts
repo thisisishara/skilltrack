@@ -7,8 +7,10 @@ import {
   deleteNodeLink,
   updateNodeLink,
 } from "@/application/links/links-service"
+import { fetchPublicPageTitle } from "@/application/links/page-title"
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { NodeLink } from "@/domain/links/types"
+import { auth } from "@/auth"
 import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
@@ -25,6 +27,19 @@ function revalidateRole(roleId: string) {
   revalidatePath(`/dashboard/roles/${roleId}`)
 }
 
+export async function previewLinkTitleAction(url: string): Promise<{ title: string | null }> {
+  const session = await auth()
+  if (!session?.user?.githubUsername) {
+    return { title: null }
+  }
+
+  try {
+    return { title: await fetchPublicPageTitle(url) }
+  } catch {
+    return { title: null }
+  }
+}
+
 export async function createNodeLinkAction(input: {
   id?: string
   roleId: string
@@ -34,7 +49,7 @@ export async function createNodeLinkAction(input: {
 }): Promise<LinkActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()

@@ -64,15 +64,15 @@ export function NodeDialog({
   copy?: NodeDialogCopy
 }) {
   const {
-    createTitle = "Create node",
-    createDescription = "Add a root node to this roadmap.",
-    childTitle = "Add child",
-    childDescription = "Create a child node under the selected parent.",
-    editTitle = "Edit node",
-    editDescription = "Update this node without changing its identity or progress.",
+    createTitle = "Add topic",
+    createDescription = "Add a top-level topic to this roadmap.",
+    childTitle = "Add sub-topic",
+    childDescription = "Create a sub-topic nested under the selected topic.",
+    editTitle = "Edit topic",
+    editDescription = "Update this topic without changing its progress.",
     titlePlaceholder = "Retrieval",
-    descriptionPlaceholder = "Optional notes about this skill",
-    submitCreateLabel = "Create node",
+    descriptionPlaceholder = "Optional notes about this topic",
+    submitCreateLabel = "Add topic",
     submitChildLabel,
   } = copy ?? {}
   const [title, setTitle] = useState("")

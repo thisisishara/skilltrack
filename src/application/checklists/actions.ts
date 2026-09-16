@@ -36,7 +36,7 @@ export async function createChecklistItemAction(input: {
 }): Promise<ChecklistActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -62,7 +62,7 @@ export async function updateChecklistItemAction(input: {
 }): Promise<ChecklistActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
-      throw new ApplicationError("validation", "Select a checklist item first.")
+      throw new ApplicationError("validation", "Select a task first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -88,7 +88,7 @@ export async function setChecklistItemCompletedAction(input: {
 }): Promise<ChecklistActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
-      throw new ApplicationError("validation", "Select a checklist item first.")
+      throw new ApplicationError("validation", "Select a task first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -113,7 +113,7 @@ export async function reorderChecklistItemsAction(input: {
 }): Promise<ChecklistActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -137,7 +137,7 @@ export async function deleteChecklistItemAction(input: {
 }): Promise<ChecklistActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
-      throw new ApplicationError("validation", "Select a checklist item first.")
+      throw new ApplicationError("validation", "Select a task first.")
     }
 
     const { applicationUser } = await requireSession()

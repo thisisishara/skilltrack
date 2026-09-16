@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -21,11 +22,24 @@ import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
 import { CreateRoleDialog } from "@/components/roles/create-role-dialog"
 
+export type TreeFocusRequest = {
+  nonce: number
+  roleId: string
+  nodeId: string
+  taskId: string | null
+}
+
 type RolesUiContextValue = {
   roles: Role[]
   activeRole: Role | null
   selectRole: (roleId: string) => void
   openCreate: () => void
+  treeFocusRequest: TreeFocusRequest | null
+  focusTree: (target: {
+    roleId: string
+    nodeId: string
+    taskId?: string | null
+  }) => void
 }
 
 const RolesUiContext = createContext<RolesUiContextValue | null>(null)
@@ -49,6 +63,23 @@ export function RolesWorkspace({
   const pathname = usePathname()
   const params = useParams<{ roleId?: string }>()
   const [createOpen, setCreateOpen] = useState(false)
+  const [treeFocusRequest, setTreeFocusRequest] = useState<TreeFocusRequest | null>(
+    null
+  )
+  const treeFocusNonceRef = useRef(0)
+
+  const focusTree = useCallback(
+    (target: { roleId: string; nodeId: string; taskId?: string | null }) => {
+      treeFocusNonceRef.current += 1
+      setTreeFocusRequest({
+        nonce: treeFocusNonceRef.current,
+        roleId: target.roleId,
+        nodeId: target.nodeId,
+        taskId: target.taskId ?? null,
+      })
+    },
+    []
+  )
 
   const activeRole = useMemo(
     () => roles.find((role) => role.id === params.roleId) ?? null,
@@ -131,8 +162,10 @@ export function RolesWorkspace({
       activeRole,
       selectRole,
       openCreate,
+      treeFocusRequest,
+      focusTree,
     }),
-    [roles, activeRole, selectRole, openCreate]
+    [roles, activeRole, selectRole, openCreate, treeFocusRequest, focusTree]
   )
 
   return (

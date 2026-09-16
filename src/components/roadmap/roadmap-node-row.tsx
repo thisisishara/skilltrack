@@ -167,6 +167,7 @@ function TaskTickList({
             <li key={item.id}>
               <div
                 id={`tree-task-${item.id}`}
+                data-tree-task={item.id}
                 data-task-row
                 className={cn(
                   "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
@@ -610,7 +611,11 @@ export function RoadmapNodeRow({
   )
 
   return (
-    <li className="relative flex flex-col" id={`tree-topic-${node.id}`}>
+    <li
+      className="relative flex flex-col"
+      id={`tree-topic-${node.id}`}
+      data-tree-topic={node.id}
+    >
       {depth > 0 ? (
         <span aria-hidden className="absolute -left-4 top-[18px] h-px w-4 bg-border/70" />
       ) : null}

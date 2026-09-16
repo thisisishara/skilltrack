@@ -178,7 +178,7 @@ export async function updateDetails(
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That checklist item no longer exists.")
+    throw new ApplicationError("not_found", "That task no longer exists.")
   }
 
   return toItem(data)
@@ -207,7 +207,7 @@ export async function setCompleted(
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That checklist item no longer exists.")
+    throw new ApplicationError("not_found", "That task no longer exists.")
   }
 
   return toItem(data)
@@ -247,6 +247,6 @@ export async function deleteForNode(nodeId: string, itemId: string) {
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That checklist item no longer exists.")
+    throw new ApplicationError("not_found", "That task no longer exists.")
   }
 }

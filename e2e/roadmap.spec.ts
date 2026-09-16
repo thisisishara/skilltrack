@@ -22,17 +22,17 @@ test.describe("authenticated roadmap", () => {
     await page.getByRole("button", { name: "Create role" }).click()
     await expect(page.getByText("This roadmap is empty")).toBeVisible()
 
-    await page.getByRole("button", { name: "Create first node" }).click()
+    await page.getByRole("button", { name: "Add first topic" }).click()
     await page.getByLabel("Title").fill("Retrieval")
-    await page.getByRole("button", { name: "Create node" }).click()
+    await page.getByRole("button", { name: "Add topic" }).click()
     await expect(page.getByText("Retrieval").first()).toBeVisible()
 
     await page.getByText("Retrieval").first().click()
-    await page.getByRole("button", { name: "Add a checklist item" }).click()
+    await page.getByRole("button", { name: "Add task" }).click()
     await page.getByPlaceholder("Understand CAP theorem").fill("Read docs")
-    await page.getByRole("button", { name: "Add item" }).click()
+    await page.getByRole("button", { name: "Add task" }).click()
     await page.getByPlaceholder("Understand CAP theorem").fill("Write notes")
-    await page.getByRole("button", { name: "Add item" }).click()
+    await page.getByRole("button", { name: "Add task" }).click()
 
     await page.getByRole("checkbox").first().click()
     await expect(page.getByText("50%").first()).toBeVisible()

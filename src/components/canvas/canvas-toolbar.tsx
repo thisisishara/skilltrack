@@ -144,16 +144,16 @@ export function CanvasToolbar({
         </ToolToggle>
       </ToggleGroup>
       <ToolbarSep />
-      <ToolbarButton label="Add node" onClick={onAddRoot}>
+      <ToolbarButton label="Add topic" onClick={onAddRoot}>
         <Plus />
       </ToolbarButton>
       <ToolbarButton label="Add label" onClick={onAddLabel}>
         <Type />
       </ToolbarButton>
-      <ToolbarButton label="Add child" disabled={!canAddChild} onClick={onAddChild}>
+      <ToolbarButton label="Add sub-topic" disabled={!canAddChild} onClick={onAddChild}>
         <GitBranch />
       </ToolbarButton>
-      <ToolbarButton label="Edit node" disabled={!canEdit} onClick={onEdit}>
+      <ToolbarButton label="Edit" disabled={!canEdit} onClick={onEdit}>
         <Pencil />
       </ToolbarButton>
       <ToolbarButton label="Delete" disabled={!hasSelection} onClick={onDelete}>

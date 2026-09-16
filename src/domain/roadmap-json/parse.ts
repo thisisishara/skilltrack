@@ -102,16 +102,16 @@ function parsePosition(value: unknown): { x: number; y: number } {
   }
 
   if (!isPlainObject(value)) {
-    fail("Node position must be an object.")
+    fail("Topic position must be an object.")
   }
 
-  assertAllowedKeys(value, POSITION_KEYS, "Node position")
+  assertAllowedKeys(value, POSITION_KEYS, "Topic position")
 
   const x = value.x
   const y = value.y
 
   if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) {
-    fail("Node position x and y must be finite numbers.")
+    fail("Topic position x and y must be finite numbers.")
   }
 
   return { x, y }
@@ -123,32 +123,32 @@ function parseChecklist(value: unknown, seen: Set<string>): NormalizedChecklistI
   }
 
   if (!Array.isArray(value)) {
-    fail("Node checklist must be an array.")
+    fail("Topic tasks must be an array.")
   }
 
   return value.map((item, index) => {
     if (!isPlainObject(item)) {
-      fail(`Checklist item ${index + 1} must be an object.`)
+      fail(`Task ${index + 1} must be an object.`)
     }
 
-    assertAllowedKeys(item, CHECKLIST_KEYS, `Checklist item ${index + 1}`)
+    assertAllowedKeys(item, CHECKLIST_KEYS, `Task ${index + 1}`)
 
-    const id = requireUuid(item.id, `Checklist item ${index + 1} id`)
+    const id = requireUuid(item.id, `Task ${index + 1} id`)
     if (seen.has(id)) {
-      fail("Checklist item IDs must be unique in the document.")
+      fail("Task IDs must be unique in the document.")
     }
     seen.add(id)
 
-    const title = displayChecklistTitle(requireString(item.title, `Checklist item ${index + 1} title`))
+    const title = displayChecklistTitle(requireString(item.title, `Task ${index + 1} title`))
     if (!title) {
-      fail(`Checklist item ${index + 1} title cannot be empty.`)
+      fail(`Task ${index + 1} title cannot be empty.`)
     }
 
     if (typeof item.completed !== "boolean") {
-      fail(`Checklist item ${index + 1} completed must be a boolean.`)
+      fail(`Task ${index + 1} completed must be a boolean.`)
     }
 
-    const description = optionalString(item.description, `Checklist item ${index + 1} description`)
+    const description = optionalString(item.description, `Task ${index + 1} description`)
 
     return {
       id,
@@ -165,7 +165,7 @@ function parseLinks(value: unknown, seen: Set<string>): NormalizedLink[] {
   }
 
   if (!Array.isArray(value)) {
-    fail("Node links must be an array.")
+    fail("Topic links must be an array.")
   }
 
   return value.map((item, index) => {
@@ -200,9 +200,9 @@ function parseKind(value: unknown): NodeKind {
     return DEFAULT_NODE_KIND
   }
 
-  const kind = requireString(value, "Node kind")
+  const kind = requireString(value, "kind")
   if (kind !== "skill" && kind !== "label") {
-    fail('Node kind must be "skill" or "label".')
+    fail('kind must be "skill" or "label".')
   }
 
   return normalizeNodeKind(kind)
@@ -213,9 +213,9 @@ function parseHandleKind(value: unknown): NodeHandleKind {
     return DEFAULT_NODE_HANDLE_KIND
   }
 
-  const handleKind = requireString(value, "Node handle_kind")
+  const handleKind = requireString(value, "handle_kind")
   if (handleKind !== "regular" && handleKind !== "input" && handleKind !== "output") {
-    fail('Node handle_kind must be "regular", "input", or "output".')
+    fail('handle_kind must be "regular", "input", or "output".')
   }
 
   return normalizeNodeHandleKind(handleKind)
@@ -229,20 +229,20 @@ function parseNode(
   seenLinkIds: Set<string>
 ): NormalizedRoadmapNode {
   if (!isPlainObject(value)) {
-    fail(`Node ${index + 1} must be an object.`)
+    fail(`Topic ${index + 1} must be an object.`)
   }
 
-  assertAllowedKeys(value, NODE_KEYS, `Node ${index + 1}`)
+  assertAllowedKeys(value, NODE_KEYS, `Topic ${index + 1}`)
 
-  const id = requireUuid(value.id, `Node ${index + 1} id`)
+  const id = requireUuid(value.id, `Topic ${index + 1} id`)
   if (seenNodeIds.has(id)) {
-    fail("Node IDs must be unique in the document.")
+    fail("Topic IDs must be unique in the document.")
   }
   seenNodeIds.add(id)
 
-  const title = displayNodeTitle(requireString(value.title, `Node ${index + 1} title`))
+  const title = displayNodeTitle(requireString(value.title, `Topic ${index + 1} title`))
   if (!title) {
-    fail(`Node ${index + 1} title cannot be empty.`)
+    fail(`Topic ${index + 1} title cannot be empty.`)
   }
 
   const kind = parseKind(value.kind)
@@ -250,18 +250,18 @@ function parseNode(
   let parentId: string | null = null
 
   if (parentRaw !== undefined && parentRaw !== null) {
-    parentId = requireUuid(parentRaw, `Node ${index + 1} parent_id`)
+    parentId = requireUuid(parentRaw, `Topic ${index + 1} parent_id`)
   }
 
   if (kind === "label") {
     for (const key of LABEL_FORBIDDEN_KEYS) {
       if (value[key] !== undefined) {
-        fail(`Label nodes cannot include "${key}".`)
+        fail(`Labels cannot include "${key}".`)
       }
     }
 
     if (parentId) {
-      fail("Labels cannot have a parent.")
+      fail("Labels cannot nest under a topic.")
     }
 
     const position = parsePosition(value.position)
@@ -285,14 +285,14 @@ function parseNode(
   }
 
   const position = parsePosition(value.position)
-  const description = optionalString(value.description, `Node ${index + 1} description`)
-  const notes = optionalString(value.notes, `Node ${index + 1} notes`)
-  const accentRaw = optionalString(value.accent_color, `Node ${index + 1} accent_color`)
+  const description = optionalString(value.description, `Topic ${index + 1} description`)
+  const notes = optionalString(value.notes, `Topic ${index + 1} notes`)
+  const accentRaw = optionalString(value.accent_color, `Topic ${index + 1} accent_color`)
   let accentColor: string | null = null
   if (accentRaw !== undefined) {
     const parsed = parseAccentHex(accentRaw)
     if (!parsed.ok) {
-      fail(`Node ${index + 1} accent_color must be a 3 or 6 digit hex color.`)
+      fail(`Topic ${index + 1} accent_color must be a 3 or 6 digit hex color.`)
     }
     accentColor = parsed.value
   }
@@ -304,7 +304,7 @@ function parseNode(
     title,
     description: description?.trim() ? description.trim() : null,
     notes: notes?.trim() ? notes.trim() : null,
-    icon: normalizeNodeIcon(optionalString(value.icon, `Node ${index + 1} icon`)),
+    icon: normalizeNodeIcon(optionalString(value.icon, `Topic ${index + 1} icon`)),
     accentColor,
     handleKind: parseHandleKind(value.handle_kind),
     incomingEdgeAnimated:
@@ -312,7 +312,7 @@ function parseNode(
         ? false
         : typeof value.incoming_edge_animated === "boolean"
           ? value.incoming_edge_animated
-          : fail(`Node ${index + 1} incoming_edge_animated must be a boolean.`),
+          : fail(`Topic ${index + 1} incoming_edge_animated must be a boolean.`),
     positionX: position.x,
     positionY: position.y,
     checklist: parseChecklist(value.checklist, seenChecklistIds),
@@ -331,16 +331,16 @@ function assertGraph(nodes: NormalizedRoadmapNode[]) {
     }
 
     if (node.parentId === node.id) {
-      fail("A node cannot be its own parent.")
+      fail("A topic cannot nest under itself.")
     }
 
     const parent = byId.get(node.parentId)
     if (!parent) {
-      fail("Parent references must point to a node in the document.")
+      fail("Each nested topic must belong to another topic in this file.")
     }
 
     if (parent.kind === "label") {
-      fail("Labels cannot have children.")
+      fail("Labels cannot contain topics.")
     }
 
     const handleMessage = parentLinkError(node.handleKind, parent.handleKind, node.parentId)
@@ -358,7 +358,7 @@ function assertGraph(nodes: NormalizedRoadmapNode[]) {
     }
 
     if (wouldCreateCycle(graph, node.id, node.parentId)) {
-      fail("Roadmap parent relationships cannot contain a cycle.")
+      fail("Topics cannot form a loop.")
     }
   }
 }

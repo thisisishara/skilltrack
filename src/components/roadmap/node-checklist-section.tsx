@@ -43,11 +43,11 @@ export function NodeChecklistSection({
   copy?: NodeChecklistCopy
 }) {
   const {
-    addedToast = "Checklist item added",
-    emptyAddLabel = "Add a checklist item",
-    titleFieldLabel = "Item title",
+    addedToast = "Task added",
+    emptyAddLabel = "Add a task",
+    titleFieldLabel = "Task",
     titlePlaceholder = "Understand CAP theorem",
-    addButtonLabel = "Add item",
+    addButtonLabel = "Add task",
   } = copy ?? {}
   const [dialogOpen, setDialogOpen] = useState(false)
 

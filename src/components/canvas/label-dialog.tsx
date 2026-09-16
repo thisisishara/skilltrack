@@ -69,7 +69,7 @@ export function LabelDialog({
           <DialogDescription>
             {isEdit
               ? "Update this canvas annotation."
-              : "Place a short note on the canvas. Labels are not skills and do not connect to the tree."}
+              : "Place a short note on the canvas. Labels do not nest with topics."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6">

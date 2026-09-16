@@ -34,7 +34,7 @@ export function RoadmapStatusBar({
         />
       </div>
       <span className="hidden tabular-nums sm:inline">
-        {progress.completed}/{progress.total} evidence
+        {progress.completed}/{progress.total} tasks
       </span>
       <StatusSep />
       <div className="ml-auto flex min-w-0 items-center gap-2.5 overflow-hidden">

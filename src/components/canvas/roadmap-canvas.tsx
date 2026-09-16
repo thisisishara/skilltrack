@@ -70,11 +70,7 @@ import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import { displayChecklistTitle } from "@/domain/checklists/title"
 import type { ChecklistItem } from "@/domain/checklists/types"
 import type { NodeLink } from "@/domain/links/types"
-import {
-  displayLinkLabel,
-  isValidHttpUrl,
-  normalizeLinkUrl,
-} from "@/domain/links/url"
+import { resolveLinkFields } from "@/domain/links/url"
 import {
   nodeCanHaveChildren,
   nodeCanHaveParent,
@@ -810,7 +806,7 @@ function RoadmapCanvasInner({
       return {
         ok: false as const,
         code: "validation" as const,
-        message: "Node title cannot be empty.",
+        message: "Topic title cannot be empty.",
       }
     }
 
@@ -838,7 +834,7 @@ function RoadmapCanvasInner({
 
     setNodes((current) => [...current, node])
     setDialogOpen(false)
-    toast.success("Node created")
+    toast.success("Topic created")
 
     void createNodeAction({
       id,
@@ -873,7 +869,7 @@ function RoadmapCanvasInner({
       return {
         ok: false as const,
         code: "unexpected" as const,
-        message: "Select a node first.",
+        message: "Select a topic first.",
       }
     }
 
@@ -882,7 +878,7 @@ function RoadmapCanvasInner({
       return {
         ok: false as const,
         code: "validation" as const,
-        message: "Node title cannot be empty.",
+        message: "Topic title cannot be empty.",
       }
     }
 
@@ -942,7 +938,7 @@ function RoadmapCanvasInner({
   function handleCreateChecklist(input: { title: string; description: string }) {
     const title = displayChecklistTitle(input.title)
     if (!title || !configNodeId) {
-      return { ok: false as const, message: "Checklist title cannot be empty." }
+      return { ok: false as const, message: "Task title cannot be empty." }
     }
 
     const id = crypto.randomUUID()
@@ -983,7 +979,7 @@ function RoadmapCanvasInner({
   function handleUpdateChecklist(item: ChecklistItem, title: string, description: string) {
     const nextTitle = displayChecklistTitle(title)
     if (!nextTitle) {
-      toast.error("Checklist title cannot be empty.")
+      toast.error("Task title cannot be empty.")
       return
     }
 
@@ -1051,18 +1047,15 @@ function RoadmapCanvasInner({
   }
 
   function handleCreateLink(input: { label: string; url: string }) {
-    const label = displayLinkLabel(input.label)
-    const url = normalizeLinkUrl(input.url)
-    if (!label) {
-      return "Link label cannot be empty."
-    }
-    if (!url || !isValidHttpUrl(url)) {
-      return "Enter a valid http or https URL."
+    const resolved = resolveLinkFields(input.label, input.url)
+    if (!resolved.ok) {
+      return resolved.message
     }
     if (!configNodeId) {
-      return "Select a node first."
+      return "Select a topic first."
     }
 
+    const { label, url } = resolved
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
     const link: NodeLink = {
@@ -1092,19 +1085,17 @@ function RoadmapCanvasInner({
   }
 
   function handleUpdateLink(link: NodeLink, label: string, url: string) {
-    const nextLabel = displayLinkLabel(label)
-    const nextUrl = normalizeLinkUrl(url)
-    if (!nextLabel) {
-      return "Link label cannot be empty."
-    }
-    if (!nextUrl || !isValidHttpUrl(nextUrl)) {
-      return "Enter a valid http or https URL."
+    const resolved = resolveLinkFields(label, url)
+    if (!resolved.ok) {
+      return resolved.message
     }
 
     const previous = link
     setLinks((current) =>
       current.map((entry) =>
-        entry.id === link.id ? { ...entry, label: nextLabel, url: nextUrl } : entry
+        entry.id === link.id
+          ? { ...entry, label: resolved.label, url: resolved.url }
+          : entry
       )
     )
 
@@ -1112,8 +1103,8 @@ function RoadmapCanvasInner({
       roleId,
       nodeId: link.nodeId,
       linkId: link.id,
-      label: nextLabel,
-      url: nextUrl,
+      label: resolved.label,
+      url: resolved.url,
     }).then((result) => {
       if (!result.ok) {
         setLinks((current) =>
@@ -1249,7 +1240,7 @@ function RoadmapCanvasInner({
     setSelectedIds([])
     setDeleteIds([])
     toast.success(
-      onlyLabel ? "Label deleted" : deleteCount > 1 ? "Items deleted" : "Node deleted"
+      onlyLabel ? "Label deleted" : deleteCount > 1 ? "Items deleted" : "Topic deleted"
     )
 
     void Promise.all(

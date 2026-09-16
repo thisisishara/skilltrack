@@ -58,7 +58,7 @@ async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) 
     )
 
     if (ready.length === 0) {
-      throw new ApplicationError("validation", "Roadmap parent relationships cannot contain a cycle.")
+      throw new ApplicationError("validation", "Topics cannot form a loop.")
     }
 
     await nodesRepository.insertMany(

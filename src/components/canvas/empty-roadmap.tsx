@@ -28,12 +28,12 @@ export function EmptyRoadmap({
           </EmptyMedia>
           <EmptyTitle>This roadmap is empty</EmptyTitle>
           <EmptyDescription>
-            Create the first node, import JSON, or drop a .json file on the canvas.
+            Add the first topic, import a roadmap, or drop a .json file on the canvas.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button type="button" onClick={onCreate}>
-            Create first node
+            Add first topic
           </Button>
           <Button type="button" variant="outline" onClick={onImport}>
             Import JSON

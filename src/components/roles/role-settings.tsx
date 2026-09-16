@@ -152,7 +152,7 @@ export function RoleSettings({ role }: { role: Role }) {
       <div className="flex flex-col gap-1.5">
         <h1 className="font-heading text-lg font-medium">Role settings</h1>
         <p className="text-sm text-muted-foreground">
-          Manage the selected role. Node IDs stay the same when you rename.
+          Manage the selected role. Topics and progress stay the same when you rename.
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export function RoleSettings({ role }: { role: Role }) {
         <CardHeader>
           <CardTitle>Name</CardTitle>
           <CardDescription>
-            Unique per account. Changing it does not regenerate roadmap nodes.
+            Unique per account. Changing it does not reset this role’s topics.
           </CardDescription>
         </CardHeader>
         <CardContent>

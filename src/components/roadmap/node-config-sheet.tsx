@@ -78,7 +78,7 @@ export function NodeConfigSheet({
   mode = "topic",
   fallbackTitle,
   subtitle,
-  checklistHeading = "Evidence checklist",
+  checklistHeading = "Tasks",
   checklistCopy,
   deleteLabel = "Delete topic",
 }: {
@@ -182,7 +182,7 @@ export function NodeConfigSheet({
 
   function flushDetails(next: DetailSnapshot) {
     if (!displayNodeTitle(next.title)) {
-      setError("Node title cannot be empty.")
+      setError("Topic title cannot be empty.")
       return
     }
 
@@ -320,7 +320,7 @@ export function NodeConfigSheet({
                   {node.title}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {subtitle ?? "Configure evidence, notes, and links for this skill."}
+                  {subtitle ?? "Configure tasks, notes, and links for this topic."}
                 </p>
               </div>
               {showClose ? (
@@ -328,7 +328,7 @@ export function NodeConfigSheet({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Close node configuration"
+                  aria-label="Close topic details"
                   onClick={() => onOpenChange(false)}
                 >
                   <XIcon />
@@ -390,7 +390,7 @@ export function NodeConfigSheet({
                           scheduleDetails({ description: next })
                         }}
                         onBlur={() => persistDetailsNow({ description })}
-                        placeholder="Short summary of this skill"
+                        placeholder="Short summary of this topic"
                         className="field-sizing-fixed max-h-40 min-h-24 resize-y overflow-auto"
                       />
                     </Field>
@@ -420,7 +420,7 @@ export function NodeConfigSheet({
                   <h3 className="text-sm font-medium">Notes</h3>
                 <NotesSection
                   notes={notes}
-                  emptyDescription="Capture free-form notes for this skill."
+                  emptyDescription="Capture free-form notes for this topic."
                   editable={editMode}
                   onEdit={() => setNotesOpen(true)}
                 />

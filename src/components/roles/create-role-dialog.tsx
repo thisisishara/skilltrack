@@ -168,7 +168,7 @@ export function CreateRoleDialog({
                     </ToggleGroup>
                     <FieldDescription>
                       Import onto a new role, or later onto a role that still has no
-                      nodes.
+                      topics.
                     </FieldDescription>
                 </Field>
                 <Field

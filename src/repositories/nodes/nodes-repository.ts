@@ -239,7 +239,7 @@ export async function updateDetails(
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
 
   return toNode(data)
@@ -268,7 +268,7 @@ export async function updatePosition(
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
 
   return toNode(data)
@@ -297,7 +297,7 @@ export async function updateParent(
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
 
   return toNode(data)
@@ -331,6 +331,6 @@ export async function deleteForRole(roleId: string, nodeId: string) {
   }
 
   if (!data) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
 }

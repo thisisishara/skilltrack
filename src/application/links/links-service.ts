@@ -4,26 +4,16 @@ import { requireOwnedNode } from "@/application/nodes/nodes-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
 import { isLabelNode } from "@/domain/nodes/kind"
-import {
-  displayLinkLabel,
-  isValidHttpUrl,
-  normalizeLinkUrl,
-} from "@/domain/links/url"
+import { resolveLinkFields } from "@/domain/links/url"
 import * as linksRepository from "@/repositories/links/links-repository"
 
 function requireLink(label: string, url: string) {
-  const trimmedLabel = displayLinkLabel(label)
-  const trimmedUrl = normalizeLinkUrl(url)
-
-  if (!trimmedLabel) {
-    throw new ApplicationError("validation", "Link label cannot be empty.")
+  const resolved = resolveLinkFields(label, url)
+  if (!resolved.ok) {
+    throw new ApplicationError("validation", resolved.message)
   }
 
-  if (!trimmedUrl || !isValidHttpUrl(trimmedUrl)) {
-    throw new ApplicationError("validation", "Enter a valid http or https URL.")
-  }
-
-  return { label: trimmedLabel, url: trimmedUrl }
+  return { label: resolved.label, url: resolved.url }
 }
 
 async function requireOwnedRole(userId: string, roleId: string) {

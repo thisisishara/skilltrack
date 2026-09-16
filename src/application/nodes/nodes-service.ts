@@ -30,7 +30,7 @@ function requireTitle(title: string) {
   const trimmed = displayNodeTitle(title)
 
   if (!trimmed) {
-    throw new ApplicationError("validation", "Node title cannot be empty.")
+    throw new ApplicationError("validation", "Topic title cannot be empty.")
   }
 
   return trimmed
@@ -74,11 +74,11 @@ function assertParentAssignment(
 
   const parent = nodes.find((node) => node.id === parentId)
   if (!parent) {
-    throw new ApplicationError("validation", "Parent node was not found.")
+    throw new ApplicationError("validation", "That topic was not found.")
   }
 
   if (isLabelNode(parent)) {
-    throw new ApplicationError("validation", "Labels cannot have children.")
+    throw new ApplicationError("validation", "Labels cannot contain topics.")
   }
 
   const message = parentLinkError(childKind, parent.handleKind, parentId)
@@ -102,7 +102,7 @@ export async function requireOwnedNode(userId: string, roleId: string, nodeId: s
   const node = await nodesRepository.getByIdForRole(roleId, nodeId)
 
   if (!node) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
 
   return node
@@ -137,7 +137,7 @@ export async function createNode(
   const nodes = await nodesRepository.listByRoleId(input.roleId)
 
   if (kind === "label" && input.parentId) {
-    throw new ApplicationError("validation", "Labels cannot have a parent.")
+    throw new ApplicationError("validation", "Labels cannot nest under a topic.")
   }
 
   let positionX = 0
@@ -156,13 +156,13 @@ export async function createNode(
     const parent = nodes.find((node) => node.id === parentId)
 
     if (!parent) {
-      throw new ApplicationError("validation", "Parent node was not found.")
+      throw new ApplicationError("validation", "That topic was not found.")
     }
 
     if (parent.roleId !== input.roleId) {
       throw new ApplicationError(
         "validation",
-        "A node must belong to the same role as its parent."
+        "Topics have to stay on the same role."
       )
     }
 
@@ -255,7 +255,7 @@ export async function moveNode(
   await requireOwnedNode(userId, roleId, nodeId)
 
   if (!Number.isFinite(positionX) || !Number.isFinite(positionY)) {
-    throw new ApplicationError("validation", "Node position is invalid.")
+    throw new ApplicationError("validation", "That topic position is invalid.")
   }
 
   return nodesRepository.updatePosition(roleId, nodeId, positionX, positionY)
@@ -271,27 +271,27 @@ export async function reparentNode(
   const nodes = await nodesRepository.listByRoleId(roleId)
 
   if (isLabelNode(node) && parentId) {
-    throw new ApplicationError("validation", "Labels cannot have a parent.")
+    throw new ApplicationError("validation", "Labels cannot nest under a topic.")
   }
 
   if (parentId) {
     const parent = nodes.find((item) => item.id === parentId)
 
     if (!parent) {
-      throw new ApplicationError("validation", "Parent node was not found.")
+      throw new ApplicationError("validation", "That topic was not found.")
     }
 
     if (parent.roleId !== roleId || node.roleId !== roleId) {
       throw new ApplicationError(
         "validation",
-        "A node must belong to the same role as its parent."
+        "Topics have to stay on the same role."
       )
     }
 
     if (wouldCreateCycle(nodes, nodeId, parentId)) {
       throw new ApplicationError(
         "validation",
-        "A node cannot be its own ancestor."
+        "A topic cannot nest under itself."
       )
     }
 
@@ -318,7 +318,7 @@ export async function placeNode(
   const nodes = await nodesRepository.listByRoleId(roleId)
 
   if (isLabelNode(node)) {
-    throw new ApplicationError("validation", "Labels cannot be nested in the tree.")
+    throw new ApplicationError("validation", "Labels cannot be nested under topics.")
   }
 
   const parentId = position === "inside" ? targetId : nodes.find((item) => item.id === targetId)?.parentId ?? null
@@ -334,7 +334,7 @@ export async function placeNode(
   await nodesRepository.updatePlacements(roleId, updates)
   const next = await nodesRepository.getByIdForRole(roleId, nodeId)
   if (!next) {
-    throw new ApplicationError("not_found", "That node no longer exists.")
+    throw new ApplicationError("not_found", "That topic no longer exists.")
   }
   return next
 }

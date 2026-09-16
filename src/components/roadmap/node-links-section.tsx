@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Link2, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { previewLinkTitleAction } from "@/application/links/actions"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,13 +23,21 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { faviconUrlFor } from "@/domain/links/url"
+import { defaultLinkLabel, faviconUrlFor, isValidHttpUrl, normalizeLinkUrl } from "@/domain/links/url"
 import type { NodeLink } from "@/domain/links/types"
 
 export function NodeLinksSection({
@@ -68,7 +77,7 @@ export function NodeLinksSection({
             </EmptyMedia>
             <EmptyTitle>No links</EmptyTitle>
             <EmptyDescription>
-              Add documentation, courses, or references for this skill.
+              Add documentation, courses, or references for this topic.
             </EmptyDescription>
           </EmptyHeader>
           {editable ? (
@@ -240,17 +249,60 @@ export function LinkDialog({
   const [label, setLabel] = useState("")
   const [url, setUrl] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [lookingUpTitle, setLookingUpTitle] = useState(false)
+  const labelTouchedRef = useRef(false)
+  const titleRequestRef = useRef(0)
   const isEdit = Boolean(link)
 
   useEffect(() => {
     if (!open) {
+      titleRequestRef.current += 1
+      setLookingUpTitle(false)
       return
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLabel(link?.label ?? "")
     setUrl(link?.url ?? "")
     setError(null)
+    setLookingUpTitle(false)
+    labelTouchedRef.current = Boolean(link?.label)
+    titleRequestRef.current += 1
   }, [open, link])
+
+  useEffect(() => {
+    if (!open || labelTouchedRef.current) {
+      return
+    }
+
+    const trimmed = normalizeLinkUrl(url)
+    if (!isValidHttpUrl(trimmed)) {
+      setLookingUpTitle(false)
+      return
+    }
+
+    const requestId = ++titleRequestRef.current
+    setLookingUpTitle(true)
+    const timer = window.setTimeout(() => {
+      void previewLinkTitleAction(trimmed)
+        .then((result) => {
+          if (requestId !== titleRequestRef.current || labelTouchedRef.current) {
+            return
+          }
+          if (result.title) {
+            setLabel(result.title)
+          }
+        })
+        .finally(() => {
+          if (requestId === titleRequestRef.current) {
+            setLookingUpTitle(false)
+          }
+        })
+    }, 450)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [open, url])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -277,16 +329,6 @@ export function LinkDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6">
           <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="link-dialog-label">Label</FieldLabel>
-              <Input
-                id="link-dialog-label"
-                value={label}
-                onChange={(event) => setLabel(event.target.value)}
-                placeholder="Official documentation"
-                autoComplete="off"
-              />
-            </Field>
             <Field data-invalid={error ? true : undefined}>
               <FieldLabel htmlFor="link-dialog-url">URL</FieldLabel>
               <Input
@@ -298,6 +340,39 @@ export function LinkDialog({
                 aria-invalid={error ? true : undefined}
               />
               {error ? <FieldError>{error}</FieldError> : null}
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="link-dialog-label">Label</FieldLabel>
+              <Input
+                id="link-dialog-label"
+                value={label}
+                onChange={(event) => {
+                  const next = event.target.value
+                  const touched = next.trim().length > 0
+                  labelTouchedRef.current = touched
+                  if (touched) {
+                    titleRequestRef.current += 1
+                    setLookingUpTitle(false)
+                  }
+                  setLabel(next)
+                }}
+                placeholder={
+                  isValidHttpUrl(normalizeLinkUrl(url))
+                    ? defaultLinkLabel(url)
+                    : "Optional"
+                }
+                autoComplete="off"
+              />
+              <FieldDescription>
+                {lookingUpTitle ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Spinner className="size-3" />
+                    Looking up the page title…
+                  </span>
+                ) : (
+                  "Filled from the page title when we can find it."
+                )}
+              </FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter>

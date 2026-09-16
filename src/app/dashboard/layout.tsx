@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { CircleAlert } from "lucide-react"
 
+import { listStaleRoadmapNotifications } from "@/application/notifications/stale-roadmaps"
 import { listRoles } from "@/application/roles/roles-service"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
@@ -8,6 +9,7 @@ import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { isApplicationError } from "@/domain/errors"
+import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import type { Role } from "@/domain/roles/types"
 import { requireSession } from "@/lib/auth/session"
 
@@ -20,6 +22,7 @@ export default async function DashboardLayout({
   let displayName: string | null | undefined
   let avatarUrl: string | null | undefined
   let roles: Role[] = []
+  let notifications: StaleRoadmapNotification[] = []
   let databaseUnavailable = false
 
   try {
@@ -28,6 +31,7 @@ export default async function DashboardLayout({
     displayName = session.user.name
     avatarUrl = session.user.image
     roles = await listRoles(applicationUser.id)
+    notifications = await listStaleRoadmapNotifications(roles)
   } catch (error) {
     if (isApplicationError(error) && error.code === "database") {
       databaseUnavailable = true
@@ -61,7 +65,7 @@ export default async function DashboardLayout({
           avatarUrl={avatarUrl}
         />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <DashboardHeader />
+          <DashboardHeader notifications={notifications} />
           {children}
         </SidebarInset>
       </RolesWorkspace>

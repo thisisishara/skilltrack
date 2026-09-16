@@ -68,7 +68,7 @@ export async function updateNodeAction(input: {
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -93,7 +93,7 @@ export async function moveNodeAction(input: {
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -118,7 +118,7 @@ export async function reparentNodeAction(input: {
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -143,7 +143,7 @@ export async function placeNodeAction(input: {
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.targetId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()
@@ -167,7 +167,7 @@ export async function deleteNodeAction(input: {
 }): Promise<NodeActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a node first.")
+      throw new ApplicationError("validation", "Select a topic first.")
     }
 
     const { applicationUser } = await requireSession()

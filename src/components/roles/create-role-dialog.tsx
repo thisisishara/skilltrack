@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
@@ -137,7 +136,7 @@ export function CreateRoleDialog({
               Start an empty roadmap or drop a JSON file to import one.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-6">
             <div
               className={cn(
                 "flex flex-col gap-4",
@@ -145,10 +144,9 @@ export function CreateRoleDialog({
               )}
             >
               <FieldGroup className="min-w-0">
-                <Field orientation="horizontal">
+                <Field>
                   <FieldLabel>How to start</FieldLabel>
-                  <FieldContent>
-                    <ToggleGroup
+                  <ToggleGroup
                       value={[mode]}
                       onValueChange={(value) => {
                         const next = Array.isArray(value) ? value[0] : value
@@ -172,16 +170,13 @@ export function CreateRoleDialog({
                       Import onto a new role, or later onto a role that still has no
                       nodes.
                     </FieldDescription>
-                  </FieldContent>
                 </Field>
                 <Field
-                  orientation="horizontal"
                   data-invalid={error && mode === "empty" ? true : undefined}
                 >
                   <FieldLabel htmlFor="create-role-name">
                     {mode === "import" ? "Name override (optional)" : "Name"}
                   </FieldLabel>
-                  <FieldContent>
                     <Input
                       id="create-role-name"
                       className="font-mono"
@@ -198,7 +193,6 @@ export function CreateRoleDialog({
                           : "Unique per account."}
                       </FieldDescription>
                     )}
-                  </FieldContent>
                 </Field>
                 {mode === "import" ? (
                   <ImportJsonFields

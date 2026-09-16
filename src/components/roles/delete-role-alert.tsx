@@ -78,7 +78,7 @@ export function DeleteRoleAlert({
       <AlertDialogContent className="data-[size=default]:sm:max-w-md">
         <form onSubmit={handleSubmit} className="contents">
           <AlertDialogHeader>
-            <AlertDialogMedia>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive">
               <TriangleAlert />
             </AlertDialogMedia>
             <AlertDialogTitle>Delete this role?</AlertDialogTitle>

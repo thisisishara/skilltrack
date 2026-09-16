@@ -21,7 +21,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
 import { Input } from "@/components/ui/input"
 import {
   Tooltip,
@@ -46,6 +46,7 @@ export function NodeLinksSection({
 }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<NodeLink | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<NodeLink | null>(null)
 
   function openCreate() {
     setEditing(null)
@@ -96,7 +97,7 @@ export function NodeLinksSection({
                   <a
                     href={link.url}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-sm font-medium underline-offset-3 hover:underline"
                   >
                     {link.label}
@@ -129,10 +130,7 @@ export function NodeLinksSection({
                           size="icon-sm"
                           variant="ghost"
                           aria-label="Delete link"
-                          onClick={() => {
-                            onDelete(link.id)
-                            toast.success("Link deleted")
-                          }}
+                          onClick={() => setPendingDelete(link)}
                         />
                       }
                     >
@@ -173,6 +171,28 @@ export function NodeLinksSection({
           return null
         }}
         onUpdate={(link, label, url) => onUpdate(link, label, url)}
+      />
+      <ConfirmDeleteAlert
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null)
+          }
+        }}
+        title="Delete this link?"
+        description={
+          pendingDelete
+            ? `“${pendingDelete.label}” will be permanently deleted.`
+            : "This link will be permanently deleted."
+        }
+        confirmLabel="Delete link"
+        onConfirm={() => {
+          if (!pendingDelete) {
+            return
+          }
+          onDelete(pendingDelete.id)
+          toast.success("Link deleted")
+        }}
       />
     </div>
   )
@@ -255,37 +275,29 @@ export function LinkDialog({
               : "Add documentation, courses, or other references."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <FieldGroup>
-            <Field orientation="horizontal">
-              <FieldLabel htmlFor="link-dialog-label">
-                Label
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="link-dialog-label"
-                  value={label}
-                  onChange={(event) => setLabel(event.target.value)}
-                  placeholder="Official documentation"
-                  autoComplete="off"
-                />
-              </FieldContent>
+            <Field>
+              <FieldLabel htmlFor="link-dialog-label">Label</FieldLabel>
+              <Input
+                id="link-dialog-label"
+                value={label}
+                onChange={(event) => setLabel(event.target.value)}
+                placeholder="Official documentation"
+                autoComplete="off"
+              />
             </Field>
-            <Field orientation="horizontal" data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="link-dialog-url">
-                URL
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="link-dialog-url"
-                  value={url}
-                  onChange={(event) => setUrl(event.target.value)}
-                  placeholder="https://example.com"
-                  autoComplete="off"
-                  aria-invalid={error ? true : undefined}
-                />
-                {error ? <FieldError>{error}</FieldError> : null}
-              </FieldContent>
+            <Field data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="link-dialog-url">URL</FieldLabel>
+              <Input
+                id="link-dialog-url"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://example.com"
+                autoComplete="off"
+                aria-invalid={error ? true : undefined}
+              />
+              {error ? <FieldError>{error}</FieldError> : null}
             </Field>
           </FieldGroup>
           <DialogFooter>

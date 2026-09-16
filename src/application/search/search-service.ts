@@ -22,9 +22,21 @@ export type SearchNodeHit = {
   kind: "skill" | "label"
 }
 
+export type SearchTaskHit = {
+  id: string
+  nodeId: string
+  roleId: string
+  roleName: string
+  title: string
+  description: string | null
+  parentPath: string
+  isCompleted: boolean
+}
+
 export type SearchIndex = {
   roles: SearchRoleHit[]
   nodes: SearchNodeHit[]
+  tasks: SearchTaskHit[]
 }
 
 export async function getSearchIndex(userId: string): Promise<SearchIndex> {
@@ -55,5 +67,28 @@ export async function getSearchIndex(userId: string): Promise<SearchIndex> {
         }
       })
     ),
+    tasks: graphs.flatMap(({ role, nodes, items }) => {
+      const byId = new Map(nodes.map((node) => [node.id, node]))
+      return items.flatMap((item) => {
+        const node = byId.get(item.nodeId)
+        if (!node || isLabelNode(node)) {
+          return []
+        }
+        const ancestors = ancestorTitlePath(nodes, node.id)
+        const parentPath = ancestors ? `${ancestors} / ${node.title}` : node.title
+        return [
+          {
+            id: item.id,
+            nodeId: node.id,
+            roleId: role.id,
+            roleName: role.name,
+            title: item.title,
+            description: item.description,
+            parentPath,
+            isCompleted: item.isCompleted,
+          },
+        ]
+      })
+    }),
   }
 }

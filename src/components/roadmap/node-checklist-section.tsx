@@ -13,8 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Field, FieldContent, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
@@ -147,35 +148,31 @@ export function TaskDialog({
               : "Add a task to track what you need to learn here."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <FieldGroup>
-            <Field orientation="horizontal">
+            <Field>
               <FieldLabel htmlFor="task-dialog-title">
                 {titleFieldLabel}
               </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="task-dialog-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={titlePlaceholder}
-                  autoComplete="off"
-                />
-              </FieldContent>
+              <Input
+                id="task-dialog-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={titlePlaceholder}
+                autoComplete="off"
+              />
             </Field>
-            <Field orientation="horizontal">
+            <Field>
               <FieldLabel htmlFor="task-dialog-description">
                 Description
               </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="task-dialog-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Optional detail"
-                  autoComplete="off"
-                />
-              </FieldContent>
+              <Textarea
+                id="task-dialog-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Optional detail"
+                className="field-sizing-fixed max-h-40 min-h-24 resize-y overflow-auto"
+              />
             </Field>
           </FieldGroup>
           <DialogFooter>

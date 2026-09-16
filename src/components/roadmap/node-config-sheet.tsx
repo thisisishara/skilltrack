@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/empty"
 import {
   Field,
-  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -392,6 +391,7 @@ export function NodeConfigSheet({
                         }}
                         onBlur={() => persistDetailsNow({ description })}
                         placeholder="Short summary of this skill"
+                        className="field-sizing-fixed max-h-40 min-h-24 resize-y overflow-auto"
                       />
                     </Field>
                     <AccentColorField
@@ -572,25 +572,21 @@ export function NotesDialog({
           </DialogDescription>
         </DialogHeader>
         <form
-          className="grid gap-4"
+          className="grid gap-6"
           onSubmit={(event) => {
             event.preventDefault()
             onSave(draft)
           }}
         >
-          <Field orientation="horizontal">
-            <FieldLabel htmlFor="notes-dialog">
-              Notes
-            </FieldLabel>
-            <FieldContent>
-              <Textarea
-                id="notes-dialog"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder="What have you learned?"
-                className="field-sizing-fixed min-h-40"
-              />
-            </FieldContent>
+          <Field>
+            <FieldLabel htmlFor="notes-dialog">Notes</FieldLabel>
+            <Textarea
+              id="notes-dialog"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="What have you learned?"
+              className="field-sizing-fixed max-h-72 min-h-36 resize-y overflow-auto"
+            />
           </Field>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

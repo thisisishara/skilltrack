@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
-  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -137,43 +136,33 @@ export function NodeDialog({
             {isEdit ? editDescription : isChild ? childDescription : createDescription}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <FieldGroup>
-            <Field orientation="horizontal" data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="node-title">
-                Title
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="node-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={titlePlaceholder}
-                  autoComplete="off"
-                  aria-invalid={error ? true : undefined}
-                />
-                {error ? <FieldError>{error}</FieldError> : null}
-              </FieldContent>
+            <Field data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="node-title">Title</FieldLabel>
+              <Input
+                id="node-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={titlePlaceholder}
+                autoComplete="off"
+                aria-invalid={error ? true : undefined}
+              />
+              {error ? <FieldError>{error}</FieldError> : null}
             </Field>
-            <Field orientation="horizontal">
-              <FieldLabel htmlFor="node-description">
-                Description
-              </FieldLabel>
-              <FieldContent>
-                <Textarea
-                  id="node-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder={descriptionPlaceholder}
-                  className="field-sizing-fixed"
-                />
-              </FieldContent>
+            <Field>
+              <FieldLabel htmlFor="node-description">Description</FieldLabel>
+              <Textarea
+                id="node-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder={descriptionPlaceholder}
+                className="field-sizing-fixed max-h-40 min-h-24 resize-y overflow-auto"
+              />
             </Field>
-            <Field orientation="horizontal">
+            <Field>
               <FieldLabel>Icon</FieldLabel>
-              <FieldContent>
-                <IconPicker value={icon} onChange={setIcon} />
-              </FieldContent>
+              <IconPicker value={icon} onChange={setIcon} />
             </Field>
           </FieldGroup>
           <DialogFooter>

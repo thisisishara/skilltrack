@@ -35,7 +35,6 @@ export function ImportJsonFields({
 
   return (
     <Field
-      orientation="horizontal"
       data-invalid={error ? true : undefined}
       className={cn(
         "min-w-0 items-start rounded-xl transition-colors",

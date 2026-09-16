@@ -205,6 +205,7 @@ export function Roadmap({
   checklistItems: serverItems,
   links: serverLinks,
   focusNodeId,
+  focusTaskId,
 }: {
   userId: string
   roleId: string
@@ -213,6 +214,7 @@ export function Roadmap({
   checklistItems: ChecklistItem[]
   links: NodeLink[]
   focusNodeId?: string
+  focusTaskId?: string
 }) {
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
@@ -276,7 +278,10 @@ export function Roadmap({
   }, [roleId])
 
   useEffect(() => {
-    if (!focusNodeId || !expandedHydrated || focusedRef.current === focusNodeId) {
+    const focusKey = focusNodeId
+      ? `${focusNodeId}:${focusTaskId ?? ""}`
+      : null
+    if (!focusNodeId || !expandedHydrated || focusedRef.current === focusKey) {
       return
     }
 
@@ -285,17 +290,20 @@ export function Roadmap({
       return
     }
 
-    focusedRef.current = focusNodeId
-    const ancestors = ancestorIds(nodes, focusNodeId)
+    focusedRef.current = focusKey
+    const idsToExpand = ancestorIds(nodes, focusNodeId)
+    if (focusTaskId) {
+      idsToExpand.push(focusNodeId)
+    }
 
-    if (ancestors.length > 0) {
-      // Deep-linking into a nested topic needs its ancestors expanded so it's
-      // actually visible; this only runs once per distinct focusNodeId.
+    if (idsToExpand.length > 0) {
+      // Deep-linking into a nested topic (or a task under it) needs ancestors
+      // expanded so the target is actually visible.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setExpandedIds((current) => {
         let changed = false
         const next = new Set(current)
-        for (const id of ancestors) {
+        for (const id of idsToExpand) {
           if (!next.has(id)) {
             next.add(id)
             changed = true
@@ -312,14 +320,17 @@ export function Roadmap({
 
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        const targetId = focusTaskId
+          ? `tree-task-${focusTaskId}`
+          : `tree-topic-${focusNodeId}`
         document
-          .getElementById(`tree-topic-${focusNodeId}`)
+          .getElementById(targetId)
           ?.scrollIntoView({ block: "center", behavior: "smooth" })
       })
     })
 
     return () => cancelAnimationFrame(frame)
-  }, [expandedHydrated, focusNodeId, nodes, roleId])
+  }, [expandedHydrated, focusNodeId, focusTaskId, nodes, roleId])
 
   const skillNodes = useMemo(() => nodes.filter(isSkillNode), [nodes])
 
@@ -1070,6 +1081,7 @@ export function Roadmap({
                   onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
+                  focusedTaskId={focusTaskId ?? null}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}

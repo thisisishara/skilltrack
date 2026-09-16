@@ -48,7 +48,7 @@ export function DeleteNodeAlert({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogMedia>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
             <TriangleAlert />
           </AlertDialogMedia>
           <AlertDialogTitle>

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/empty"
 import { matchesSearch } from "@/domain/search/query"
 
-const emptyIndex: SearchIndex = { roles: [], nodes: [] }
+const emptyIndex: SearchIndex = { roles: [], nodes: [], tasks: [] }
 
 export function CommandSearch() {
   const router = useRouter()
@@ -96,13 +96,35 @@ export function CommandSearch() {
     [activeRole, index.nodes, query]
   )
 
-  const noHits = query.trim().length > 0 && roles.length === 0 && nodes.length === 0
+  const tasks = useMemo(
+    () =>
+      index.tasks
+        .filter((task) => {
+          if (activeRole && task.roleId !== activeRole.id) {
+            return false
+          }
+          return (
+            matchesSearch(task.title, query) ||
+            matchesSearch(task.description ?? "", query) ||
+            matchesSearch(task.parentPath, query) ||
+            matchesSearch(task.roleName, query)
+          )
+        })
+        .slice(0, 40),
+    [activeRole, index.tasks, query]
+  )
+
+  const noHits =
+    query.trim().length > 0 &&
+    roles.length === 0 &&
+    nodes.length === 0 &&
+    tasks.length === 0
   const placeholder = activeRole
     ? `Search ${activeRole.name}…`
-    : "Search roles and nodes…"
+    : "Search roles, topics, and tasks…"
   const dialogDescription = activeRole
-    ? `Search topics in ${activeRole.name}.`
-    : "Search roles and roadmap nodes."
+    ? `Search topics and tasks in ${activeRole.name}.`
+    : "Search roles, topics, and tasks."
 
   function closeAnd(run: () => void) {
     setOpen(false)
@@ -170,7 +192,7 @@ export function CommandSearch() {
                 </CommandGroup>
               ) : null}
               {nodes.length > 0 ? (
-                <CommandGroup heading="Nodes">
+                <CommandGroup heading="Topics">
                   {nodes.map((node) => (
                     <CommandItem
                       key={node.id}
@@ -194,6 +216,33 @@ export function CommandSearch() {
                           {node.percent}%
                         </span>
                       )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : null}
+              {tasks.length > 0 ? (
+                <CommandGroup heading="Tasks">
+                  {tasks.map((task) => (
+                    <CommandItem
+                      key={task.id}
+                      value={`task ${task.title} ${task.description ?? ""} ${task.parentPath} ${task.roleName} ${task.id}`}
+                      onSelect={() => {
+                        closeAnd(() => {
+                          router.push(
+                            `/dashboard/roles/${task.roleId}?node=${task.nodeId}&task=${task.id}`
+                          )
+                        })
+                      }}
+                    >
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="truncate">{task.title}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {[task.roleName, task.parentPath].filter(Boolean).join(" / ")}
+                        </span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {task.isCompleted ? "Done" : "Open"}
+                      </span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

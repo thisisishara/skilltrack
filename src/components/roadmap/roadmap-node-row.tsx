@@ -7,6 +7,7 @@ import { TaskDialog } from "@/components/roadmap/node-checklist-section"
 import { NodeLucideIcon } from "@/components/roadmap/lucide-icon"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,6 +96,7 @@ function reorderTaskIds(
 function TaskTickList({
   items,
   editing,
+  focusedTaskId,
   onToggle,
   onCreate,
   onUpdate,
@@ -103,6 +105,7 @@ function TaskTickList({
 }: {
   items: ChecklistItem[]
   editing: boolean
+  focusedTaskId: string | null
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
   onCreate: (input: { title: string; description: string }) => {
     ok: true
@@ -119,6 +122,7 @@ function TaskTickList({
   } | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null)
 
   const ordered = [...items].sort((a, b) => a.sortOrder - b.sortOrder)
   const orderedIds = ordered.map((item) => item.id)
@@ -162,11 +166,13 @@ function TaskTickList({
           return (
             <li key={item.id}>
               <div
+                id={`tree-task-${item.id}`}
                 data-task-row
                 className={cn(
                   "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
                   item.isCompleted && "opacity-80",
                   draggedId === item.id && "opacity-50",
+                  focusedTaskId === item.id && "bg-accent ring-2 ring-primary/50",
                   hint === "before" &&
                     "before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-primary",
                   hint === "after" &&
@@ -276,7 +282,7 @@ function TaskTickList({
                             variant="ghost"
                             className="size-6"
                             aria-label="Delete task"
-                            onClick={() => onDelete(item.id)}
+                            onClick={() => setPendingDelete(item)}
                           />
                         }
                       >
@@ -322,6 +328,26 @@ function TaskTickList({
         }}
         onUpdate={onUpdate}
       />
+      <ConfirmDeleteAlert
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null)
+          }
+        }}
+        title="Delete this task?"
+        description={
+          pendingDelete
+            ? `“${pendingDelete.title}” will be permanently deleted.`
+            : "This task will be permanently deleted."
+        }
+        confirmLabel="Delete task"
+        onConfirm={() => {
+          if (pendingDelete) {
+            onDelete(pendingDelete.id)
+          }
+        }}
+      />
     </div>
   )
 }
@@ -339,6 +365,7 @@ export function RoadmapNodeRow({
   onAddItem,
   getChecklistHandlers,
   editMode,
+  focusedTaskId,
   subtreeProgressFor,
   draggedId,
   dropHint,
@@ -361,6 +388,7 @@ export function RoadmapNodeRow({
   onAddItem: (nodeId: string, kind: TopicAddKind) => void
   getChecklistHandlers: (nodeId: string) => ChecklistHandlers
   editMode: boolean
+  focusedTaskId: string | null
   subtreeProgressFor: (nodeId: string) => ProgressSnapshot
   draggedId: string | null
   dropHint: { nodeId: string; position: TreeDropPosition } | null
@@ -708,6 +736,7 @@ export function RoadmapNodeRow({
           <TaskTickList
             items={ownItems}
             editing={editMode}
+            focusedTaskId={focusedTaskId}
             onToggle={getChecklistHandlers(node.id).onToggle}
             onCreate={getChecklistHandlers(node.id).onCreate}
             onUpdate={getChecklistHandlers(node.id).onUpdate}
@@ -731,6 +760,7 @@ export function RoadmapNodeRow({
                   onAddItem={onAddItem}
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
+                  focusedTaskId={focusedTaskId}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}

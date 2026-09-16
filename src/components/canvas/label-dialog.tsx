@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
-  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -73,23 +72,19 @@ export function LabelDialog({
               : "Place a short note on the canvas. Labels are not skills and do not connect to the tree."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <FieldGroup>
-            <Field orientation="horizontal" data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="canvas-label-title">
-                Text
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  id="canvas-label-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Focus area"
-                  autoComplete="off"
-                  aria-invalid={error ? true : undefined}
-                />
-                {error ? <FieldError>{error}</FieldError> : null}
-              </FieldContent>
+            <Field data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="canvas-label-title">Text</FieldLabel>
+              <Input
+                id="canvas-label-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Focus area"
+                autoComplete="off"
+                aria-invalid={error ? true : undefined}
+              />
+              {error ? <FieldError>{error}</FieldError> : null}
             </Field>
           </FieldGroup>
           <DialogFooter>

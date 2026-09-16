@@ -119,7 +119,7 @@ export function ImportRoadmapDialog({
               choose one. The role name stays the same.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-6">
             <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
               <FieldGroup className="min-w-0">
                 <ImportJsonFields json={json} error={error} onJsonChange={(value) => {

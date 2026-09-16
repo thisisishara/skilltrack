@@ -20,10 +20,10 @@ export default async function RoleDashboardPage({
   searchParams,
 }: {
   params: Promise<{ roleId: string }>
-  searchParams: Promise<{ node?: string }>
+  searchParams: Promise<{ node?: string; task?: string }>
 }) {
   const { roleId } = await params
-  const { node: focusNodeId } = await searchParams
+  const { node: focusNodeId, task: focusTaskId } = await searchParams
   const { applicationUser } = await requireSession()
   const role = await getRoleForUser(applicationUser.id, roleId)
 
@@ -63,6 +63,7 @@ export default async function RoleDashboardPage({
         checklistItems={checklistItems}
         links={links}
         focusNodeId={focusNodeId}
+        focusTaskId={focusTaskId}
       />
     </div>
   )

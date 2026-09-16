@@ -24,6 +24,7 @@ function toNode(row: NodeRow): RoadmapNode {
     description: row.description,
     notes: row.notes,
     icon: row.icon,
+    accentColor: row.accent_color,
     handleKind: normalizeNodeHandleKind(row.handle_kind),
     incomingEdgeAnimated: Boolean(row.incoming_edge_animated),
     positionX: row.position_x,
@@ -126,6 +127,7 @@ export async function insertMany(
     description: string | null
     notes: string | null
     icon: string
+    accentColor: string | null
     handleKind: NodeHandleKind
     incomingEdgeAnimated: boolean
     positionX: number
@@ -150,6 +152,7 @@ export async function insertMany(
         description: row.description,
         notes: row.notes,
         icon: row.icon,
+        accent_color: row.accentColor,
         handle_kind: row.handleKind,
         incoming_edge_animated: row.incomingEdgeAnimated,
         position_x: row.positionX,
@@ -207,6 +210,7 @@ export async function updateDetails(
     description: string | null
     icon: string
     notes?: string | null
+    accentColor?: string | null
     handleKind?: NodeHandleKind
     incomingEdgeAnimated?: boolean
   }
@@ -219,6 +223,7 @@ export async function updateDetails(
       description: input.description,
       icon: input.icon,
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.accentColor !== undefined ? { accent_color: input.accentColor } : {}),
       ...(input.handleKind !== undefined ? { handle_kind: input.handleKind } : {}),
       ...(input.incomingEdgeAnimated !== undefined
         ? { incoming_edge_animated: input.incomingEdgeAnimated }
@@ -296,6 +301,19 @@ export async function updateParent(
   }
 
   return toNode(data)
+}
+
+export async function updatePlacements(
+  roleId: string,
+  updates: { id: string; parentId: string | null; sortOrder: number }[]
+) {
+  if (updates.length === 0) {
+    return
+  }
+
+  await Promise.all(
+    updates.map((update) => updateParent(roleId, update.id, update.parentId, update.sortOrder))
+  )
 }
 
 export async function deleteForRole(roleId: string, nodeId: string) {

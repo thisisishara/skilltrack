@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown, ListTree, LogOut, Map, Settings } from "lucide-react"
+import { ChevronsUpDown, LogOut, Map, Settings } from "lucide-react"
 
 import { signOutAction } from "@/lib/auth/actions"
 import { RoleSwitcher } from "@/components/roles/role-switcher"
@@ -46,10 +46,8 @@ export function AppSidebar({
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
   const roleHref = activeRole ? `/dashboard/roles/${activeRole.id}` : null
-  const treeHref = roleHref ? `${roleHref}/tree` : null
   const settingsHref = roleHref ? `${roleHref}/settings` : null
   const roadmapActive = Boolean(roleHref && pathname === roleHref)
-  const treeActive = Boolean(treeHref && pathname.startsWith(treeHref))
   const settingsActive = Boolean(
     settingsHref && pathname.startsWith(settingsHref)
   )
@@ -61,28 +59,18 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {activeRole && roleHref && treeHref && settingsHref ? (
+        {activeRole && roleHref && settingsHref ? (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={roadmapActive}
-                    tooltip="Canvas"
+                    tooltip="Roadmap"
                     render={<Link href={roleHref} />}
                   >
                     <Map />
-                    <span>Canvas</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={treeActive}
-                    tooltip="Tree"
-                    render={<Link href={treeHref} />}
-                  >
-                    <ListTree />
-                    <span>Tree</span>
+                    <span>Roadmap</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>

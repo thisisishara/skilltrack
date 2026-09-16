@@ -7,6 +7,7 @@ import {
   parentLinkError,
   type NodeHandleKind,
 } from "@/domain/nodes/handle"
+import { parseAccentHex } from "@/domain/nodes/accent"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
 import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/nodes/icon"
 import { DEFAULT_NODE_KIND, normalizeNodeKind, type NodeKind } from "@/domain/nodes/kind"
@@ -32,6 +33,7 @@ const NODE_KEYS = new Set([
   "parent_id",
   "description",
   "icon",
+  "accent_color",
   "handle_kind",
   "incoming_edge_animated",
   "position",
@@ -42,6 +44,7 @@ const NODE_KEYS = new Set([
 const LABEL_FORBIDDEN_KEYS = new Set([
   "description",
   "icon",
+  "accent_color",
   "handle_kind",
   "incoming_edge_animated",
   "checklist",
@@ -271,6 +274,7 @@ function parseNode(
       description: null,
       notes: null,
       icon: DEFAULT_NODE_ICON,
+      accentColor: null,
       handleKind: DEFAULT_NODE_HANDLE_KIND,
       incomingEdgeAnimated: false,
       positionX: position.x,
@@ -283,6 +287,15 @@ function parseNode(
   const position = parsePosition(value.position)
   const description = optionalString(value.description, `Node ${index + 1} description`)
   const notes = optionalString(value.notes, `Node ${index + 1} notes`)
+  const accentRaw = optionalString(value.accent_color, `Node ${index + 1} accent_color`)
+  let accentColor: string | null = null
+  if (accentRaw !== undefined) {
+    const parsed = parseAccentHex(accentRaw)
+    if (!parsed.ok) {
+      fail(`Node ${index + 1} accent_color must be a 3 or 6 digit hex color.`)
+    }
+    accentColor = parsed.value
+  }
 
   return {
     id,
@@ -292,6 +305,7 @@ function parseNode(
     description: description?.trim() ? description.trim() : null,
     notes: notes?.trim() ? notes.trim() : null,
     icon: normalizeNodeIcon(optionalString(value.icon, `Node ${index + 1} icon`)),
+    accentColor,
     handleKind: parseHandleKind(value.handle_kind),
     incomingEdgeAnimated:
       value.incoming_edge_animated === undefined

@@ -15,7 +15,7 @@ export function ProgressStatusBadge({
     status === "done" ? "default" : status === "in_progress" ? "secondary" : "outline"
 
   return (
-    <Badge variant={variant} className="font-mono tabular-nums">
+    <Badge variant={variant} className="tabular-nums">
       {progressStatusLabel(status)} {percent}%
     </Badge>
   )

@@ -71,6 +71,7 @@ async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) 
         description: node.description,
         notes: node.notes,
         icon: node.icon,
+        accentColor: node.accentColor,
         handleKind: node.handleKind,
         incomingEdgeAnimated: node.incomingEdgeAnimated,
         positionX: node.positionX,

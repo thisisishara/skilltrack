@@ -108,6 +108,8 @@ export function roadmapProgress(items: ChecklistItem[]) {
 }
 
 export const DONE_INCOMING_EDGE_STROKE = "#4CAF50"
+export const DONE_CHECKBOX_CLASS =
+  "data-checked:border-[#4CAF50] data-checked:bg-[#4CAF50] data-checked:text-white dark:data-checked:bg-[#4CAF50] dark:data-checked:border-[#4CAF50]"
 export const DEFAULT_EDGE_STROKE = "var(--muted-foreground)"
 export const DEFAULT_EDGE_STROKE_WIDTH = 1.75
 

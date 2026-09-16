@@ -48,19 +48,19 @@ import {
   CanvasToolbar,
   type CanvasInteractionTool,
 } from "@/components/canvas/canvas-toolbar"
-import { DeleteNodeAlert } from "@/components/canvas/delete-node-alert"
 import { EmptyRoadmap } from "@/components/canvas/empty-roadmap"
 import { LabelDialog, type LabelDialogMode } from "@/components/canvas/label-dialog"
 import { LabelNodeCard, type LabelFlowNode } from "@/components/canvas/label-node"
-import { NodeConfigSheet } from "@/components/canvas/node-config-sheet"
-import { NodeDialog, type NodeDialogMode } from "@/components/canvas/node-dialog"
+import { DeleteNodeAlert } from "@/components/roadmap/delete-node-alert"
+import { NodeConfigSheet } from "@/components/roadmap/node-config-sheet"
+import { NodeDialog, type NodeDialogMode } from "@/components/roadmap/node-dialog"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 import {
   RoadmapNodeCard,
   type RoadmapFlowNode,
 } from "@/components/canvas/roadmap-node"
-import { RoadmapStatusBar } from "@/components/canvas/roadmap-status-bar"
+import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -306,6 +306,7 @@ function createLocalNode(input: {
   return {
     ...input,
     notes: null,
+    accentColor: null,
     createdAt: now,
     updatedAt: now,
   }
@@ -853,6 +854,7 @@ function RoadmapCanvasInner({
     description: string
     icon: string
     notes: string
+    accentColor: string | null
     handleKind: NodeHandleKind
   }) {
     if (!configNode) {
@@ -879,6 +881,7 @@ function RoadmapCanvasInner({
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
+      accentColor: input.accentColor,
       handleKind: input.handleKind,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
@@ -890,6 +893,7 @@ function RoadmapCanvasInner({
       description: next.description,
       icon: next.icon,
       notes: next.notes,
+      accentColor: next.accentColor,
       handleKind: next.handleKind,
     }).then((result) => {
       if (!result.ok) {

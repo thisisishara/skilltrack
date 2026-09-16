@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { toast } from "sonner"
 
@@ -31,7 +31,6 @@ const emptyIndex: SearchIndex = { roles: [], nodes: [] }
 
 export function CommandSearch() {
   const router = useRouter()
-  const pathname = usePathname()
   const { activeRole } = useRolesUi()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -40,7 +39,6 @@ export function CommandSearch() {
   // Scope search to the role currently open, so switching into a role's
   // roadmap never surfaces another role's nodes. With no active role (e.g.
   // the bare /dashboard screen) we fall back to a global roles+nodes search.
-  const inTree = Boolean(activeRole && pathname?.startsWith(`/dashboard/roles/${activeRole.id}/tree`))
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -83,9 +81,9 @@ export function CommandSearch() {
           if (activeRole && node.roleId !== activeRole.id) {
             return false
           }
-          // The tree view only renders skill nodes, so a label result there
+          // The roadmap view only renders skill nodes, so a label result
           // would be a dead end when clicked.
-          if (inTree && node.kind === "label") {
+          if (node.kind === "label") {
             return false
           }
           return (
@@ -95,7 +93,7 @@ export function CommandSearch() {
           )
         })
         .slice(0, 40),
-    [activeRole, inTree, index.nodes, query]
+    [activeRole, index.nodes, query]
   )
 
   const noHits = query.trim().length > 0 && roles.length === 0 && nodes.length === 0
@@ -179,11 +177,7 @@ export function CommandSearch() {
                       value={`node ${node.title} ${node.parentPath} ${node.roleName} ${node.id}`}
                       onSelect={() => {
                         closeAnd(() => {
-                          const base =
-                            inTree && node.kind !== "label"
-                              ? `/dashboard/roles/${node.roleId}/tree`
-                              : `/dashboard/roles/${node.roleId}`
-                          router.push(`${base}?node=${node.id}`)
+                          router.push(`/dashboard/roles/${node.roleId}?node=${node.id}`)
                         })
                       }}
                     >

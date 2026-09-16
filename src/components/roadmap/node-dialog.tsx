@@ -4,8 +4,7 @@ import { useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
 
 import type { NodeActionResult } from "@/application/nodes/actions"
-import { IconPicker } from "@/components/canvas/icon-picker"
-import { NodeHandleFields } from "@/components/canvas/node-handle-fields"
+import { IconPicker } from "@/components/roadmap/icon-picker"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
+  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -30,7 +30,7 @@ import {
 import { DEFAULT_NODE_ICON } from "@/domain/nodes/icon"
 
 export type NodeDialogMode =
-  | { kind: "create"; parentId: string | null }
+  | { kind: "create"; parentId: string | null; asGroup?: boolean }
   | { kind: "edit"; nodeId: string; title: string; description: string | null; icon: string }
 
 export type NodeDialogCopy = {
@@ -43,6 +43,7 @@ export type NodeDialogCopy = {
   titlePlaceholder?: string
   descriptionPlaceholder?: string
   submitCreateLabel?: string
+  submitChildLabel?: string
 }
 
 export function NodeDialog({
@@ -73,16 +74,16 @@ export function NodeDialog({
     titlePlaceholder = "Retrieval",
     descriptionPlaceholder = "Optional notes about this skill",
     submitCreateLabel = "Create node",
+    submitChildLabel,
   } = copy ?? {}
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [icon, setIcon] = useState(DEFAULT_NODE_ICON)
-  const [handleKind, setHandleKind] = useState<NodeHandleKind>(DEFAULT_NODE_HANDLE_KIND)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isEdit = mode?.kind === "edit"
-  const isChild = mode?.kind === "create" && mode.parentId !== null
+  const isChild = mode?.kind === "create" && mode.parentId !== null && !mode.asGroup
 
   useEffect(() => {
     if (!open || !mode) {
@@ -105,7 +106,6 @@ export function NodeDialog({
     setTitle("")
     setDescription("")
     setIcon(DEFAULT_NODE_ICON)
-    setHandleKind(DEFAULT_NODE_HANDLE_KIND)
   }, [open, mode])
 
   async function handleSubmit(event: FormEvent) {
@@ -116,7 +116,7 @@ export function NodeDialog({
       title,
       description,
       icon,
-      handleKind,
+      handleKind: DEFAULT_NODE_HANDLE_KIND,
     })
     setPending(false)
 
@@ -130,7 +130,7 @@ export function NodeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? editTitle : isChild ? childTitle : createTitle}</DialogTitle>
           <DialogDescription>
@@ -139,37 +139,42 @@ export function NodeDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <FieldGroup>
-            <Field data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="node-title">Title</FieldLabel>
-              <Input
-                id="node-title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder={titlePlaceholder}
-                autoComplete="off"
-                aria-invalid={error ? true : undefined}
-              />
-              {error ? <FieldError>{error}</FieldError> : null}
+            <Field orientation="horizontal" data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="node-title">
+                Title
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="node-title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder={titlePlaceholder}
+                  autoComplete="off"
+                  aria-invalid={error ? true : undefined}
+                />
+                {error ? <FieldError>{error}</FieldError> : null}
+              </FieldContent>
             </Field>
-            <Field>
-              <FieldLabel htmlFor="node-description">Description</FieldLabel>
-              <Textarea
-                id="node-description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder={descriptionPlaceholder}
-              />
+            <Field orientation="horizontal">
+              <FieldLabel htmlFor="node-description">
+                Description
+              </FieldLabel>
+              <FieldContent>
+                <Textarea
+                  id="node-description"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder={descriptionPlaceholder}
+                  className="field-sizing-fixed"
+                />
+              </FieldContent>
             </Field>
-            <Field>
+            <Field orientation="horizontal">
               <FieldLabel>Icon</FieldLabel>
-              <IconPicker value={icon} onChange={setIcon} />
+              <FieldContent>
+                <IconPicker value={icon} onChange={setIcon} />
+              </FieldContent>
             </Field>
-            <NodeHandleFields
-              handleKind={handleKind}
-              onHandleKindChange={setHandleKind}
-              allowInput
-              allowOutput={!isChild}
-            />
           </FieldGroup>
           <DialogFooter>
             <Button
@@ -180,7 +185,13 @@ export function NodeDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : isEdit ? "Save" : submitCreateLabel}
+              {pending
+                ? "Saving…"
+                : isEdit
+                  ? "Save"
+                  : isChild
+                    ? (submitChildLabel ?? submitCreateLabel)
+                    : submitCreateLabel}
             </Button>
           </DialogFooter>
         </form>

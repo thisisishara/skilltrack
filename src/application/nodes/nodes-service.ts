@@ -2,6 +2,7 @@ import "server-only"
 
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
+import { parseAccentHex } from "@/domain/nodes/accent"
 import {
   childrenLinkError,
   normalizeNodeHandleKind,
@@ -14,6 +15,7 @@ import {
   isLabelNode,
   normalizeNodeKind,
 } from "@/domain/nodes/kind"
+import { placementUpdates } from "@/domain/nodes/placement"
 import {
   CHILD_OFFSET_Y,
   LABEL_OFFSET_X,
@@ -37,6 +39,19 @@ function requireTitle(title: string) {
 function optionalDescription(description: string | null | undefined) {
   const trimmed = description?.trim() ?? ""
   return trimmed ? trimmed : null
+}
+
+function optionalAccent(value: string | null | undefined) {
+  if (value === undefined) {
+    return undefined
+  }
+
+  const parsed = parseAccentHex(value)
+  if (!parsed.ok) {
+    throw new ApplicationError("validation", "Accent color must be a 3 or 6 digit hex code.")
+  }
+
+  return parsed.value
 }
 
 function nextSortOrder(nodes: RoadmapNode[], parentId: string | null) {
@@ -194,6 +209,7 @@ export async function updateNodeDetails(
     description?: string | null
     icon?: string | null
     notes?: string | null
+    accentColor?: string | null
     handleKind?: string | null
     incomingEdgeAnimated?: boolean
   }
@@ -218,6 +234,9 @@ export async function updateNodeDetails(
     icon: normalizeNodeIcon(input.icon),
     ...(input.notes !== undefined
       ? { notes: optionalDescription(input.notes) }
+      : {}),
+    ...(input.accentColor !== undefined
+      ? { accentColor: optionalAccent(input.accentColor) }
       : {}),
     ...(input.handleKind !== undefined ? { handleKind } : {}),
     ...(input.incomingEdgeAnimated !== undefined
@@ -285,6 +304,39 @@ export async function reparentNode(
     parentId,
     nextSortOrder(nodes, parentId)
   )
+}
+
+export async function placeNode(
+  userId: string,
+  roleId: string,
+  nodeId: string,
+  targetId: string,
+  position: "before" | "after" | "inside"
+) {
+  const node = await requireOwnedNode(userId, roleId, nodeId)
+  await requireOwnedNode(userId, roleId, targetId)
+  const nodes = await nodesRepository.listByRoleId(roleId)
+
+  if (isLabelNode(node)) {
+    throw new ApplicationError("validation", "Labels cannot be nested in the tree.")
+  }
+
+  const parentId = position === "inside" ? targetId : nodes.find((item) => item.id === targetId)?.parentId ?? null
+  if (parentId) {
+    assertParentAssignment(nodes, node.handleKind, parentId)
+  }
+
+  const updates = placementUpdates(nodes, nodeId, targetId, position)
+  if (!updates) {
+    throw new ApplicationError("validation", "That topic cannot be moved there.")
+  }
+
+  await nodesRepository.updatePlacements(roleId, updates)
+  const next = await nodesRepository.getByIdForRole(roleId, nodeId)
+  if (!next) {
+    throw new ApplicationError("not_found", "That node no longer exists.")
+  }
+  return next
 }
 
 export async function deleteNode(userId: string, roleId: string, nodeId: string) {

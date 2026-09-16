@@ -2,7 +2,7 @@
 
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react"
 
-import { NodeLucideIcon } from "@/components/canvas/lucide-icon"
+import { NodeLucideIcon } from "@/components/roadmap/lucide-icon"
 import { Progress } from "@/components/ui/progress"
 import {
   nodeCanHaveChildren,

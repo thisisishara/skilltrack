@@ -10,6 +10,7 @@ export type RoadmapNode = {
   description: string | null
   notes: string | null
   icon: string
+  accentColor: string | null
   handleKind: NodeHandleKind
   incomingEdgeAnimated: boolean
   positionX: number

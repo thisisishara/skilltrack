@@ -14,3 +14,16 @@ export function isValidHttpUrl(url: string) {
     return false
   }
 }
+
+export function faviconUrlFor(pageUrl: string) {
+  try {
+    const parsed = new URL(pageUrl)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null
+    }
+
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(parsed.hostname)}&sz=64`
+  } catch {
+    return null
+  }
+}

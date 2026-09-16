@@ -1,6 +1,6 @@
 "use client"
 
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
+import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { type NodeHandleKind } from "@/domain/nodes/handle"
 
@@ -9,15 +9,16 @@ export function NodeHandleFields({
   onHandleKindChange,
   allowOutput,
   allowInput,
+  orientation = "vertical",
 }: {
   handleKind: NodeHandleKind
   onHandleKindChange: (kind: NodeHandleKind) => void
   allowOutput: boolean
   allowInput: boolean
+  orientation?: "vertical" | "horizontal"
 }) {
-  return (
-    <Field>
-      <FieldLabel>Node type</FieldLabel>
+  const controls = (
+    <>
       <ToggleGroup
         value={[handleKind]}
         onValueChange={(value) => {
@@ -48,6 +49,13 @@ export function NodeHandleFields({
         Regular nodes connect both ways. Input nodes only accept a parent.
         Output nodes only connect to children.
       </FieldDescription>
+    </>
+  )
+
+  return (
+    <Field orientation={orientation}>
+      <FieldLabel>Node type</FieldLabel>
+      {orientation === "horizontal" ? <FieldContent>{controls}</FieldContent> : controls}
     </Field>
   )
 }

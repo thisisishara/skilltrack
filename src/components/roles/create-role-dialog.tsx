@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
@@ -144,53 +145,60 @@ export function CreateRoleDialog({
               )}
             >
               <FieldGroup className="min-w-0">
-                <Field>
+                <Field orientation="horizontal">
                   <FieldLabel>How to start</FieldLabel>
-                  <ToggleGroup
-                    value={[mode]}
-                    onValueChange={(value) => {
-                      const next = Array.isArray(value) ? value[0] : value
-                      if (next === "empty" || next === "import") {
-                        setMode(next)
-                        setError(null)
-                      }
-                    }}
-                    variant="outline"
-                    spacing={0}
-                    className="w-full"
-                  >
-                    <ToggleGroupItem value="empty" className="flex-1">
-                      Empty roadmap
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="import" className="flex-1">
-                      Import JSON
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  <FieldDescription>
-                    Import onto a new role, or later onto a role that still has no
-                    nodes.
-                  </FieldDescription>
+                  <FieldContent>
+                    <ToggleGroup
+                      value={[mode]}
+                      onValueChange={(value) => {
+                        const next = Array.isArray(value) ? value[0] : value
+                        if (next === "empty" || next === "import") {
+                          setMode(next)
+                          setError(null)
+                        }
+                      }}
+                      variant="outline"
+                      spacing={0}
+                      className="w-full"
+                    >
+                      <ToggleGroupItem value="empty" className="flex-1">
+                        Empty roadmap
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="import" className="flex-1">
+                        Import JSON
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                    <FieldDescription>
+                      Import onto a new role, or later onto a role that still has no
+                      nodes.
+                    </FieldDescription>
+                  </FieldContent>
                 </Field>
-                <Field data-invalid={error && mode === "empty" ? true : undefined}>
+                <Field
+                  orientation="horizontal"
+                  data-invalid={error && mode === "empty" ? true : undefined}
+                >
                   <FieldLabel htmlFor="create-role-name">
                     {mode === "import" ? "Name override (optional)" : "Name"}
                   </FieldLabel>
-                  <Input
-                    id="create-role-name"
-                    className="font-mono"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Senior AI Engineer"
-                    autoComplete="off"
-                    aria-invalid={error && mode === "empty" ? true : undefined}
-                  />
-                  {mode === "empty" && error ? <FieldError>{error}</FieldError> : (
-                    <FieldDescription>
-                      {mode === "import"
-                        ? "Leave blank to use the name from the JSON document."
-                        : "Unique per account."}
-                    </FieldDescription>
-                  )}
+                  <FieldContent>
+                    <Input
+                      id="create-role-name"
+                      className="font-mono"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Senior AI Engineer"
+                      autoComplete="off"
+                      aria-invalid={error && mode === "empty" ? true : undefined}
+                    />
+                    {mode === "empty" && error ? <FieldError>{error}</FieldError> : (
+                      <FieldDescription>
+                        {mode === "import"
+                          ? "Leave blank to use the name from the JSON document."
+                          : "Unique per account."}
+                      </FieldDescription>
+                    )}
+                  </FieldContent>
                 </Field>
                 {mode === "import" ? (
                   <ImportJsonFields

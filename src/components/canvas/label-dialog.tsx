@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   Field,
+  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -63,7 +64,7 @@ export function LabelDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit label" : "Add label"}</DialogTitle>
           <DialogDescription>
@@ -74,17 +75,21 @@ export function LabelDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <FieldGroup>
-            <Field data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor="canvas-label-title">Text</FieldLabel>
-              <Input
-                id="canvas-label-title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Focus area"
-                autoComplete="off"
-                aria-invalid={error ? true : undefined}
-              />
-              {error ? <FieldError>{error}</FieldError> : null}
+            <Field orientation="horizontal" data-invalid={error ? true : undefined}>
+              <FieldLabel htmlFor="canvas-label-title">
+                Text
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="canvas-label-title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Focus area"
+                  autoComplete="off"
+                  aria-invalid={error ? true : undefined}
+                />
+                {error ? <FieldError>{error}</FieldError> : null}
+              </FieldContent>
             </Field>
           </FieldGroup>
           <DialogFooter>

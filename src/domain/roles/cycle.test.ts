@@ -21,10 +21,7 @@ describe("adjacentRoleId", () => {
 })
 
 describe("roleHrefForCurrentView", () => {
-  it("keeps tree and settings while switching roles", () => {
-    expect(
-      roleHrefForCurrentView("b", "/dashboard/roles/a/tree", "a")
-    ).toBe("/dashboard/roles/b/tree")
+  it("keeps settings while switching roles", () => {
     expect(
       roleHrefForCurrentView("b", "/dashboard/roles/a/settings", "a")
     ).toBe("/dashboard/roles/b/settings")

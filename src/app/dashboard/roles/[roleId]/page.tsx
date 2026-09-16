@@ -1,11 +1,11 @@
-import { Map } from "lucide-react"
+import { ListTree } from "lucide-react"
 
 import { listChecklistsForRole } from "@/application/checklists/checklists-service"
 import { listLinksForRole } from "@/application/links/links-service"
 import { listNodesForRole } from "@/application/nodes/nodes-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
-import { RoadmapCanvas } from "@/components/canvas/roadmap-canvas"
 import { PersistActiveRole } from "@/components/roles/persist-active-role"
+import { Roadmap } from "@/components/roadmap/roadmap"
 import {
   Empty,
   EmptyDescription,
@@ -33,7 +33,7 @@ export default async function RoleDashboardPage({
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Map />
+              <ListTree />
             </EmptyMedia>
             <EmptyTitle>Role not found</EmptyTitle>
             <EmptyDescription>
@@ -55,7 +55,7 @@ export default async function RoleDashboardPage({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <PersistActiveRole roleId={role.id} />
-      <RoadmapCanvas
+      <Roadmap
         roleId={role.id}
         roleName={role.name}
         nodes={nodes}

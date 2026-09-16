@@ -6,6 +6,7 @@ import {
   createNode,
   deleteNode,
   moveNode,
+  placeNode,
   reparentNode,
   updateNodeDetails,
 } from "@/application/nodes/nodes-service"
@@ -61,6 +62,7 @@ export async function updateNodeAction(input: {
   description?: string | null
   icon?: string | null
   notes?: string | null
+  accentColor?: string | null
   handleKind?: string | null
   incomingEdgeAnimated?: boolean
 }): Promise<NodeActionResult> {
@@ -125,6 +127,32 @@ export async function reparentNodeAction(input: {
       input.roleId,
       input.nodeId,
       input.parentId
+    )
+    revalidateRole(input.roleId)
+    return { ok: true, node }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function placeNodeAction(input: {
+  roleId: string
+  nodeId: string
+  targetId: string
+  position: "before" | "after" | "inside"
+}): Promise<NodeActionResult> {
+  try {
+    if (!input.roleId || !input.nodeId || !input.targetId) {
+      throw new ApplicationError("validation", "Select a node first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    const node = await placeNode(
+      applicationUser.id,
+      input.roleId,
+      input.nodeId,
+      input.targetId,
+      input.position
     )
     revalidateRole(input.roleId)
     return { ok: true, node }

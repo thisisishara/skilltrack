@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ListTree, SlidersHorizontal } from "lucide-react"
+import { ChevronsDownUp, ChevronsUpDown, ListTree, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -19,26 +19,40 @@ import {
 import {
   createNodeAction,
   deleteNodeAction,
+  placeNodeAction,
   reparentNodeAction,
   updateNodeAction,
 } from "@/application/nodes/actions"
-import { DeleteNodeAlert } from "@/components/canvas/delete-node-alert"
-import type { NodeChecklistCopy } from "@/components/canvas/node-checklist-section"
-import { NodeConfigSheet } from "@/components/canvas/node-config-sheet"
+import { DeleteNodeAlert } from "@/components/roadmap/delete-node-alert"
+import {
+  TaskDialog,
+  type NodeChecklistCopy,
+} from "@/components/roadmap/node-checklist-section"
+import { NotesDialog, NodeConfigSheet } from "@/components/roadmap/node-config-sheet"
+import { LinkDialog } from "@/components/roadmap/node-links-section"
 import {
   NodeDialog,
   type NodeDialogCopy,
   type NodeDialogMode,
-} from "@/components/canvas/node-dialog"
-import { RoadmapStatusBar } from "@/components/canvas/roadmap-status-bar"
-import { TreeNodeRow } from "@/components/tree/tree-node-row"
+} from "@/components/roadmap/node-dialog"
+import {
+  RoadmapNodeRow,
+  type TopicAddKind,
+} from "@/components/roadmap/roadmap-node-row"
+import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Toggle } from "@/components/ui/toggle"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   Empty,
   EmptyContent,
@@ -58,9 +72,15 @@ import {
 } from "@/domain/links/url"
 import type { NodeHandleKind } from "@/domain/nodes/handle"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
+import { nodeCanHaveChildren, nodeCanHaveParent } from "@/domain/nodes/handle"
 import { normalizeNodeIcon } from "@/domain/nodes/icon"
 import { isSkillNode } from "@/domain/nodes/kind"
 import { CHILD_OFFSET_Y, ROOT_OFFSET_X } from "@/domain/nodes/layout"
+import {
+  applyPlacements,
+  placementUpdates,
+  type TreeDropPosition,
+} from "@/domain/nodes/placement"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import type { RoadmapNode } from "@/domain/nodes/types"
 import {
@@ -70,7 +90,7 @@ import {
   subtreeNodeIds,
   subtreeProgress,
 } from "@/domain/progress/progress"
-import { readExpandedIds, writeExpandedIds } from "@/lib/tree/expanded-storage"
+import { readExpandedIds, writeExpandedIds } from "@/lib/roadmap/expanded-storage"
 
 const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
   emptyTitle: "No tasks yet",
@@ -83,15 +103,16 @@ const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
 }
 
 const TOPIC_DIALOG_COPY: NodeDialogCopy = {
-  createTitle: "Add topic",
-  createDescription: "Add a top-level topic to this roadmap.",
+  createTitle: "Add topic group",
+  createDescription: "Add a top-level topic group to this roadmap.",
   childTitle: "Add sub-topic",
   childDescription: "Create a sub-topic nested under the selected topic.",
   editTitle: "Edit topic",
   editDescription: "Update this topic without changing its progress.",
   titlePlaceholder: "System design",
   descriptionPlaceholder: "Optional notes about this topic",
-  submitCreateLabel: "Add topic",
+  submitCreateLabel: "Add topic group",
+  submitChildLabel: "Add sub-topic",
 }
 
 function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
@@ -161,6 +182,7 @@ function createLocalNode(input: {
     description: input.description,
     notes: null,
     icon: input.icon,
+    accentColor: null,
     handleKind: input.handleKind,
     incomingEdgeAnimated: false,
     positionX: input.positionX,
@@ -171,7 +193,7 @@ function createLocalNode(input: {
   }
 }
 
-export function RoadmapTree({
+export function Roadmap({
   roleId,
   roleName,
   nodes: serverNodes,
@@ -196,7 +218,26 @@ export function RoadmapTree({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteIds, setDeleteIds] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [taskListEditing, setTaskListEditing] = useState(false)
+  const [compose, setCompose] = useState<{
+    type: "task" | "link" | "notes"
+    nodeId: string
+  } | null>(null)
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [dropHint, setDropHint] = useState<{
+    nodeId: string
+    position: TreeDropPosition
+  } | null>(null)
   const focusedRef = useRef<string | null>(null)
+  const draggedIdRef = useRef<string | null>(null)
+
+  function setDragging(nodeId: string | null) {
+    draggedIdRef.current = nodeId
+    setDraggedId(nodeId)
+    if (!nodeId) {
+      setDropHint(null)
+    }
+  }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -307,34 +348,75 @@ export function RoadmapTree({
     [skillNodes, items]
   )
 
+  const isOverview =
+    !configNodeId || Boolean(singleRoot && configNodeId === singleRoot.id)
   const configNode = useMemo(
     () => nodes.find((node) => node.id === configNodeId) ?? null,
     [nodes, configNodeId]
   )
-  const sheetOpen = Boolean(configNode)
+  const panelNode = isOverview ? singleRoot : configNode
+  const isPanelSubgroup = Boolean(
+    panelNode && visibleRoots.some((node) => node.id === panelNode.id)
+  )
   const selectedItems = useMemo(
-    () => items.filter((item) => item.nodeId === configNodeId),
-    [items, configNodeId]
+    () =>
+      !isOverview && configNodeId
+        ? items.filter((item) => item.nodeId === configNodeId)
+        : [],
+    [configNodeId, isOverview, items]
   )
   const selectedLinks = useMemo(
-    () => links.filter((link) => link.nodeId === configNodeId),
-    [links, configNodeId]
+    () => (panelNode ? links.filter((link) => link.nodeId === panelNode.id) : []),
+    [links, panelNode]
   )
   const selectedNodeProgress = useMemo(
-    () => (configNodeId ? nodeProgress(items, configNodeId) : nodeProgress([], "")),
-    [items, configNodeId]
-  )
-  const selectedSubtreeProgress = useMemo(
     () =>
-      configNodeId
-        ? subtreeProgress(skillNodes, items, configNodeId)
+      !isOverview && configNodeId
+        ? nodeProgress(items, configNodeId)
         : nodeProgress([], ""),
-    [items, configNodeId, skillNodes]
+    [configNodeId, isOverview, items]
   )
+  const selectedSubtreeProgress = useMemo(() => {
+    if (isOverview) {
+      return overallProgress
+    }
+    return configNodeId
+      ? subtreeProgress(skillNodes, items, configNodeId)
+      : nodeProgress([], "")
+  }, [configNodeId, isOverview, items, overallProgress, skillNodes])
   const deleteNodes = useMemo(
     () => nodes.filter((node) => deleteIds.includes(node.id)),
     [deleteIds, nodes]
   )
+  const deleteChildNames = useMemo(
+    () =>
+      deleteNodes.flatMap((node) =>
+        (childrenByParent.get(node.id) ?? []).map((child) => child.title)
+      ),
+    [childrenByParent, deleteNodes]
+  )
+
+  function expandAll() {
+    const next = new Set(
+      skillNodes
+        .filter((node) => {
+          const hasChildren = (childrenByParent.get(node.id) ?? []).length > 0
+          const hasTasks = items.some((item) => item.nodeId === node.id)
+          return hasChildren || hasTasks || Boolean(node.description?.trim())
+        })
+        .map((node) => node.id)
+    )
+    setExpandedIds(next)
+    writeExpandedIds(roleId, next)
+    setConfigNodeId(null)
+  }
+
+  function collapseAll() {
+    const next = new Set<string>()
+    setExpandedIds(next)
+    writeExpandedIds(roleId, next)
+    setConfigNodeId(null)
+  }
 
   function toggleExpand(nodeId: string) {
     setExpandedIds((current) => {
@@ -349,9 +431,96 @@ export function RoadmapTree({
     })
   }
 
-  function openCreate(parentId: string | null) {
-    setDialogMode({ kind: "create", parentId })
+  function canDropOn(targetId: string, position: TreeDropPosition) {
+    const currentDraggedId = draggedIdRef.current
+    if (!currentDraggedId) {
+      return false
+    }
+
+    const dragged = nodes.find((node) => node.id === currentDraggedId)
+    const target = nodes.find((node) => node.id === targetId)
+    if (!dragged || !target) {
+      return false
+    }
+
+    const nextParentId = position === "inside" ? targetId : target.parentId
+    if (nextParentId && !nodeCanHaveParent(dragged.handleKind)) {
+      return false
+    }
+    if (position === "inside" && !nodeCanHaveChildren(target.handleKind)) {
+      return false
+    }
+
+    return placementUpdates(nodes, currentDraggedId, targetId, position) !== null
+  }
+
+  function handlePlace(targetId: string, position: TreeDropPosition) {
+    const currentDraggedId = draggedIdRef.current
+    if (!currentDraggedId) {
+      return
+    }
+
+    const updates = placementUpdates(nodes, currentDraggedId, targetId, position)
+    setDragging(null)
+    if (!updates) {
+      return
+    }
+
+    const previous = nodes
+    setNodes((current) => applyPlacements(current, updates))
+    if (position === "inside") {
+      setExpandedIds((current) => {
+        if (current.has(targetId)) {
+          return current
+        }
+        const next = new Set(current)
+        next.add(targetId)
+        writeExpandedIds(roleId, next)
+        return next
+      })
+    }
+    setConfigNodeId(currentDraggedId)
+
+    void placeNodeAction({
+      roleId,
+      nodeId: currentDraggedId,
+      targetId,
+      position,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes(previous)
+        toast.error(result.message)
+        return
+      }
+      toast.success("Topic moved")
+    })
+  }
+
+  function expandNode(nodeId: string) {
+    setExpandedIds((current) => {
+      if (current.has(nodeId)) {
+        return current
+      }
+      const next = new Set(current)
+      next.add(nodeId)
+      writeExpandedIds(roleId, next)
+      return next
+    })
+  }
+
+  function openCreate(parentId: string | null, asGroup = false) {
+    setDialogMode({ kind: "create", parentId, asGroup })
     setDialogOpen(true)
+  }
+
+  function handleAddItem(nodeId: string, kind: TopicAddKind) {
+    setConfigNodeId(nodeId)
+    expandNode(nodeId)
+    if (kind === "subtopic") {
+      openCreate(nodeId)
+      return
+    }
+    setCompose({ type: kind, nodeId })
   }
 
   function handleDialogSubmit(input: {
@@ -405,7 +574,7 @@ export function RoadmapTree({
         return next
       })
     }
-    toast.success("Topic added")
+    toast.success(dialogMode.asGroup ? "Topic group added" : "Sub-topic added")
 
     void createNodeAction({
       id,
@@ -434,9 +603,10 @@ export function RoadmapTree({
     description: string
     icon: string
     notes: string
+    accentColor: string | null
     handleKind: NodeHandleKind
   }) {
-    if (!configNode) {
+    if (!panelNode) {
       return {
         ok: false as const,
         code: "unexpected" as const,
@@ -453,13 +623,14 @@ export function RoadmapTree({
       }
     }
 
-    const previous = configNode
+    const previous = panelNode
     const next: RoadmapNode = {
-      ...configNode,
+      ...panelNode,
       title,
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
+      accentColor: input.accentColor,
       handleKind: input.handleKind,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
@@ -471,6 +642,7 @@ export function RoadmapTree({
       description: next.description,
       icon: next.icon,
       notes: next.notes,
+      accentColor: next.accentColor,
       handleKind: next.handleKind,
     }).then((result) => {
       if (!result.ok) {
@@ -482,6 +654,38 @@ export function RoadmapTree({
     })
 
     return { ok: true as const, node: next }
+  }
+
+  function handleSaveNotes(nodeId: string, notes: string) {
+    const target = nodes.find((node) => node.id === nodeId)
+    if (!target) {
+      return
+    }
+
+    const previous = target
+    const next: RoadmapNode = {
+      ...target,
+      notes: notes.trim() || null,
+    }
+    setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
+
+    void updateNodeAction({
+      roleId,
+      nodeId: next.id,
+      title: next.title,
+      description: next.description,
+      icon: next.icon,
+      notes: next.notes,
+      accentColor: next.accentColor,
+      handleKind: next.handleKind,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes((current) =>
+          current.map((node) => (node.id === previous.id ? previous : node))
+        )
+        toast.error(result.message)
+      }
+    })
   }
 
   function handleParentChange(parentId: string | null) {
@@ -688,7 +892,10 @@ export function RoadmapTree({
     [getChecklistHandlers, configNodeId]
   )
 
-  function handleCreateLink(input: { label: string; url: string }) {
+  function handleCreateLink(
+    input: { label: string; url: string },
+    nodeId = panelNode?.id
+  ) {
     const label = displayLinkLabel(input.label)
     const url = normalizeLinkUrl(input.url)
     if (!label) {
@@ -697,16 +904,16 @@ export function RoadmapTree({
     if (!url || !isValidHttpUrl(url)) {
       return "Enter a valid http or https URL."
     }
-    if (!configNodeId) {
+    if (!nodeId) {
       return "Select a topic first."
     }
 
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
-    const link: NodeLink = { id, nodeId: configNodeId, label, url, createdAt: now, updatedAt: now }
+    const link: NodeLink = { id, nodeId, label, url, createdAt: now, updatedAt: now }
     setLinks((current) => [...current, link])
 
-    void createNodeLinkAction({ id, roleId, nodeId: configNodeId, label, url }).then((result) => {
+    void createNodeLinkAction({ id, roleId, nodeId, label, url }).then((result) => {
       if (!result.ok) {
         setLinks((current) => current.filter((entry) => entry.id !== id))
         toast.error(result.message)
@@ -755,7 +962,7 @@ export function RoadmapTree({
     const previous = links
     setLinks((current) => current.filter((link) => link.id !== linkId))
 
-    void deleteNodeLinkAction({ roleId, nodeId: configNodeId ?? "", linkId }).then((result) => {
+    void deleteNodeLinkAction({ roleId, nodeId: panelNode?.id ?? "", linkId }).then((result) => {
       if (!result.ok) {
         setLinks(previous)
         toast.error(result.message)
@@ -765,69 +972,123 @@ export function RoadmapTree({
 
   const list = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-2.5">
-        <div className="flex min-w-0 items-center gap-1">
-          <p className="truncate text-sm font-medium">{roleName}</p>
-          {singleRoot ? (
-            <Button
-              type="button"
-              size="icon-sm"
-              variant="ghost"
-              className="size-6 shrink-0 text-muted-foreground"
-              aria-label="Roadmap details"
-              onClick={() => setConfigNodeId(singleRoot.id)}
+      <div
+        className="flex shrink-0 cursor-pointer items-center justify-between gap-2 border-b px-4 py-2.5"
+        onClick={() => setConfigNodeId(null)}
+      >
+        <p className="min-w-0 truncate text-left text-sm font-medium">
+          {roleName}
+        </p>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={expandAll}
+          >
+            <ChevronsUpDown data-icon="inline-start" />
+            Expand all
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={collapseAll}
+          >
+            <ChevronsDownUp data-icon="inline-start" />
+            Collapse all
+          </Button>
+          <Toggle
+            variant="outline"
+            size="sm"
+            pressed={taskListEditing}
+            onPressedChange={(pressed) => setTaskListEditing(pressed === true)}
+            aria-label="Edit task list"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Pencil data-icon="inline-start" />
+            Edit task list
+          </Toggle>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openCreate(primaryParentId, true)
+                  }}
+                />
+              }
             >
-              <SlidersHorizontal className="size-3.5" />
-            </Button>
-          ) : null}
+              Add Topic Group
+            </TooltipTrigger>
+            <TooltipContent>Add Topic Group</TooltipContent>
+          </Tooltip>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => openCreate(primaryParentId)}
-        >
-          Add topic
-        </Button>
       </div>
       <ScrollArea className="min-h-0 flex-1">
-        <div className="p-2">
+        <div className="px-4 py-3">
           {!expandedHydrated ? null : visibleRoots.length === 0 ? (
             <Empty className="my-6">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <ListTree />
                 </EmptyMedia>
-                <EmptyTitle>No topics yet</EmptyTitle>
+                <EmptyTitle>No topic groups yet</EmptyTitle>
                 <EmptyDescription>
                   {singleRoot
-                    ? "Add a topic to start filling in this roadmap."
-                    : "Add your first topic to start mapping this roadmap."}
+                    ? "Add a topic group to start filling in this roadmap."
+                    : "Add your first topic group to start mapping this roadmap."}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button type="button" size="sm" onClick={() => openCreate(primaryParentId)}>
-                  Add topic
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => openCreate(primaryParentId, true)}
+                      />
+                    }
+                  >
+                    Add Topic Group
+                  </TooltipTrigger>
+                  <TooltipContent>Add Topic Group</TooltipContent>
+                </Tooltip>
               </EmptyContent>
             </Empty>
           ) : (
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-1.5">
               {visibleRoots.map((node) => (
-                <TreeNodeRow
+                <RoadmapNodeRow
                   key={node.id}
                   node={node}
                   depth={0}
                   childrenByParent={childrenByParent}
                   items={items}
+                  nodes={skillNodes}
                   expandedIds={expandedIds}
                   onToggleExpand={toggleExpand}
-                  selectedNodeId={configNodeId}
+                  selectedNodeId={isOverview ? null : configNodeId}
                   onSelect={setConfigNodeId}
-                  onAddChild={openCreate}
-                  onDelete={openDelete}
+                  onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
+                  editingTasks={taskListEditing}
                   subtreeProgressFor={subtreeProgressFor}
+                  draggedId={draggedId}
+                  dropHint={dropHint}
+                  onDragStartNode={setDragging}
+                  onDragOverNode={(nodeId, position) => {
+                    setDropHint({ nodeId, position })
+                  }}
+                  onDropNode={handlePlace}
+                  onDragEndNode={() => setDragging(null)}
+                  getDraggedId={() => draggedIdRef.current}
+                  canDropOn={canDropOn}
                 />
               ))}
             </ul>
@@ -840,46 +1101,54 @@ export function RoadmapTree({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
-        <ResizablePanel id="roadmap-tree" defaultSize="70%" minSize="40%">
+        <ResizablePanel id="roadmap-list" defaultSize="70%" minSize="40%">
           {list}
         </ResizablePanel>
-        {sheetOpen ? (
-          <>
-            <ResizableHandle withHandle />
-            <ResizablePanel id="tree-node-config" defaultSize="30%" minSize="22%" maxSize="48%">
-              <div className="h-full min-h-0 overflow-hidden">
-                <NodeConfigSheet
-                  open={sheetOpen}
-                  onOpenChange={(open) => {
-                    if (!open) {
-                      setConfigNodeId(null)
+        <ResizableHandle withHandle />
+        <ResizablePanel id="roadmap-details" defaultSize="30%" minSize="22%" maxSize="48%">
+          <div className="h-full min-h-0 overflow-hidden">
+            <NodeConfigSheet
+              open
+              onOpenChange={() => {
+                setConfigNodeId(null)
+              }}
+              node={panelNode}
+              nodes={skillNodes}
+              checklistItems={selectedItems}
+              links={selectedLinks}
+              nodeProgress={selectedNodeProgress}
+              subtreeProgress={selectedSubtreeProgress}
+              mode={isOverview ? "overview" : "topic"}
+              showClose={false}
+              showChecklist={!isOverview}
+              showIcon={!isPanelSubgroup}
+              showProgressBar
+              fallbackTitle={roleName}
+              subtitle="Configure details, tasks, and links for this topic."
+              checklistHeading="Tasks"
+              checklistCopy={TASK_CHECKLIST_COPY}
+              deleteLabel={isPanelSubgroup ? "Delete subgroup" : "Delete topic"}
+              onSaveDetails={async (input) => handleSaveDetails(input)}
+              onParentChange={async (parentId) => handleParentChange(parentId)}
+              onToggleChecklist={configChecklistHandlers.onToggle}
+              onCreateChecklist={configChecklistHandlers.onCreate}
+              onUpdateChecklist={configChecklistHandlers.onUpdate}
+              onDeleteChecklist={configChecklistHandlers.onDelete}
+              onReorderChecklist={configChecklistHandlers.onReorder}
+              onCreateLink={handleCreateLink}
+              onUpdateLink={handleUpdateLink}
+              onDeleteLink={handleDeleteLink}
+              onDelete={
+                !isOverview && panelNode
+                  ? () => {
+                      const nodeId = panelNode.id
+                      openDelete(nodeId)
                     }
-                  }}
-                  node={configNode}
-                  nodes={skillNodes}
-                  checklistItems={selectedItems}
-                  links={selectedLinks}
-                  nodeProgress={selectedNodeProgress}
-                  subtreeProgress={selectedSubtreeProgress}
-                  showHandleKind={false}
-                  subtitle="Configure details, tasks, and links for this topic."
-                  checklistHeading="Tasks"
-                  checklistCopy={TASK_CHECKLIST_COPY}
-                  onSaveDetails={async (input) => handleSaveDetails(input)}
-                  onParentChange={async (parentId) => handleParentChange(parentId)}
-                  onToggleChecklist={configChecklistHandlers.onToggle}
-                  onCreateChecklist={configChecklistHandlers.onCreate}
-                  onUpdateChecklist={configChecklistHandlers.onUpdate}
-                  onDeleteChecklist={configChecklistHandlers.onDelete}
-                  onReorderChecklist={configChecklistHandlers.onReorder}
-                  onCreateLink={handleCreateLink}
-                  onUpdateLink={handleUpdateLink}
-                  onDeleteLink={handleDeleteLink}
-                />
-              </div>
-            </ResizablePanel>
-          </>
-        ) : null}
+                  : undefined
+              }
+            />
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
       <RoadmapStatusBar roleName={roleName} progress={overallProgress} counts={statusCounts} />
       <NodeDialog
@@ -889,13 +1158,77 @@ export function RoadmapTree({
         onSubmit={async (input) => handleDialogSubmit(input)}
         copy={TOPIC_DIALOG_COPY}
       />
+      <TaskDialog
+        open={compose?.type === "task"}
+        item={null}
+        titleFieldLabel="Task"
+        titlePlaceholder="e.g. Understand CAP theorem"
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompose(null)
+          }
+        }}
+        onCreate={(input) => {
+          if (!compose || compose.type !== "task") {
+            return false
+          }
+          const result = getChecklistHandlers(compose.nodeId).onCreate(input)
+          return result.ok
+        }}
+        onUpdate={() => undefined}
+      />
+      <LinkDialog
+        open={compose?.type === "link"}
+        link={null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompose(null)
+          }
+        }}
+        onCreate={(label, url) => {
+          if (!compose || compose.type !== "link") {
+            return "Select a topic first."
+          }
+          const message = handleCreateLink({ label, url }, compose.nodeId)
+          if (!message) {
+            toast.success("Link added")
+          }
+          return message
+        }}
+        onUpdate={() => null}
+      />
+      <NotesDialog
+        open={compose?.type === "notes"}
+        notes={
+          compose?.type === "notes"
+            ? (nodes.find((node) => node.id === compose.nodeId)?.notes ?? "")
+            : ""
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setCompose(null)
+          }
+        }}
+        onSave={(notes) => {
+          if (!compose || compose.type !== "notes") {
+            return
+          }
+          handleSaveNotes(compose.nodeId, notes)
+          setCompose(null)
+        }}
+      />
       <DeleteNodeAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         count={deleteIds.length}
         nodeTitle={deleteNodes[0]?.title ?? ""}
-        noun="topic"
+        noun={
+          deleteNodes[0] && visibleRoots.some((node) => node.id === deleteNodes[0].id)
+            ? "subgroup"
+            : "topic"
+        }
         childNoun="sub-topics"
+        childNames={deleteChildNames}
         onConfirm={async () => {
           handleDelete()
         }}

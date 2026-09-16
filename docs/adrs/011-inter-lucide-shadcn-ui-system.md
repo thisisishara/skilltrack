@@ -13,7 +13,7 @@ Inconsistent chrome (custom empty states, ad-hoc toasts, mixed icon packs, extra
 The product UI is **only**:
 
 1. **Typeface:** Inter via `next/font/google`, class on the root layout so `--font-sans` / `font-sans` resolve to Inter. No Geist, system-ui as primary, or second display font for chrome. Use shadcn semantic type tokens; no parallel type scale.
-2. **Icons:** Lucide (`lucide-react`) only. Persist kebab-case Lucide ids on nodes (default `circle-dot`). Unknown ids fall back to `circle-dot`. Do not mix Tabler/Heroicons/custom SVG packs. App mark: pixel-art zap in `public/skilltrack-icon.png`; Lucide `Zap` where a vector mark is needed. Inside shadcn components, do not add icon sizing classes; on `Button` use `data-icon="inline-start"` / `inline-end`.
+2. **Icons:** Lucide (`lucide-react`) for application chrome. Node topic icons persist kebab-case ids (default `circle-dot`) and resolve to Lucide or a curated Simple Icons brand allowlist. Unknown ids fall back to `circle-dot`. Do not mix Tabler/Heroicons/ad-hoc SVG packs. App mark: pixel-art zap in `public/skilltrack-icon.png`; Lucide `Zap` where a vector mark is needed. Inside shadcn components, do not add icon sizing classes; on `Button` use `data-icon="inline-start"` / `inline-end`.
 3. **Components:** Valid shadcn/ui (Radix, CLI-copied into `components/ui`). Map needs to registry components as in spec §5 (including `Empty` for every empty surface, `Sheet` for node config, `sonner` for mutation toasts, `AlertDialog` for destructive confirms, `Sidebar` for chrome).
 
 Do not invent custom empty layouts, toast systems, callouts, badges, or form chrome that duplicate registry pieces.

@@ -76,6 +76,7 @@ export function serializeRoadmapDocument(
         ...(node.parentId ? { parent_id: node.parentId } : {}),
         ...(node.description ? { description: node.description } : {}),
         icon: node.icon,
+        ...(node.accentColor ? { accent_color: node.accentColor } : {}),
         handle_kind: node.handleKind,
         incoming_edge_animated: node.incomingEdgeAnimated,
         position: { x: node.positionX, y: node.positionY },

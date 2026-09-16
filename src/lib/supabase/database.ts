@@ -78,6 +78,7 @@ export type Database = {
           description: string | null
           notes: string | null
           icon: string
+          accent_color: string | null
           handle_kind: string
           incoming_edge_animated: boolean
           position_x: number
@@ -95,6 +96,7 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
+          accent_color?: string | null
           handle_kind?: string
           incoming_edge_animated?: boolean
           position_x?: number
@@ -112,6 +114,7 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
+          accent_color?: string | null
           handle_kind?: string
           incoming_edge_animated?: boolean
           position_x?: number

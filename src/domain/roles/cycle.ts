@@ -35,7 +35,7 @@ export function roleHrefForCurrentView(
   }
 
   const rest = pathname.slice(prefix.length)
-  if (rest === "/tree" || rest === "/settings") {
+  if (rest === "/settings") {
     return `${base}${rest}`
   }
 

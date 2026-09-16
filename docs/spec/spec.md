@@ -24,7 +24,7 @@ SkillTrack lets users:
    - parent-node progress
    - roadmap progress
 7. Add notes and links to roadmap nodes.
-8. Assign a Lucide icon to each node, with a default fallback icon (`circle-dot`).
+8. Assign an icon to each node (Lucide or a curated brand mark), with a default fallback icon (`circle-dot`).
 9. Refactor roadmap structure without losing node identity or progress.
 10. Import a roadmap from JSON only while creating a new role.
 11. Export a roadmap as JSON.
@@ -169,7 +169,7 @@ Future AI functionality should be another module rather than being embedded thro
 - Tailwind CSS
 - shadcn/ui (Radix primitives, copied into the project via the shadcn CLI)
 - Inter as the only UI typeface (`next/font/google`, CSS variable `--font-sans`)
-- Lucide as the only icon library (`lucide-react`)
+- Lucide as the icon library for application chrome (`lucide-react`); node topic icons may also use a curated Simple Icons brand set
 - A suitable canvas/graph library such as React Flow
 - Server Components where appropriate
 - Client Components only where interactivity requires them
@@ -187,11 +187,11 @@ The product UI must be composed from **valid shadcn/ui components**. Do not inve
 
 ### Icons
 
-- Icon library: **Lucide** via `lucide-react`.
+- Icon library for chrome: **Lucide** via `lucide-react`.
 - Import Lucide icons as React components (for example `Brain`, `Code`, `Search`).
 - Inside shadcn components, do not add sizing classes on icons (`size-4`, `w-4 h-4`). Components size icons.
 - On `Button`, set `data-icon="inline-start"` or `data-icon="inline-end"` on the Lucide icon.
-- Persist node icons as Lucide kebab-case identifiers (see §12). Resolve those identifiers to Lucide components at the UI boundary.
+- Persist node icons as kebab-case identifiers (see §12). Resolve those identifiers to Lucide or curated brand components at the UI boundary.
 - **App mark:** a pixel-art lightning bolt in the spirit of Lucide [`zap`](https://lucide.dev/icons/zap). Source art: `public/skilltrack-icon.png`. Browser/PWA icons live in `public/favicon/` (`favicon.ico`, 16/32 PNG, apple-touch, 192/512 chrome). In-app chrome may use Lucide `Zap` where a vector mark is needed.
 
 ### Required shadcn/ui usage
@@ -255,7 +255,7 @@ Required `Empty` compositions:
 
 ### What is not a shadcn component
 
-The infinite roadmap **canvas** (React Flow or equivalent) is the only primary surface that is not a shadcn primitive. Canvas chrome still uses shadcn: zoom/fit `Button`s, node `Badge` progress, Lucide node icons, `Sheet` for configuration, `Empty` when the roadmap has no nodes, `Command` for node search.
+The infinite roadmap **canvas** (React Flow or equivalent) is the only primary surface that is not a shadcn primitive. Canvas chrome still uses shadcn: zoom/fit `Button`s, node `Badge` progress, node icons (Lucide or curated brands), `Sheet` for configuration, `Empty` when the roadmap has no nodes, `Command` for node search.
 
 ## Authentication
 
@@ -503,7 +503,7 @@ The panel must allow editing, using shadcn form primitives (`FieldGroup`, `Field
 
 - title
 - description
-- icon (Lucide picker; see §12)
+- icon (searchable picker; see §12)
 - parent
 - position where appropriate
 - notes
@@ -525,7 +525,7 @@ Empty notes, links, and checklists in this panel use `Empty` as specified in §5
 
 Each node may have an icon.
 
-Icons are **Lucide** icons. Persist a stable Lucide identifier (kebab-case name as published by Lucide / `lucide-react`), never raw SVG or HTML.
+Icons are **Lucide** icons plus a curated **brand** set (Simple Icons, for topics such as GitHub, GitLab, Docker, Google Cloud). Persist a stable kebab-case identifier, never raw SVG or HTML.
 
 Example:
 
@@ -535,35 +535,31 @@ Example:
 }
 ```
 
-That identifier maps to the `Brain` component from `lucide-react`.
+That identifier maps to the `Brain` component from `lucide-react`. Brand ids such as `github` map to the curated Simple Icons set.
 
 Required behavior:
 
-- Icon picker is a searchable Lucide catalog composed from shadcn `Command` (typically inside `Popover` or `Dialog`). No-match state uses `Empty`.
+- Icon picker is a searchable catalog composed from shadcn `Command` (typically inside `Popover` or `Dialog`). No-match state uses `Empty`.
 - Default icon when none is selected: `circle-dot` (`CircleDot`).
-- Store Lucide identifiers, not rendered markup.
+- Store kebab-case identifiers, not rendered markup.
 - Unknown or removed identifiers fall back to `circle-dot`.
-- The allowed set is the Lucide icon set bundled with the application (`lucide-react`). Do not mix Tabler, Heroicons, or custom SVG packs.
+- Application chrome stays Lucide-only. Node topic icons may use Lucide and the curated Simple Icons allowlist bundled with the app. Do not mix Tabler, Heroicons, or ad-hoc SVG packs.
+- A few widely requested vendor marks that cannot be redistributed (for example AWS, Azure, OpenAI) use a letter badge with the same kebab-case id.
 
-Example identifiers (must be valid Lucide names):
+Example identifiers:
 
 ```text
 brain
+github
+gitlab
+docker
+google-cloud
+aws
+azure
+openai
 code
 database
 cloud
-shield
-network
-bot
-search
-book
-server
-terminal
-flask-conical
-chart-column
-users
-lock
-box
 circle-dot
 ```
 
@@ -1172,7 +1168,7 @@ The published schema sets `additionalProperties` to `false`. Unknown keys and ma
         },
         "icon": {
           "type": "string",
-          "description": "Lucide kebab-case icon name (e.g. brain, circle-dot). Unknown values fall back to circle-dot."
+          "description": "Kebab-case icon id (Lucide or curated brand, e.g. brain, github, google-cloud). Unknown values fall back to circle-dot."
         },
         "handle_kind": {
           "type": "string",
@@ -2574,7 +2570,7 @@ SkillTrack MVP is complete when a user can:
 - See an infinite canvas.
 - Create nested nodes to arbitrary depth.
 - Move nodes.
-- Select Lucide icons.
+- Select Lucide and brand icons.
 - Configure notes and links.
 - Add evidence checklist items.
 - Check/uncheck checklist items.

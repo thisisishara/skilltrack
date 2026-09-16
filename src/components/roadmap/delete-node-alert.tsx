@@ -14,6 +14,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function DeleteNodeAlert({
   open,
@@ -23,6 +24,7 @@ export function DeleteNodeAlert({
   onConfirm,
   noun = "node",
   childNoun = "child nodes",
+  childNames = [],
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -31,6 +33,7 @@ export function DeleteNodeAlert({
   onConfirm: () => Promise<void>
   noun?: string
   childNoun?: string
+  childNames?: string[]
 }) {
   const [pending, setPending] = useState(false)
   const multi = count > 1
@@ -59,6 +62,33 @@ export function DeleteNodeAlert({
                 : `This ${noun} and its ${childNoun} will be permanently deleted.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {childNames.length > 0 ? (
+          childNames.length > 6 ? (
+            <ScrollArea className="h-40 rounded-lg border bg-muted/40">
+              <ul className="flex flex-col gap-1 p-2">
+                {childNames.map((name, index) => (
+                  <li
+                    key={`${name}-${index}`}
+                    className="truncate rounded-md px-2 py-1 text-sm"
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          ) : (
+            <ul className="flex flex-col gap-1 rounded-lg border bg-muted/40 p-2">
+              {childNames.map((name, index) => (
+                <li
+                  key={`${name}-${index}`}
+                  className="truncate rounded-md px-2 py-1 text-sm"
+                >
+                  {name}
+                </li>
+              ))}
+            </ul>
+          )
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction

@@ -2,352 +2,3221 @@
   "schema": "skilltrack.roadmap.v1",
   "roadmap": {
     "name": "Senior AI Engineer",
-    "description": "Comprehensive roadmap covering software engineering, AI/ML engineering, LLM systems, distributed systems, cloud, security, observability, testing, architecture, leadership, product thinking, and AI-assisted development."
+    "description": "Comprehensive roadmap covering software engineering foundations, architecture, backend, data, distributed systems, cloud, DevOps, testing, observability, ML/LLM systems, security, governance, product, documentation, leadership, and professional judgment."
   },
   "nodes": [
     {
       "id": "00000000-0000-4000-8000-000000000001",
-      "title": "Software Engineering",
-      "icon": "code",
-      "position": { "x": 0, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000001", "title": "Write production-quality Python", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000002", "title": "Understand clean code and maintainability", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000003", "title": "Apply SOLID principles pragmatically", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000004", "title": "Use dependency injection effectively", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000005", "title": "Understand common design patterns", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000006", "title": "Design maintainable Python package structures", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000007", "title": "Write unit and integration tests", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000008", "title": "Understand async programming and event loops", "completed": false }
-      ]
+      "title": "ONE. Software Engineering Foundations"
     },
     {
       "id": "00000000-0000-4000-8000-000000000002",
-      "title": "Python Engineering",
-      "parent_id": "00000000-0000-4000-8000-000000000001",
-      "icon": "terminal",
-      "position": { "x": 280, "y": -180 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000009", "title": "Type hints and modern Python typing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000010", "title": "Context managers and resource lifecycle", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000011", "title": "Generators and iterators", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000012", "title": "Concurrency with asyncio", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000013", "title": "Packaging with pyproject.toml", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000014", "title": "Dependency management and reproducible environments", "completed": false }
-      ]
+      "title": "Programming fundamentals",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
     },
     {
       "id": "00000000-0000-4000-8000-000000000003",
-      "title": "Architecture & Design",
-      "parent_id": "00000000-0000-4000-8000-000000000001",
-      "icon": "network",
-      "position": { "x": 280, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000015", "title": "Understand modular monolith architecture", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000016", "title": "Understand microservices tradeoffs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000017", "title": "Understand layered architecture", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000018", "title": "Understand hexagonal/ports-and-adapters architecture", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000019", "title": "Use ADRs for important decisions", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000020", "title": "Create architecture diagrams", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000021", "title": "Perform architecture tradeoff analysis", "completed": false }
-      ]
+      "title": "Python deeply",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000004",
-      "title": "APIs & Backend Engineering",
-      "parent_id": "00000000-0000-4000-8000-000000000001",
-      "icon": "server",
-      "position": { "x": 280, "y": 180 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000022", "title": "Design REST APIs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000023", "title": "API versioning", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000024", "title": "Authentication and authorization", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000025", "title": "Input validation and API contracts", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000026", "title": "Rate limiting", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000027", "title": "Idempotency", "completed": false }
-      ]
+      "title": "Types, generics, protocols and interfaces",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000005",
-      "title": "Databases",
-      "icon": "database",
-      "position": { "x": 0, "y": 320 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000028", "title": "Relational database fundamentals", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000029", "title": "SQL", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000030", "title": "Indexes and query planning", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000031", "title": "Transactions and isolation levels", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000032", "title": "Constraints and referential integrity", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000033", "title": "Connection pooling", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000034", "title": "Caching strategies", "completed": false }
-      ]
+      "title": "Functions, modules and packages",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000006",
-      "title": "Distributed Systems",
-      "icon": "network",
-      "position": { "x": 0, "y": 640 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000035", "title": "Understand CAP theorem", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000036", "title": "Understand consistency models", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000037", "title": "Queues and asynchronous processing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000038", "title": "At-least-once delivery", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000039", "title": "Retries and exponential backoff", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000040", "title": "Dead-letter queues", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000041", "title": "Leases and visibility timeouts", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000042", "title": "Distributed locking", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000043", "title": "Idempotent consumers", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000044", "title": "Circuit breakers", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000045", "title": "Backpressure", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000046", "title": "Failure isolation", "completed": false }
-      ]
+      "title": "Exceptions and error propagation",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000007",
-      "title": "Cloud Engineering",
-      "icon": "cloud",
-      "position": { "x": 0, "y": 960 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000047", "title": "AWS fundamentals", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000048", "title": "Azure fundamentals", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000049", "title": "IAM", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000050", "title": "Object storage", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000051", "title": "Serverless compute", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000052", "title": "Containers", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000053", "title": "Infrastructure as code", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000054", "title": "Cloud networking", "completed": false }
-      ]
+      "title": "Iterators and generators",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000008",
-      "title": "Docker & Deployment",
-      "parent_id": "00000000-0000-4000-8000-000000000007",
-      "icon": "box",
-      "position": { "x": 280, "y": 820 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000055", "title": "Build production Docker images", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000056", "title": "Multi-stage builds", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000057", "title": "Container security", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000058", "title": "Health checks", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000059", "title": "CI/CD deployment pipelines", "completed": false }
-      ]
+      "title": "Context managers",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000009",
-      "title": "Security",
-      "icon": "shield",
-      "position": { "x": 640, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000060", "title": "OWASP Top 10", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000061", "title": "OWASP API Security Top 10", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000062", "title": "Authentication vs authorization", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000063", "title": "JWT security", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000064", "title": "Secrets management", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000065", "title": "Least privilege", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000066", "title": "Tenant isolation", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000067", "title": "Data encryption at rest and in transit", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000068", "title": "Prompt injection and LLM security", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000069", "title": "Supply-chain security", "completed": false }
-      ]
+      "title": "Async programming",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000010",
-      "title": "Testing & Quality",
-      "icon": "flask-conical",
-      "position": { "x": 640, "y": 320 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000070", "title": "Unit testing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000071", "title": "Integration testing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000072", "title": "End-to-end testing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000073", "title": "Contract testing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000074", "title": "Load testing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000075", "title": "Failure injection", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000076", "title": "Regression testing", "completed": false }
-      ]
+      "title": "Concurrency and parallelism",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000011",
-      "title": "Observability",
-      "icon": "chart-column",
-      "position": { "x": 640, "y": 640 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000077", "title": "Structured logging", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000078", "title": "Metrics", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000079", "title": "Distributed tracing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000080", "title": "Correlation IDs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000081", "title": "Trace IDs and spans", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000082", "title": "SLIs, SLOs and SLAs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000083", "title": "Alerting", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000084", "title": "Production debugging", "completed": false }
-      ]
+      "title": "Memory and resource management",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000012",
-      "title": "Machine Learning Engineering",
-      "icon": "brain",
-      "position": { "x": 1000, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000085", "title": "Supervised learning fundamentals", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000086", "title": "Evaluation metrics", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000087", "title": "Train/validation/test methodology", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000088", "title": "Data leakage", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000089", "title": "Model deployment", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000090", "title": "Model monitoring", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000091", "title": "Experiment tracking", "completed": false }
-      ]
+      "title": "Profiling and optimization",
+      "parent_id": "00000000-0000-4000-8000-000000000002"
     },
     {
       "id": "00000000-0000-4000-8000-000000000013",
-      "title": "LLM Engineering",
-      "parent_id": "00000000-0000-4000-8000-000000000012",
-      "icon": "bot",
-      "position": { "x": 1280, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000092", "title": "Transformer architecture", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000093", "title": "Tokenization", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000094", "title": "Inference parameters", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000095", "title": "Prompt engineering", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000096", "title": "Structured outputs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000097", "title": "Function/tool calling", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000098", "title": "Fine-tuning and LoRA/QLoRA", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000099", "title": "Model selection and routing", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000100", "title": "LLM cost and latency optimization", "completed": false }
-      ]
+      "title": "Data structures and algorithms",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
     },
     {
       "id": "00000000-0000-4000-8000-000000000014",
-      "title": "RAG",
-      "parent_id": "00000000-0000-4000-8000-000000000013",
-      "icon": "search",
-      "position": { "x": 1560, "y": 0 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000101", "title": "Document ingestion", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000102", "title": "Chunking strategies", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000103", "title": "Embedding models", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000104", "title": "Vector databases", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000105", "title": "Similarity search", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000106", "title": "Hybrid retrieval", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000107", "title": "Reranking", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000108", "title": "Retrieval evaluation", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000109", "title": "RAG observability", "completed": false }
-      ]
+      "title": "Arrays, lists, stacks, queues",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000015",
-      "title": "AI Evaluation",
-      "parent_id": "00000000-0000-4000-8000-000000000013",
-      "icon": "chart-column",
-      "position": { "x": 1560, "y": 320 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000110", "title": "Define task-specific metrics", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000111", "title": "Build representative evaluation datasets", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000112", "title": "Regression evaluation", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000113", "title": "LLM-as-judge limitations", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000114", "title": "Error analysis", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000115", "title": "Cost/quality/latency tradeoffs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000116", "title": "Production feedback loops", "completed": false }
-      ]
+      "title": "Hash tables and sets",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000016",
-      "title": "Agentic AI",
-      "parent_id": "00000000-0000-4000-8000-000000000013",
-      "icon": "bot",
-      "position": { "x": 1560, "y": 640 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000117", "title": "Tool use", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000118", "title": "Agent state", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000119", "title": "Planning and reasoning patterns", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000120", "title": "Human-in-the-loop systems", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000121", "title": "Agent evaluation", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000122", "title": "Agent security", "completed": false }
-      ]
+      "title": "Trees and graphs",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000017",
-      "title": "MLOps & AI Infrastructure",
-      "icon": "server",
-      "position": { "x": 1000, "y": 720 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000123", "title": "Model serving", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000124", "title": "GPU inference basics", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000125", "title": "Batch vs online inference", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000126", "title": "Model versioning", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000127", "title": "Feature/data pipelines", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000128", "title": "Drift and monitoring", "completed": false }
-      ]
+      "title": "Heaps and priority queues",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000018",
-      "title": "Product & Business Thinking",
-      "icon": "chart-column",
-      "position": { "x": 1000, "y": 1040 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000129", "title": "Translate product requirements into technical requirements", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000130", "title": "Define measurable success criteria", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000131", "title": "Understand ROI", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000132", "title": "Cost/quality tradeoffs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000133", "title": "Prioritization", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000134", "title": "Communicate technical tradeoffs to non-engineers", "completed": false }
-      ]
+      "title": "Sorting and searching",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000019",
-      "title": "Leadership & Team Engineering",
-      "icon": "users",
-      "position": { "x": 1000, "y": 1360 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000135", "title": "Conduct effective code reviews", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000136", "title": "Mentor engineers", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000137", "title": "Delegate effectively", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000138", "title": "Resolve technical disagreements", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000139", "title": "Run technical design discussions", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000140", "title": "Give actionable feedback", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000141", "title": "Manage delivery risk", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000142", "title": "Lead incident reviews", "completed": false }
-      ]
+      "title": "Recursion",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000020",
-      "title": "Technical Communication",
-      "icon": "book",
-      "position": { "x": 1000, "y": 1680 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000143", "title": "Write technical specifications", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000144", "title": "Write ADRs", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000145", "title": "Document architecture decisions", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000146", "title": "Explain complex systems clearly", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000147", "title": "Write useful incident reports", "completed": false }
-      ]
+      "title": "Dynamic programming",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000021",
-      "title": "AI-Assisted Development",
-      "icon": "bot",
-      "position": { "x": 1360, "y": 1360 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000148", "title": "Use coding agents effectively", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000149", "title": "Write implementation-ready specifications", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000150", "title": "Use repository-level context effectively", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000151", "title": "Review AI-generated code critically", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000152", "title": "Use AI for test generation and analysis", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000153", "title": "Use AI for debugging without surrendering system understanding", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000154", "title": "Establish AI coding policies and guardrails", "completed": false }
-      ]
+      "title": "Big-O analysis",
+      "parent_id": "00000000-0000-4000-8000-000000000013"
     },
     {
       "id": "00000000-0000-4000-8000-000000000022",
-      "title": "Career & Engineering Growth",
-      "icon": "chart-column",
-      "position": { "x": 1360, "y": 1680 },
-      "checklist": [
-        { "id": "10000000-0000-4000-8000-000000000155", "title": "Understand senior engineer expectations", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000156", "title": "Build evidence of technical ownership", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000157", "title": "Build evidence of mentoring", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000158", "title": "Build evidence of architecture ownership", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000159", "title": "Build evidence of production ownership", "completed": false },
-        { "id": "10000000-0000-4000-8000-000000000160", "title": "Analyze senior job descriptions", "completed": false }
-      ]
+      "title": "Computer systems",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000023",
+      "title": "Processes",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000024",
+      "title": "Threads",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000025",
+      "title": "Scheduling",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000026",
+      "title": "Memory",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000027",
+      "title": "Filesystems",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000028",
+      "title": "Networking",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000029",
+      "title": "TCP/IP",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000030",
+      "title": "HTTP",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000031",
+      "title": "TLS",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000032",
+      "title": "DNS",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000033",
+      "title": "Serialization and encoding",
+      "parent_id": "00000000-0000-4000-8000-000000000022"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000034",
+      "title": "Software design",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000035",
+      "title": "Cohesion and coupling",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "title": "SOLID",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000037",
+      "title": "Dependency inversion",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000038",
+      "title": "Dependency injection",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000039",
+      "title": "Composition over inheritance",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000040",
+      "title": "Separation of concerns",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000041",
+      "title": "Layered architecture",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000042",
+      "title": "Clean architecture",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000043",
+      "title": "Hexagonal architecture",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000044",
+      "title": "Modular monoliths",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000045",
+      "title": "Microservices",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000046",
+      "title": "Event-driven architecture",
+      "parent_id": "00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000047",
+      "title": "TWO. Design Patterns and Application Architecture"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000048",
+      "title": "Factory",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000049",
+      "title": "Abstract Factory",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000050",
+      "title": "Builder",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000051",
+      "title": "Adapter",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000052",
+      "title": "Facade",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000053",
+      "title": "Decorator",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000054",
+      "title": "Proxy",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000055",
+      "title": "Strategy",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000056",
+      "title": "Command",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000057",
+      "title": "Observer",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000058",
+      "title": "State",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000059",
+      "title": "Chain of Responsibility",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000060",
+      "title": "Repository",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000061",
+      "title": "Service Layer",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000062",
+      "title": "Unit of Work",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000063",
+      "title": "Provider abstraction",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000064",
+      "title": "Ports and adapters",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000065",
+      "title": "Most importantly: knowing when not to use a pattern",
+      "parent_id": "00000000-0000-4000-8000-000000000047"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000066",
+      "title": "THREE. Backend Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000067",
+      "title": "API design",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000068",
+      "title": "REST",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000069",
+      "title": "RPC/gRPC",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000070",
+      "title": "Webhooks",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000071",
+      "title": "Async APIs",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000072",
+      "title": "Pagination",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000073",
+      "title": "Filtering",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000074",
+      "title": "Versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000075",
+      "title": "Idempotency",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000076",
+      "title": "Authentication",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000077",
+      "title": "Authorization",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000078",
+      "title": "Rate limiting",
+      "parent_id": "00000000-0000-4000-8000-000000000067"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000079",
+      "title": "Backend execution",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000080",
+      "title": "Request lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000081",
+      "title": "Middleware",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000082",
+      "title": "Background jobs",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000083",
+      "title": "Task queues",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000084",
+      "title": "Scheduling",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000085",
+      "title": "Retries",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000086",
+      "title": "Backoff",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000087",
+      "title": "Dead-letter queues",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000088",
+      "title": "Caching",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000089",
+      "title": "Connection pooling",
+      "parent_id": "00000000-0000-4000-8000-000000000079"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000090",
+      "title": "Framework internals",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000091",
+      "title": "FastAPI/Django/Flask concepts",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000092",
+      "title": "Async event loops",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000093",
+      "title": "Worker models",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000094",
+      "title": "Process models",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000095",
+      "title": "Lifecycles",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000096",
+      "title": "Dependency injection",
+      "parent_id": "00000000-0000-4000-8000-000000000066"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000097",
+      "title": "FOUR. Databases and Data Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000098",
+      "title": "Relational databases",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000099",
+      "title": "SQL",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000100",
+      "title": "Schema design",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000101",
+      "title": "Normalization",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000102",
+      "title": "Denormalization",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000103",
+      "title": "Transactions",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000104",
+      "title": "ACID",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000105",
+      "title": "Isolation levels",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000106",
+      "title": "Locks",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000107",
+      "title": "Indexes",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000108",
+      "title": "Query plans",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000109",
+      "title": "Migrations",
+      "parent_id": "00000000-0000-4000-8000-000000000098"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000110",
+      "title": "NoSQL",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000111",
+      "title": "Key-value",
+      "parent_id": "00000000-0000-4000-8000-000000000110"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000112",
+      "title": "Document",
+      "parent_id": "00000000-0000-4000-8000-000000000110"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000113",
+      "title": "Wide-column",
+      "parent_id": "00000000-0000-4000-8000-000000000110"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000114",
+      "title": "Graph",
+      "parent_id": "00000000-0000-4000-8000-000000000110"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000115",
+      "title": "Data infrastructure",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000116",
+      "title": "Object storage",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000117",
+      "title": "Warehouses",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000118",
+      "title": "Data lakes",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000119",
+      "title": "Streaming",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000120",
+      "title": "Batch processing",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000121",
+      "title": "ETL/ELT",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000122",
+      "title": "Data quality",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000123",
+      "title": "Data lineage",
+      "parent_id": "00000000-0000-4000-8000-000000000097"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000124",
+      "title": "FIVE. Distributed Systems"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000125",
+      "title": "Failure models",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000126",
+      "title": "Partial failure",
+      "parent_id": "00000000-0000-4000-8000-000000000125"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000127",
+      "title": "Network failure",
+      "parent_id": "00000000-0000-4000-8000-000000000125"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000128",
+      "title": "Timeouts",
+      "parent_id": "00000000-0000-4000-8000-000000000125"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000129",
+      "title": "Partitions",
+      "parent_id": "00000000-0000-4000-8000-000000000125"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000130",
+      "title": "Retries",
+      "parent_id": "00000000-0000-4000-8000-000000000125"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000131",
+      "title": "Distributed-system concepts",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000132",
+      "title": "CAP",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000133",
+      "title": "Consistency",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000134",
+      "title": "Availability",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000135",
+      "title": "Eventual consistency",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000136",
+      "title": "Ordering",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000137",
+      "title": "Delivery semantics",
+      "parent_id": "00000000-0000-4000-8000-000000000131"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000138",
+      "title": "Messaging",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000139",
+      "title": "Queues",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000140",
+      "title": "Pub/sub",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000141",
+      "title": "Kafka-style logs",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000142",
+      "title": "At-most-once",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000143",
+      "title": "At-least-once",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000144",
+      "title": "Exactly-once trade-offs",
+      "parent_id": "00000000-0000-4000-8000-000000000138"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000145",
+      "title": "Reliability patterns",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000146",
+      "title": "Retry",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000147",
+      "title": "Exponential backoff",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000148",
+      "title": "Circuit breakers",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000149",
+      "title": "Bulkheads",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000150",
+      "title": "Timeouts",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000151",
+      "title": "Idempotency",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000152",
+      "title": "Sagas",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000153",
+      "title": "Compensation",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000154",
+      "title": "Backpressure",
+      "parent_id": "00000000-0000-4000-8000-000000000124"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000155",
+      "title": "SIX. System Design and Architecture"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000156",
+      "title": "Requirements engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000157",
+      "title": "Functional requirements",
+      "parent_id": "00000000-0000-4000-8000-000000000156"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000158",
+      "title": "Non-functional requirements",
+      "parent_id": "00000000-0000-4000-8000-000000000156"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000159",
+      "title": "Constraints",
+      "parent_id": "00000000-0000-4000-8000-000000000156"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000160",
+      "title": "Capacity assumptions",
+      "parent_id": "00000000-0000-4000-8000-000000000156"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000161",
+      "title": "SLIs/SLOs",
+      "parent_id": "00000000-0000-4000-8000-000000000156"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000162",
+      "title": "Architecture",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000163",
+      "title": "Context diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000164",
+      "title": "Container diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000165",
+      "title": "Component diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000166",
+      "title": "Sequence diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000167",
+      "title": "Data-flow diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000168",
+      "title": "Deployment diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000169",
+      "title": "C4-style architecture documentation",
+      "parent_id": "00000000-0000-4000-8000-000000000162"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000170",
+      "title": "Quality attributes",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000171",
+      "title": "Reliability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000172",
+      "title": "Availability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000173",
+      "title": "Scalability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000174",
+      "title": "Performance",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000175",
+      "title": "Security",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000176",
+      "title": "Maintainability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000177",
+      "title": "Testability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000178",
+      "title": "Observability",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000179",
+      "title": "Cost",
+      "parent_id": "00000000-0000-4000-8000-000000000170"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000180",
+      "title": "Architectural decision-making",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000181",
+      "title": "Identify alternatives",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000182",
+      "title": "Evaluate trade-offs",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000183",
+      "title": "Identify risks",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000184",
+      "title": "Record decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000185",
+      "title": "ADRs",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000186",
+      "title": "Reversible vs irreversible decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000187",
+      "title": "Technical-debt management",
+      "parent_id": "00000000-0000-4000-8000-000000000155"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000188",
+      "title": "SEVEN. Cloud and Infrastructure"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000189",
+      "title": "Compute",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000190",
+      "title": "Containers",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000191",
+      "title": "Serverless",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000192",
+      "title": "Storage",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000193",
+      "title": "Networking",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000194",
+      "title": "Databases",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000195",
+      "title": "IAM",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000196",
+      "title": "Secrets management",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000197",
+      "title": "DNS",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000198",
+      "title": "Load balancing",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000199",
+      "title": "AWS/Azure/GCP concepts",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000200",
+      "title": "Docker",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000201",
+      "title": "Kubernetes concepts",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000202",
+      "title": "Autoscaling",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000203",
+      "title": "Resource limits",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000204",
+      "title": "Health checks",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000205",
+      "title": "Infrastructure as Code",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000206",
+      "title": "Environment management",
+      "parent_id": "00000000-0000-4000-8000-000000000188"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000207",
+      "title": "EIGHT. DevOps and Software Delivery",
+      "notes": "This isn't just DevOps trivia. DORA currently treats continuous integration, deployment automation, testing, version control, database change management, observability, maintainability, and related capabilities as core parts of effective software delivery."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000208",
+      "title": "Git",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000209",
+      "title": "Branching strategies",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000210",
+      "title": "Rebase/merge",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000211",
+      "title": "Release tagging",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000212",
+      "title": "CI",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000213",
+      "title": "CD",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000214",
+      "title": "Automated testing",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000215",
+      "title": "Deployment automation",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000216",
+      "title": "Artifact management",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000217",
+      "title": "Rollbacks",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000218",
+      "title": "Blue/green deployment",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000219",
+      "title": "Canary deployment",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000220",
+      "title": "Feature flags",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000221",
+      "title": "Semantic versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000222",
+      "title": "Conventional commits",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000223",
+      "title": "Changelogs",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000224",
+      "title": "Monorepos",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000225",
+      "title": "Multi-package versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000226",
+      "title": "Dependency management",
+      "parent_id": "00000000-0000-4000-8000-000000000207"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000227",
+      "title": "NINE. Testing and Quality Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000228",
+      "title": "Unit tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000229",
+      "title": "Integration tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000230",
+      "title": "Contract tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000231",
+      "title": "End-to-end tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000232",
+      "title": "Smoke tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000233",
+      "title": "Regression tests",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000234",
+      "title": "Mocking",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000235",
+      "title": "Fixtures",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000236",
+      "title": "Property-based testing",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000237",
+      "title": "Mutation testing",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000238",
+      "title": "Fuzzing",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000239",
+      "title": "Load testing",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000240",
+      "title": "Chaos testing",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000241",
+      "title": "Test pyramid",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000242",
+      "title": "Test isolation",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000243",
+      "title": "Determinism",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000244",
+      "title": "Flaky-test management",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000245",
+      "title": "Test-data management",
+      "parent_id": "00000000-0000-4000-8000-000000000227"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000246",
+      "title": "TEN. Production Engineering and Observability"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000247",
+      "title": "Logging",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000248",
+      "title": "Metrics",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000249",
+      "title": "Distributed tracing",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000250",
+      "title": "Profiling",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000251",
+      "title": "Latency",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000252",
+      "title": "Throughput",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000253",
+      "title": "Error rates",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000254",
+      "title": "Saturation",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000255",
+      "title": "SLIs",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000256",
+      "title": "SLOs",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000257",
+      "title": "SLAs",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000258",
+      "title": "Error budgets",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000259",
+      "title": "Alerting",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000260",
+      "title": "On-call",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000261",
+      "title": "Runbooks",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000262",
+      "title": "Incident response",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000263",
+      "title": "Root-cause analysis",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000264",
+      "title": "Postmortems",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000265",
+      "title": "Capacity planning",
+      "parent_id": "00000000-0000-4000-8000-000000000246"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000266",
+      "title": "ELEVEN. Machine Learning Fundamentals"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000267",
+      "title": "Mathematics",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000268",
+      "title": "Linear algebra",
+      "parent_id": "00000000-0000-4000-8000-000000000267"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000269",
+      "title": "Probability",
+      "parent_id": "00000000-0000-4000-8000-000000000267"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000270",
+      "title": "Statistics",
+      "parent_id": "00000000-0000-4000-8000-000000000267"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000271",
+      "title": "Calculus",
+      "parent_id": "00000000-0000-4000-8000-000000000267"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000272",
+      "title": "Optimization",
+      "parent_id": "00000000-0000-4000-8000-000000000267"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000273",
+      "title": "ML paradigms",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000274",
+      "title": "Supervised learning",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000275",
+      "title": "Unsupervised learning",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000276",
+      "title": "Semi-supervised learning",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000277",
+      "title": "Self-supervised learning",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000278",
+      "title": "Classification",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000279",
+      "title": "Regression",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000280",
+      "title": "Ranking",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000281",
+      "title": "Clustering",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000282",
+      "title": "Representation learning",
+      "parent_id": "00000000-0000-4000-8000-000000000273"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000283",
+      "title": "Generalization",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000284",
+      "title": "Overfitting",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000285",
+      "title": "Underfitting",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000286",
+      "title": "Bias/variance",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000287",
+      "title": "Regularization",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000288",
+      "title": "Data leakage",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000289",
+      "title": "Distribution shift",
+      "parent_id": "00000000-0000-4000-8000-000000000283"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000290",
+      "title": "Evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000291",
+      "title": "Train/validation/test",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000292",
+      "title": "Cross-validation",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000293",
+      "title": "Precision/recall/F1",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000294",
+      "title": "ROC-AUC",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000295",
+      "title": "PR-AUC",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000296",
+      "title": "Calibration",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000297",
+      "title": "Ranking metrics",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000298",
+      "title": "Statistical significance",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000299",
+      "title": "Error analysis",
+      "parent_id": "00000000-0000-4000-8000-000000000266"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000300",
+      "title": "TWELVE. Deep Learning"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000301",
+      "title": "Neural-network fundamentals",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000302",
+      "title": "Forward propagation",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000303",
+      "title": "Backpropagation",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000304",
+      "title": "Activations",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000305",
+      "title": "Loss functions",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000306",
+      "title": "Optimizers",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000307",
+      "title": "Initialization",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000308",
+      "title": "Normalization",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000309",
+      "title": "Regularization",
+      "parent_id": "00000000-0000-4000-8000-000000000301"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000310",
+      "title": "Architectures",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000311",
+      "title": "CNNs",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000312",
+      "title": "RNNs",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000313",
+      "title": "LSTMs/GRUs",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000314",
+      "title": "Attention",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000315",
+      "title": "Transformers",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000316",
+      "title": "Encoder models",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000317",
+      "title": "Decoder models",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000318",
+      "title": "Encoder-decoder models",
+      "parent_id": "00000000-0000-4000-8000-000000000310"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000319",
+      "title": "Training systems",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000320",
+      "title": "GPUs",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000321",
+      "title": "Mixed precision",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000322",
+      "title": "Batching",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000323",
+      "title": "Gradient accumulation",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000324",
+      "title": "Distributed training",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000325",
+      "title": "Checkpointing",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000326",
+      "title": "Experiment tracking",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000327",
+      "title": "Reproducibility",
+      "parent_id": "00000000-0000-4000-8000-000000000300"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000328",
+      "title": "THIRTEEN. NLP and Language Models"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000329",
+      "title": "Tokenization",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000330",
+      "title": "Subword methods",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000331",
+      "title": "Embeddings",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000332",
+      "title": "Language modeling",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000333",
+      "title": "Information retrieval",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000334",
+      "title": "Sequence labeling",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000335",
+      "title": "Classification",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000336",
+      "title": "Attention",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000337",
+      "title": "Self-attention",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000338",
+      "title": "Multi-head attention",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000339",
+      "title": "Positional encoding",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000340",
+      "title": "Causal masking",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000341",
+      "title": "KV cache",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000342",
+      "title": "Encoder-only models",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000343",
+      "title": "Decoder-only models",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000344",
+      "title": "Encoder-decoder models",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000345",
+      "title": "Fine-tuning",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000346",
+      "title": "SFT",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000347",
+      "title": "LoRA",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000348",
+      "title": "QLoRA",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000349",
+      "title": "Preference optimization",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000350",
+      "title": "Distillation",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000351",
+      "title": "Quantization",
+      "parent_id": "00000000-0000-4000-8000-000000000328"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000352",
+      "title": "FOURTEEN. Generative AI Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000353",
+      "title": "Model selection",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000354",
+      "title": "Quality",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000355",
+      "title": "Latency",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000356",
+      "title": "Cost",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000357",
+      "title": "Context window",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000358",
+      "title": "Modality",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000359",
+      "title": "Hosting/provider trade-offs",
+      "parent_id": "00000000-0000-4000-8000-000000000353"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000360",
+      "title": "Prompt engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000361",
+      "title": "System instructions",
+      "parent_id": "00000000-0000-4000-8000-000000000360"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000362",
+      "title": "Few-shot examples",
+      "parent_id": "00000000-0000-4000-8000-000000000360"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000363",
+      "title": "Structured output",
+      "parent_id": "00000000-0000-4000-8000-000000000360"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000364",
+      "title": "Prompt versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000360"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000365",
+      "title": "Prompt injection resistance",
+      "parent_id": "00000000-0000-4000-8000-000000000360"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000366",
+      "title": "RAG",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000367",
+      "title": "Ingestion",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000368",
+      "title": "Chunking",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000369",
+      "title": "Metadata",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000370",
+      "title": "Embeddings",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000371",
+      "title": "Vector databases",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000372",
+      "title": "Semantic search",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000373",
+      "title": "Hybrid retrieval",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000374",
+      "title": "Reranking",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000375",
+      "title": "Context construction",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000376",
+      "title": "Grounding",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000377",
+      "title": "Citation",
+      "parent_id": "00000000-0000-4000-8000-000000000366"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000378",
+      "title": "Agents",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000379",
+      "title": "Tool calling",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000380",
+      "title": "Planning",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000381",
+      "title": "State",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000382",
+      "title": "Memory",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000383",
+      "title": "Human approval",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000384",
+      "title": "Agent loops",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000385",
+      "title": "Multi-agent architectures",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000386",
+      "title": "Failure containment",
+      "parent_id": "00000000-0000-4000-8000-000000000378"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000387",
+      "title": "Multimodal AI",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000388",
+      "title": "Vision-language models",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000389",
+      "title": "Speech",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000390",
+      "title": "Audio",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000391",
+      "title": "Document intelligence",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000392",
+      "title": "Image generation",
+      "parent_id": "00000000-0000-4000-8000-000000000352"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000393",
+      "title": "FIFTEEN. AI Evaluation"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000394",
+      "title": "Evaluation design",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000395",
+      "title": "Define success",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000396",
+      "title": "Offline evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000397",
+      "title": "Online evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000398",
+      "title": "Golden datasets",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000399",
+      "title": "Human evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000400",
+      "title": "LLM-as-judge",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000401",
+      "title": "Pairwise evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000394"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000402",
+      "title": "GenAI metrics",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000403",
+      "title": "Correctness",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000404",
+      "title": "Relevance",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000405",
+      "title": "Groundedness",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000406",
+      "title": "Faithfulness",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000407",
+      "title": "Helpfulness",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000408",
+      "title": "Safety",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000409",
+      "title": "Tool-call accuracy",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000410",
+      "title": "Retrieval quality",
+      "parent_id": "00000000-0000-4000-8000-000000000402"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000411",
+      "title": "Evaluation engineering",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000412",
+      "title": "Dataset versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000413",
+      "title": "Regression suites",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000414",
+      "title": "Experiment tracking",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000415",
+      "title": "Confidence/statistics",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000416",
+      "title": "Failure taxonomies",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000417",
+      "title": "Production feedback loops",
+      "parent_id": "00000000-0000-4000-8000-000000000393"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000418",
+      "title": "SIXTEEN. MLOps / LLMOps"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000419",
+      "title": "Data lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000420",
+      "title": "Model lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000421",
+      "title": "Evaluation lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000422",
+      "title": "Deployment lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000423",
+      "title": "Monitoring lifecycle",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000424",
+      "title": "Dataset versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000425",
+      "title": "Model versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000426",
+      "title": "Prompt versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000427",
+      "title": "Evaluation versioning",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000428",
+      "title": "Model registries",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000429",
+      "title": "Model serving",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000430",
+      "title": "Drift detection",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000431",
+      "title": "Retraining",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000432",
+      "title": "Prompt registries",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000433",
+      "title": "Provider abstraction",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000434",
+      "title": "Token tracking",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000435",
+      "title": "Cost tracking",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000436",
+      "title": "Latency monitoring",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000437",
+      "title": "AI tracing",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000438",
+      "title": "Evaluation gates",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000439",
+      "title": "Guardrails",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000440",
+      "title": "Model fallback/routing",
+      "parent_id": "00000000-0000-4000-8000-000000000418"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000441",
+      "title": "SEVENTEEN. AI Performance and Economics"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000442",
+      "title": "Inference optimization",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000443",
+      "title": "Batching",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000444",
+      "title": "Streaming",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000445",
+      "title": "Caching",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000446",
+      "title": "Quantization",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000447",
+      "title": "KV cache",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000448",
+      "title": "Speculative decoding concepts",
+      "parent_id": "00000000-0000-4000-8000-000000000442"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000449",
+      "title": "Capacity",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000450",
+      "title": "Tokens/second",
+      "parent_id": "00000000-0000-4000-8000-000000000449"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000451",
+      "title": "Requests/second",
+      "parent_id": "00000000-0000-4000-8000-000000000449"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000452",
+      "title": "Concurrency",
+      "parent_id": "00000000-0000-4000-8000-000000000449"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000453",
+      "title": "Queue depth",
+      "parent_id": "00000000-0000-4000-8000-000000000449"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000454",
+      "title": "GPU utilization",
+      "parent_id": "00000000-0000-4000-8000-000000000449"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000455",
+      "title": "Economics",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000456",
+      "title": "Cost/request",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000457",
+      "title": "Cost/tenant",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000458",
+      "title": "Cost/successful outcome",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000459",
+      "title": "Model routing",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000460",
+      "title": "Caching economics",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000461",
+      "title": "Cloud cost optimization",
+      "parent_id": "00000000-0000-4000-8000-000000000441"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000462",
+      "title": "EIGHTEEN. Security"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000463",
+      "title": "Authentication",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000464",
+      "title": "Authorization",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000465",
+      "title": "IAM",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000466",
+      "title": "Secrets",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000467",
+      "title": "Encryption",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000468",
+      "title": "Network security",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000469",
+      "title": "Dependency security",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000470",
+      "title": "Supply-chain security",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000471",
+      "title": "Secure SDLC",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000472",
+      "title": "Prompt injection",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000473",
+      "title": "Indirect prompt injection",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000474",
+      "title": "Sensitive-information disclosure",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000475",
+      "title": "Data poisoning",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000476",
+      "title": "Model poisoning",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000477",
+      "title": "Excessive agency",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000478",
+      "title": "Insecure tool use",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000479",
+      "title": "Model theft",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000480",
+      "title": "AI denial-of-service",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000481",
+      "title": "Output handling",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000482",
+      "title": "Least privilege",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000483",
+      "title": "Tool authorization",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000484",
+      "title": "Sandboxing",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000485",
+      "title": "Human-in-the-loop controls",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000486",
+      "title": "Audit logging",
+      "parent_id": "00000000-0000-4000-8000-000000000462"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000487",
+      "title": "NINETEEN. Responsible AI and Governance",
+      "notes": "NIST's GenAI profile is particularly useful here because it treats these concerns across the AI lifecycle rather than as an isolated compliance exercise."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000488",
+      "title": "Reliability",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000489",
+      "title": "Safety",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000490",
+      "title": "Security",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000491",
+      "title": "Resilience",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000492",
+      "title": "Accountability",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000493",
+      "title": "Transparency",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000494",
+      "title": "Explainability",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000495",
+      "title": "Interpretability",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000496",
+      "title": "Privacy",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000497",
+      "title": "Fairness",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000498",
+      "title": "Bias management",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000499",
+      "title": "Risk assessment",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000500",
+      "title": "AI system documentation",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000501",
+      "title": "Data lineage",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000502",
+      "title": "Auditability",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000503",
+      "title": "Human oversight",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000504",
+      "title": "Data protection",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000505",
+      "title": "Copyright",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000506",
+      "title": "Model licensing",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000507",
+      "title": "Applicable AI regulation",
+      "parent_id": "00000000-0000-4000-8000-000000000487"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000508",
+      "title": "TWENTY. Product and Business Engineering"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000509",
+      "title": "Problem framing",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000510",
+      "title": "User needs",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000511",
+      "title": "Business objectives",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000512",
+      "title": "Success metrics",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000513",
+      "title": "Constraints",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000514",
+      "title": "Build vs buy",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000515",
+      "title": "Accuracy vs latency",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000516",
+      "title": "Quality vs cost",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000517",
+      "title": "Automation vs human review",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000518",
+      "title": "Speed vs maintainability",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000519",
+      "title": "Adoption",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000520",
+      "title": "Task success",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000521",
+      "title": "Conversion",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000522",
+      "title": "Retention",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000523",
+      "title": "Cost per business outcome",
+      "parent_id": "00000000-0000-4000-8000-000000000508"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000524",
+      "title": "TWENTY-ONE. Technical Documentation"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000525",
+      "title": "Requirements",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000526",
+      "title": "Acceptance criteria",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000527",
+      "title": "Architecture specifications",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000528",
+      "title": "Architecture diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000529",
+      "title": "Sequence diagrams",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000530",
+      "title": "Data models",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000531",
+      "title": "Deployment documentation",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000532",
+      "title": "Operational runbooks",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000533",
+      "title": "ADRs",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000534",
+      "title": "Alternatives considered",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000535",
+      "title": "Trade-offs",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000536",
+      "title": "Consequences of decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000524"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000537",
+      "title": "TWENTY-TWO. Code Review and Engineering Quality",
+      "notes": "This is not just my interpretation. Google's published review guidance explicitly emphasizes design, functionality, complexity, tests, naming, comments, documentation, and overall code health."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000538",
+      "title": "Design",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000539",
+      "title": "Correctness",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000540",
+      "title": "Complexity",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000541",
+      "title": "Concurrency",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000542",
+      "title": "Security",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000543",
+      "title": "Performance",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000544",
+      "title": "Testing",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000545",
+      "title": "Naming",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000546",
+      "title": "Documentation",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000547",
+      "title": "Maintainability",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000548",
+      "title": "Style consistency",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000549",
+      "title": "Distinguishing blockers from suggestions",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000550",
+      "title": "Explaining reasoning",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000551",
+      "title": "Handling disagreement",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000552",
+      "title": "Mentoring through review",
+      "parent_id": "00000000-0000-4000-8000-000000000537"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000553",
+      "title": "TWENTY-THREE. Technical Leadership"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000554",
+      "title": "Technical direction",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000555",
+      "title": "Architecture ownership",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000556",
+      "title": "Technical strategy",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000557",
+      "title": "Risk identification",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000558",
+      "title": "Technical-debt prioritization",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000559",
+      "title": "Decision-making under uncertainty",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000560",
+      "title": "Gathering input",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000561",
+      "title": "Making decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000562",
+      "title": "Communicating decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000563",
+      "title": "Delegating technical decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000564",
+      "title": "Removing technical blockers",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000565",
+      "title": "Establishing engineering standards",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000566",
+      "title": "Building reusable systems",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000567",
+      "title": "Improving developer experience",
+      "parent_id": "00000000-0000-4000-8000-000000000553"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000568",
+      "title": "TWENTY-FOUR. Mentoring and People Development"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000569",
+      "title": "Teaching",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000570",
+      "title": "Pair programming",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000571",
+      "title": "Design mentoring",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000572",
+      "title": "Code-review mentoring",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000573",
+      "title": "Delegation",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000574",
+      "title": "Giving ownership",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000575",
+      "title": "Matching work to capability",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000576",
+      "title": "Avoiding micromanagement",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000577",
+      "title": "Giving actionable feedback",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000578",
+      "title": "Coaching problem-solving",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000579",
+      "title": "Developing future senior engineers",
+      "parent_id": "00000000-0000-4000-8000-000000000568"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000580",
+      "title": "TWENTY-FIVE. Team and Project Management"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000581",
+      "title": "Breaking initiatives into deliverables",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000582",
+      "title": "Dependency management",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000583",
+      "title": "Estimation under uncertainty",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000584",
+      "title": "Critical-path identification",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000585",
+      "title": "Risk management",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000586",
+      "title": "Scope management",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000587",
+      "title": "Blocker management",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000588",
+      "title": "Status communication",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000589",
+      "title": "Stakeholder coordination",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000590",
+      "title": "Sprint/iteration planning",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000591",
+      "title": "Retrospectives",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000592",
+      "title": "Cross-team coordination",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000593",
+      "title": "Delivery ownership",
+      "parent_id": "00000000-0000-4000-8000-000000000580"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000594",
+      "title": "TWENTY-SIX. Communication"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000595",
+      "title": "Explaining complex systems simply",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000596",
+      "title": "Technical writing",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000597",
+      "title": "Architecture proposals",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000598",
+      "title": "Presenting trade-offs",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000599",
+      "title": "Defending decisions with evidence",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000600",
+      "title": "Communicating uncertainty",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000601",
+      "title": "Translating technical risk into business impact",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000602",
+      "title": "Setting expectations",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000603",
+      "title": "Escalating problems early",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000604",
+      "title": "Conflict resolution",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000605",
+      "title": "Cross-functional communication",
+      "parent_id": "00000000-0000-4000-8000-000000000594"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000606",
+      "title": "TWENTY-SEVEN. Production and Incident Ownership"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000607",
+      "title": "Detection",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000608",
+      "title": "Triage",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000609",
+      "title": "Mitigation",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000610",
+      "title": "Recovery",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000611",
+      "title": "Root-cause analysis",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000612",
+      "title": "Postmortems",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000613",
+      "title": "Corrective actions",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000614",
+      "title": "Preventive actions",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000615",
+      "title": "Monitoring improvements",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000616",
+      "title": "Architecture improvements",
+      "parent_id": "00000000-0000-4000-8000-000000000606"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000617",
+      "title": "TWENTY-EIGHT. Engineering Strategy"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000618",
+      "title": "Technical roadmap",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000619",
+      "title": "Platform investment",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000620",
+      "title": "Architecture evolution",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000621",
+      "title": "Technical debt",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000622",
+      "title": "Build vs buy",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000623",
+      "title": "Vendor evaluation",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000624",
+      "title": "Vendor lock-in",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000625",
+      "title": "Total cost of ownership",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000626",
+      "title": "Operational burden",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000627",
+      "title": "Exit strategy",
+      "parent_id": "00000000-0000-4000-8000-000000000617"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000628",
+      "title": "TWENTY-NINE. Professional Judgment"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000629",
+      "title": "Reliability over demos",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000630",
+      "title": "Honesty about uncertainty",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000631",
+      "title": "Evidence-based decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000632",
+      "title": "Protecting user data",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000633",
+      "title": "Challenging unsafe designs",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000634",
+      "title": "Documenting consequential decisions",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000635",
+      "title": "Knowing when to escalate",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000636",
+      "title": "Knowing when \"good enough\" is actually appropriate",
+      "parent_id": "00000000-0000-4000-8000-000000000628"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000637",
+      "title": "THIRTY. Continuous Learning and Technical Curiosity"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000638",
+      "title": "Reading research papers",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000639",
+      "title": "Understanding benchmarks",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000640",
+      "title": "Reproducing important results",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000641",
+      "title": "Distinguishing research novelty from production value",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000642",
+      "title": "Prototyping new technologies",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000643",
+      "title": "Benchmarking alternatives",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000644",
+      "title": "Evaluating technology maturity",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000645",
+      "title": "Learning from incidents",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000646",
+      "title": "Learning from code reviews",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000647",
+      "title": "Teaching others",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000648",
+      "title": "Building end-to-end systems",
+      "parent_id": "00000000-0000-4000-8000-000000000637"
     }
   ]
 }

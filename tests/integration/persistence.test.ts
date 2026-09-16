@@ -16,7 +16,7 @@ import {
 import { ensureApplicationUser } from "@/application/users/users-service"
 import { isApplicationError } from "@/domain/errors"
 import * as nodesRepository from "@/repositories/nodes/nodes-repository"
-import mixedCanvas from "@/schemas/fixtures/mixed-canvas.v1.json"
+import mixedTree from "@/schemas/fixtures/mixed-tree.v1.json"
 import { hasLiveSupabase } from "./setup"
 
 const describeDb = hasLiveSupabase() ? describe : describe.skip
@@ -81,7 +81,7 @@ describeDb("repository and service persistence", () => {
 
   it("round-trips an export of an imported roadmap", async () => {
     const { user, fixture } = await seedUser()
-    const role = await importRoadmap(user.id, JSON.stringify(mixedCanvas), {
+    const role = await importRoadmap(user.id, JSON.stringify(mixedTree), {
       nameOverride: `E10 import ${randomUUID().slice(0, 8)}`,
     })
     fixture.roleIds.push(role.id)
@@ -107,7 +107,7 @@ describeDb("repository and service persistence", () => {
       .spyOn(nodesRepository, "insertMany")
       .mockRejectedValueOnce(new Error("forced insert failure"))
 
-    await expect(importRoadmap(user.id, JSON.stringify(mixedCanvas), { nameOverride: name })).rejects.toBeTruthy()
+    await expect(importRoadmap(user.id, JSON.stringify(mixedTree), { nameOverride: name })).rejects.toBeTruthy()
     spy.mockRestore()
 
     const roles = await listRoles(user.id)
@@ -121,7 +121,7 @@ describeDb("repository and service persistence", () => {
     await createNode(user.id, { roleId: role.id, parentId: null, title: "Existing" })
 
     try {
-      await importRoadmap(user.id, JSON.stringify(mixedCanvas), { roleId: role.id })
+      await importRoadmap(user.id, JSON.stringify(mixedTree), { roleId: role.id })
       throw new Error("expected import to fail")
     } catch (error) {
       expect(isApplicationError(error)).toBe(true)

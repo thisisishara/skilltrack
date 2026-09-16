@@ -1,4 +1,3 @@
-import type { NodeHandleKind } from "@/domain/nodes/handle"
 import type { NodeKind } from "@/domain/nodes/kind"
 
 export const ROADMAP_SCHEMA_ID = "skilltrack.roadmap.v1"
@@ -25,10 +24,6 @@ export type NormalizedRoadmapNode = {
   notes: string | null
   icon: string
   accentColor: string | null
-  handleKind: NodeHandleKind
-  incomingEdgeAnimated: boolean
-  positionX: number
-  positionY: number
   checklist: NormalizedChecklistItem[]
   links: NormalizedLink[]
 }

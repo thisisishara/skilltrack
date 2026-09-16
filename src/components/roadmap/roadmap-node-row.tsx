@@ -97,6 +97,7 @@ function TaskTickList({
   items,
   editing,
   focusedTaskId,
+  onSelectTopic,
   onToggle,
   onCreate,
   onUpdate,
@@ -106,6 +107,7 @@ function TaskTickList({
   items: ChecklistItem[]
   editing: boolean
   focusedTaskId: string | null
+  onSelectTopic: () => void
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
   onCreate: (input: { title: string; description: string }) => {
     ok: true
@@ -159,7 +161,7 @@ function TaskTickList({
   }
 
   return (
-    <div data-no-drag className="flex flex-col">
+    <div data-no-drag className="flex flex-col" onClick={onSelectTopic}>
       <ul className="flex flex-col gap-1 py-1">
         {ordered.map((item) => {
           const hint = dropHint?.itemId === item.id ? dropHint.position : null
@@ -734,7 +736,10 @@ export function RoadmapNodeRow({
           )}
         >
           {description ? (
-            <p className="px-1 pt-1 pb-1.5 text-sm leading-5 text-muted-foreground">
+            <p
+              className="cursor-pointer px-1 pt-1 pb-1.5 text-sm leading-5 text-muted-foreground"
+              onClick={() => onSelect(node.id)}
+            >
               {description}
             </p>
           ) : null}
@@ -742,6 +747,7 @@ export function RoadmapNodeRow({
             items={ownItems}
             editing={editMode}
             focusedTaskId={focusedTaskId}
+            onSelectTopic={showTopic}
             onToggle={getChecklistHandlers(node.id).onToggle}
             onCreate={getChecklistHandlers(node.id).onCreate}
             onUpdate={getChecklistHandlers(node.id).onUpdate}

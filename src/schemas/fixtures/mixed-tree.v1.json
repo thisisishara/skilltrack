@@ -1,18 +1,14 @@
 {
   "schema": "skilltrack.roadmap.v1",
   "roadmap": {
-    "name": "Mixed Canvas",
-    "description": "Skills, labels, and node chrome"
+    "name": "Mixed Tree",
+    "description": "Skills, notes, tasks, and links"
   },
   "nodes": [
     {
       "id": "00000000-0000-4000-8000-0000000000a1",
-      "kind": "skill",
       "title": "Root",
       "icon": "brain",
-      "handle_kind": "output",
-      "incoming_edge_animated": false,
-      "position": { "x": 0, "y": 0 },
       "notes": "Root notes",
       "checklist": [
         {
@@ -31,19 +27,9 @@
     },
     {
       "id": "00000000-0000-4000-8000-0000000000a2",
-      "kind": "skill",
       "title": "Leaf",
       "parent_id": "00000000-0000-4000-8000-0000000000a1",
-      "icon": "circle-dot",
-      "handle_kind": "input",
-      "incoming_edge_animated": true,
-      "position": { "x": 240, "y": 80 }
-    },
-    {
-      "id": "00000000-0000-4000-8000-0000000000a3",
-      "kind": "label",
-      "title": "Phase 1",
-      "position": { "x": -160, "y": -40 }
+      "icon": "circle-dot"
     }
   ]
 }

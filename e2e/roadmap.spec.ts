@@ -20,11 +20,12 @@ test.describe("authenticated roadmap", () => {
     await page.getByRole("button", { name: "Create Role" }).click()
     await page.getByLabel("Name").fill(roleName)
     await page.getByRole("button", { name: "Create role" }).click()
-    await expect(page.getByText("This roadmap is empty")).toBeVisible()
+    await expect(page.getByText("No topic groups yet")).toBeVisible()
 
-    await page.getByRole("button", { name: "Add first topic" }).click()
+    await page.getByRole("switch", { name: "Edit mode" }).click()
+    await page.getByRole("button", { name: "Add Topic Group" }).first().click()
     await page.getByLabel("Title").fill("Retrieval")
-    await page.getByRole("button", { name: "Add topic" }).click()
+    await page.getByRole("button", { name: "Add topic group" }).click()
     await expect(page.getByText("Retrieval").first()).toBeVisible()
 
     await page.getByText("Retrieval").first().click()

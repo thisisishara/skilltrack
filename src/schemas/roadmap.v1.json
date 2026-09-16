@@ -31,19 +31,6 @@
     }
   },
   "$defs": {
-    "position": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["x", "y"],
-      "properties": {
-        "x": {
-          "type": "number"
-        },
-        "y": {
-          "type": "number"
-        }
-      }
-    },
     "checklistItem": {
       "type": "object",
       "additionalProperties": false,
@@ -104,23 +91,13 @@
         "description": {
           "type": "string"
         },
-        "kind": {
-          "type": "string",
-          "enum": ["skill", "label"]
-        },
         "icon": {
           "type": "string",
           "description": "Lucide kebab-case icon name (e.g. brain, circle-dot). Unknown values fall back to circle-dot."
         },
-        "handle_kind": {
+        "accent_color": {
           "type": "string",
-          "enum": ["regular", "input", "output"]
-        },
-        "incoming_edge_animated": {
-          "type": "boolean"
-        },
-        "position": {
-          "$ref": "#/$defs/position"
+          "description": "Optional 3 or 6 digit hex color."
         },
         "checklist": {
           "type": "array",

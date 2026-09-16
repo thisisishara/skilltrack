@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react"
-import { ChevronsDownUp, ChevronsUpDown, ListTree } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ChevronsDownUp, ChevronsUpDown, FileDown, FileUp, ListTree } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -16,6 +17,10 @@ import {
   deleteNodeLinkAction,
   updateNodeLinkAction,
 } from "@/application/links/actions"
+import {
+  exportRoadmapAction,
+  importRoadmapAction,
+} from "@/application/import-export/actions"
 import {
   createNodeAction,
   deleteNodeAction,
@@ -40,6 +45,7 @@ import {
 } from "@/components/roadmap/roadmap-node-row"
 import { persistTreeLocation } from "@/components/roadmap/tree-location"
 import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
+import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import {
   ResizableHandle,
@@ -64,6 +70,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
+import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 import { applyChecklistCompletion } from "@/domain/checklists/completion"
 import { displayChecklistTitle } from "@/domain/checklists/title"
 import type { ChecklistItem } from "@/domain/checklists/types"
@@ -94,8 +101,10 @@ import {
   DETAILS_PANEL_MAX_SIZE,
   DETAILS_PANEL_MIN_SIZE,
 } from "@/lib/layout/details-panel-storage"
+import { downloadTextFile } from "@/lib/roadmap/download"
 import { readStoredEditMode, writeStoredEditMode } from "@/lib/roadmap/edit-mode-storage"
 import { readExpandedIds, writeExpandedIds } from "@/lib/roadmap/expanded-storage"
+import { cn } from "@/lib/utils"
 
 const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
   emptyTitle: "No tasks yet",
@@ -272,11 +281,19 @@ export function Roadmap({
     nodeId: string
     position: TreeDropPosition
   } | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importSeedJson, setImportSeedJson] = useState("")
+  const [importSeedError, setImportSeedError] = useState<string | null>(null)
+  const [exportPending, setExportPending] = useState(false)
+  const router = useRouter()
+  const importDropLock = useRef(false)
   const focusedRef = useRef<string | null>(null)
   const appliedFocusNonceRef = useRef(0)
   const pendingRevealRef = useRef<string | null>(
     focusNodeIdFromServer ?? null
   )
+  const focusNodeFromUrlRef = useRef(focusNodeIdFromServer)
+  focusNodeFromUrlRef.current = focusNodeIdFromServer
   const draggedIdRef = useRef<string | null>(null)
   const programmaticScrollRef = useRef(false)
   const programmaticScrollTimerRef = useRef(0)
@@ -341,9 +358,7 @@ export function Roadmap({
     setExpandedHydrated(true)
     focusedRef.current = null
     appliedFocusNonceRef.current = 0
-    pendingRevealRef.current = focusNodeIdFromServer ?? null
-    // Restore from the role URL once on open, not when scroll rewrites ?node=.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- roleId
+    pendingRevealRef.current = focusNodeFromUrlRef.current ?? null
   }, [roleId])
 
   useEffect(() => {
@@ -455,6 +470,56 @@ export function Roadmap({
     () => nodeStatusCounts(skillNodes, items),
     [skillNodes, items]
   )
+  const canImport = nodes.length === 0
+
+  async function handleExport() {
+    setExportPending(true)
+    const result = await exportRoadmapAction(roleId)
+    setExportPending(false)
+    if (!result.ok) {
+      toast.error(result.message)
+      return
+    }
+
+    downloadTextFile(result.filename, result.json)
+    toast.success("Roadmap exported")
+  }
+
+  function openImport() {
+    setImportSeedJson("")
+    setImportSeedError(null)
+    setImportOpen(true)
+  }
+
+  const handleDroppedJson = useCallback(
+    (text: string) => {
+      if (nodes.length > 0) {
+        toast.error("Import only works on an empty roadmap.")
+        return
+      }
+
+      if (importDropLock.current) {
+        return
+      }
+      importDropLock.current = true
+
+      void importRoadmapAction({ json: text, roleId }).then((result) => {
+        importDropLock.current = false
+        if (result.ok) {
+          toast.success("Roadmap imported")
+          router.refresh()
+          return
+        }
+
+        setImportSeedJson(text)
+        setImportSeedError(result.message)
+        setImportOpen(true)
+      })
+    },
+    [nodes.length, roleId, router]
+  )
+  const { isOver: isJsonFileOver, dropProps: jsonDropProps } =
+    useJsonFileDrop(handleDroppedJson, canImport)
 
   const subtreeProgressFor = useCallback(
     (nodeId: string) => subtreeProgress(skillNodes, items, nodeId),
@@ -1081,7 +1146,14 @@ export function Roadmap({
   }
 
   const list = (
-    <div ref={listRef} className="flex h-full min-h-0 flex-col">
+    <div
+      ref={listRef}
+      className={cn(
+        "relative flex h-full min-h-0 flex-col",
+        isJsonFileOver && "outline-2 -outline-offset-8 outline-dashed outline-ring"
+      )}
+      {...jsonDropProps}
+    >
       <div
         data-tree-toolbar
         className="flex shrink-0 cursor-pointer items-center justify-between gap-2 border-b px-4 py-2.5"
@@ -1091,6 +1163,34 @@ export function Roadmap({
           {roleName}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
+          {canImport ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={(event) => {
+                event.stopPropagation()
+                openImport()
+              }}
+            >
+              <FileUp data-icon="inline-start" />
+              Import JSON
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={exportPending}
+              onClick={(event) => {
+                event.stopPropagation()
+                void handleExport()
+              }}
+            >
+              <FileDown data-icon="inline-start" />
+              {exportPending ? "Exporting…" : "Export JSON"}
+            </Button>
+          )}
           {editMode ? (
             <Tooltip>
               <TooltipTrigger
@@ -1164,29 +1264,41 @@ export function Roadmap({
                 </EmptyMedia>
                 <EmptyTitle>No topic groups yet</EmptyTitle>
                 <EmptyDescription>
-                  {editMode
-                    ? singleRoot
-                      ? "Add a topic group to start filling in this roadmap."
-                      : "Add your first topic group to start mapping this roadmap."
-                    : "Switch to Edit to add a topic group."}
+                  {canImport
+                    ? editMode
+                      ? "Add a topic group, import a roadmap, or drop a .json file here."
+                      : "Import a roadmap, or switch to Edit to add a topic group."
+                    : editMode
+                      ? singleRoot
+                        ? "Add a topic group to start filling in this roadmap."
+                        : "Add your first topic group to start mapping this roadmap."
+                      : "Switch to Edit to add a topic group."}
                 </EmptyDescription>
               </EmptyHeader>
-              {editMode ? (
+              {canImport || editMode ? (
               <EmptyContent>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => openCreate(primaryParentId, true)}
-                      />
-                    }
-                  >
-                    Add Topic Group
-                  </TooltipTrigger>
-                  <TooltipContent>Add Topic Group</TooltipContent>
-                </Tooltip>
+                {canImport ? (
+                  <Button type="button" size="sm" variant="outline" onClick={openImport}>
+                    <FileUp data-icon="inline-start" />
+                    Import JSON
+                  </Button>
+                ) : null}
+                {editMode ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => openCreate(primaryParentId, true)}
+                        />
+                      }
+                    >
+                      Add Topic Group
+                    </TooltipTrigger>
+                    <TooltipContent>Add Topic Group</TooltipContent>
+                  </Tooltip>
+                ) : null}
               </EmptyContent>
               ) : null}
             </Empty>
@@ -1374,6 +1486,26 @@ export function Roadmap({
         childNames={deleteChildNames}
         onConfirm={async () => {
           handleDelete()
+        }}
+      />
+      <ImportRoadmapDialog
+        open={importOpen}
+        onOpenChange={(open) => {
+          setImportOpen(open)
+          if (!open) {
+            setImportSeedJson("")
+            setImportSeedError(null)
+          }
+        }}
+        initialJson={importSeedJson}
+        initialError={importSeedError}
+        onImport={async (json) => {
+          const result = await importRoadmapAction({ json, roleId })
+          if (result.ok && "role" in result) {
+            toast.success("Roadmap imported")
+            router.refresh()
+          }
+          return result
         }}
       />
     </div>

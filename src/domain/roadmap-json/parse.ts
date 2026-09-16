@@ -1,16 +1,9 @@
 import { ApplicationError } from "@/domain/errors"
 import { isValidHttpUrl, normalizeLinkUrl, displayLinkLabel } from "@/domain/links/url"
-import {
-  childrenLinkError,
-  DEFAULT_NODE_HANDLE_KIND,
-  normalizeNodeHandleKind,
-  parentLinkError,
-  type NodeHandleKind,
-} from "@/domain/nodes/handle"
 import { parseAccentHex } from "@/domain/nodes/accent"
 import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
 import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/nodes/icon"
-import { DEFAULT_NODE_KIND, normalizeNodeKind, type NodeKind } from "@/domain/nodes/kind"
+import { DEFAULT_NODE_KIND } from "@/domain/nodes/kind"
 import { displayNodeTitle } from "@/domain/nodes/title"
 import { displayChecklistTitle } from "@/domain/checklists/title"
 import { displayRoleName } from "@/domain/roles/name"
@@ -29,29 +22,14 @@ const ROADMAP_KEYS = new Set(["name", "description"])
 const NODE_KEYS = new Set([
   "id",
   "title",
-  "kind",
   "parent_id",
   "description",
   "icon",
   "accent_color",
-  "handle_kind",
-  "incoming_edge_animated",
-  "position",
   "checklist",
   "notes",
   "links",
 ])
-const LABEL_FORBIDDEN_KEYS = new Set([
-  "description",
-  "icon",
-  "accent_color",
-  "handle_kind",
-  "incoming_edge_animated",
-  "checklist",
-  "notes",
-  "links",
-])
-const POSITION_KEYS = new Set(["x", "y"])
 const CHECKLIST_KEYS = new Set(["id", "title", "completed", "description"])
 const LINK_KEYS = new Set(["id", "label", "url"])
 
@@ -94,27 +72,6 @@ function requireUuid(value: unknown, label: string) {
   }
 
   return text
-}
-
-function parsePosition(value: unknown): { x: number; y: number } {
-  if (value === undefined) {
-    return { x: 0, y: 0 }
-  }
-
-  if (!isPlainObject(value)) {
-    fail("Topic position must be an object.")
-  }
-
-  assertAllowedKeys(value, POSITION_KEYS, "Topic position")
-
-  const x = value.x
-  const y = value.y
-
-  if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) {
-    fail("Topic position x and y must be finite numbers.")
-  }
-
-  return { x, y }
 }
 
 function parseChecklist(value: unknown, seen: Set<string>): NormalizedChecklistItem[] {
@@ -195,32 +152,6 @@ function parseLinks(value: unknown, seen: Set<string>): NormalizedLink[] {
   })
 }
 
-function parseKind(value: unknown): NodeKind {
-  if (value === undefined) {
-    return DEFAULT_NODE_KIND
-  }
-
-  const kind = requireString(value, "kind")
-  if (kind !== "skill" && kind !== "label") {
-    fail('kind must be "skill" or "label".')
-  }
-
-  return normalizeNodeKind(kind)
-}
-
-function parseHandleKind(value: unknown): NodeHandleKind {
-  if (value === undefined) {
-    return DEFAULT_NODE_HANDLE_KIND
-  }
-
-  const handleKind = requireString(value, "handle_kind")
-  if (handleKind !== "regular" && handleKind !== "input" && handleKind !== "output") {
-    fail('handle_kind must be "regular", "input", or "output".')
-  }
-
-  return normalizeNodeHandleKind(handleKind)
-}
-
 function parseNode(
   value: unknown,
   index: number,
@@ -245,7 +176,6 @@ function parseNode(
     fail(`Topic ${index + 1} title cannot be empty.`)
   }
 
-  const kind = parseKind(value.kind)
   const parentRaw = value.parent_id
   let parentId: string | null = null
 
@@ -253,38 +183,6 @@ function parseNode(
     parentId = requireUuid(parentRaw, `Topic ${index + 1} parent_id`)
   }
 
-  if (kind === "label") {
-    for (const key of LABEL_FORBIDDEN_KEYS) {
-      if (value[key] !== undefined) {
-        fail(`Labels cannot include "${key}".`)
-      }
-    }
-
-    if (parentId) {
-      fail("Labels cannot nest under a topic.")
-    }
-
-    const position = parsePosition(value.position)
-
-    return {
-      id,
-      kind,
-      parentId: null,
-      title,
-      description: null,
-      notes: null,
-      icon: DEFAULT_NODE_ICON,
-      accentColor: null,
-      handleKind: DEFAULT_NODE_HANDLE_KIND,
-      incomingEdgeAnimated: false,
-      positionX: position.x,
-      positionY: position.y,
-      checklist: [],
-      links: [],
-    }
-  }
-
-  const position = parsePosition(value.position)
   const description = optionalString(value.description, `Topic ${index + 1} description`)
   const notes = optionalString(value.notes, `Topic ${index + 1} notes`)
   const accentRaw = optionalString(value.accent_color, `Topic ${index + 1} accent_color`)
@@ -299,22 +197,13 @@ function parseNode(
 
   return {
     id,
-    kind,
+    kind: DEFAULT_NODE_KIND,
     parentId,
     title,
     description: description?.trim() ? description.trim() : null,
     notes: notes?.trim() ? notes.trim() : null,
     icon: normalizeNodeIcon(optionalString(value.icon, `Topic ${index + 1} icon`)),
     accentColor,
-    handleKind: parseHandleKind(value.handle_kind),
-    incomingEdgeAnimated:
-      value.incoming_edge_animated === undefined
-        ? false
-        : typeof value.incoming_edge_animated === "boolean"
-          ? value.incoming_edge_animated
-          : fail(`Topic ${index + 1} incoming_edge_animated must be a boolean.`),
-    positionX: position.x,
-    positionY: position.y,
     checklist: parseChecklist(value.checklist, seenChecklistIds),
     links: parseLinks(value.links, seenLinkIds),
   }
@@ -323,7 +212,6 @@ function parseNode(
 function assertGraph(nodes: NormalizedRoadmapNode[]) {
   const byId = new Map(nodes.map((node) => [node.id, node]))
   const graph = nodes.map((node) => ({ id: node.id, parentId: node.parentId }))
-  const childCount = new Map<string, number>()
 
   for (const node of nodes) {
     if (!node.parentId) {
@@ -337,24 +225,6 @@ function assertGraph(nodes: NormalizedRoadmapNode[]) {
     const parent = byId.get(node.parentId)
     if (!parent) {
       fail("Each nested topic must belong to another topic in this file.")
-    }
-
-    if (parent.kind === "label") {
-      fail("Labels cannot contain topics.")
-    }
-
-    const handleMessage = parentLinkError(node.handleKind, parent.handleKind, node.parentId)
-    if (handleMessage) {
-      fail(handleMessage)
-    }
-
-    childCount.set(parent.id, (childCount.get(parent.id) ?? 0) + 1)
-  }
-
-  for (const node of nodes) {
-    const message = childrenLinkError(node.handleKind, childCount.get(node.id) ?? 0)
-    if (message) {
-      fail(message)
     }
 
     if (wouldCreateCycle(graph, node.id, node.parentId)) {

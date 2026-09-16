@@ -133,18 +133,15 @@ export function CommandSearch() {
     run()
   }
 
-  function revealInTree(roleId: string, nodeId: string, taskId?: string | null) {
+  function revealInTree(roleId: string, nodeId: string) {
     closeAnd(() => {
       if (activeRole?.id === roleId) {
-        persistTreeLocation(nodeId, taskId ?? null)
-        focusTree({ roleId, nodeId, taskId })
+        persistTreeLocation(nodeId)
+        focusTree({ roleId, nodeId })
         return
       }
 
-      const query = taskId
-        ? `?node=${nodeId}&task=${taskId}`
-        : `?node=${nodeId}`
-      router.push(`/dashboard/roles/${roleId}${query}`, { scroll: false })
+      router.push(`/dashboard/roles/${roleId}?node=${nodeId}`, { scroll: false })
     })
   }
 
@@ -241,7 +238,7 @@ export function CommandSearch() {
                       key={task.id}
                       value={`task ${task.title} ${task.description ?? ""} ${task.parentPath} ${task.roleName} ${task.id}`}
                       onSelect={() => {
-                        revealInTree(task.roleId, task.nodeId, task.id)
+                        revealInTree(task.roleId, task.nodeId)
                       }}
                     >
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">

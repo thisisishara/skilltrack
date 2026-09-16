@@ -26,7 +26,6 @@ export type TreeFocusRequest = {
   nonce: number
   roleId: string
   nodeId: string
-  taskId: string | null
 }
 
 type RolesUiContextValue = {
@@ -35,11 +34,7 @@ type RolesUiContextValue = {
   selectRole: (roleId: string) => void
   openCreate: () => void
   treeFocusRequest: TreeFocusRequest | null
-  focusTree: (target: {
-    roleId: string
-    nodeId: string
-    taskId?: string | null
-  }) => void
+  focusTree: (target: { roleId: string; nodeId: string }) => void
 }
 
 const RolesUiContext = createContext<RolesUiContextValue | null>(null)
@@ -68,18 +63,14 @@ export function RolesWorkspace({
   )
   const treeFocusNonceRef = useRef(0)
 
-  const focusTree = useCallback(
-    (target: { roleId: string; nodeId: string; taskId?: string | null }) => {
-      treeFocusNonceRef.current += 1
-      setTreeFocusRequest({
-        nonce: treeFocusNonceRef.current,
-        roleId: target.roleId,
-        nodeId: target.nodeId,
-        taskId: target.taskId ?? null,
-      })
-    },
-    []
-  )
+  const focusTree = useCallback((target: { roleId: string; nodeId: string }) => {
+    treeFocusNonceRef.current += 1
+    setTreeFocusRequest({
+      nonce: treeFocusNonceRef.current,
+      roleId: target.roleId,
+      nodeId: target.nodeId,
+    })
+  }, [])
 
   const activeRole = useMemo(
     () => roles.find((role) => role.id === params.roleId) ?? null,

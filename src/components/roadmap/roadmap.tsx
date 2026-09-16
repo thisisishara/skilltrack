@@ -1,7 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react"
-import { useSearchParams } from "next/navigation"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react"
 import { ChevronsDownUp, ChevronsUpDown, ListTree } from "lucide-react"
 import { toast } from "sonner"
 
@@ -126,22 +125,6 @@ function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
   return [...server, ...local.filter((item) => !serverIds.has(item.id))]
 }
 
-function RoadmapFocusFromUrl({
-  onFocus,
-}: {
-  onFocus: (nodeId: string | null, taskId: string | null) => void
-}) {
-  const searchParams = useSearchParams()
-  const nodeId = searchParams.get("node")
-  const taskId = searchParams.get("task")
-
-  useEffect(() => {
-    onFocus(nodeId, taskId)
-  }, [nodeId, onFocus, taskId])
-
-  return null
-}
-
 const TREE_READING_GAP = 8
 
 function readingLineY(toolbar: HTMLElement | null, viewport: HTMLElement) {
@@ -162,11 +145,8 @@ function scrollToReadingLine(
 function locationFromViewport(
   viewport: HTMLElement,
   line: number
-): {
-  nodeId: string | null
-  taskId: string | null
-} {
-  let best: { top: number; nodeId: string; taskId: string | null } | null = null
+): string | null {
+  let best: { top: number; nodeId: string } | null = null
 
   for (const el of viewport.querySelectorAll<HTMLElement>("[data-tree-topic]")) {
     const top = el.getBoundingClientRect().top
@@ -175,23 +155,11 @@ function locationFromViewport(
       continue
     }
     if (!best || top >= best.top) {
-      best = { top, nodeId, taskId: null }
+      best = { top, nodeId }
     }
   }
 
-  for (const el of viewport.querySelectorAll<HTMLElement>("[data-tree-task]")) {
-    const top = el.getBoundingClientRect().top
-    const taskId = el.dataset.treeTask
-    const nodeId = el.closest<HTMLElement>("[data-tree-topic]")?.dataset.treeTopic
-    if (!taskId || !nodeId || top > line) {
-      continue
-    }
-    if (!best || top >= best.top) {
-      best = { top, nodeId, taskId }
-    }
-  }
-
-  return { nodeId: best?.nodeId ?? null, taskId: best?.taskId ?? null }
+  return best?.nodeId ?? null
 }
 
 function ancestorIds(nodes: RoadmapNode[], nodeId: string): string[] {
@@ -275,7 +243,6 @@ export function Roadmap({
   checklistItems: serverItems,
   links: serverLinks,
   focusNodeId: focusNodeIdFromServer,
-  focusTaskId: focusTaskIdFromServer,
 }: {
   userId: string
   roleId: string
@@ -284,23 +251,7 @@ export function Roadmap({
   checklistItems: ChecklistItem[]
   links: NodeLink[]
   focusNodeId?: string
-  focusTaskId?: string
 }) {
-  const [urlFocus, setUrlFocus] = useState<{
-    nodeId: string | null
-    taskId: string | null
-  }>({
-    nodeId: focusNodeIdFromServer ?? null,
-    taskId: focusTaskIdFromServer ?? null,
-  })
-  const focusNodeId = urlFocus.nodeId ?? undefined
-  const focusTaskId = urlFocus.taskId ?? undefined
-  const [jumpHighlightTaskId, setJumpHighlightTaskId] = useState<string | null>(
-    null
-  )
-  const onUrlFocus = useCallback((nodeId: string | null, taskId: string | null) => {
-    setUrlFocus({ nodeId, taskId })
-  }, [])
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
   const [links, setLinks] = useState<NodeLink[]>(serverLinks ?? [])
@@ -323,10 +274,9 @@ export function Roadmap({
   } | null>(null)
   const focusedRef = useRef<string | null>(null)
   const appliedFocusNonceRef = useRef(0)
-  const pendingRevealRef = useRef<{
-    nodeId: string
-    taskId: string | null
-  } | null>(null)
+  const pendingRevealRef = useRef<string | null>(
+    focusNodeIdFromServer ?? null
+  )
   const draggedIdRef = useRef<string | null>(null)
   const programmaticScrollRef = useRef(false)
   const programmaticScrollTimerRef = useRef(0)
@@ -339,6 +289,25 @@ export function Roadmap({
     detailsDefaultSize,
     onLayoutChanged,
   } = useDetailsPanelLayout(userId)
+
+  function lockTreeLayout() {
+    programmaticScrollRef.current = true
+    window.clearTimeout(programmaticScrollTimerRef.current)
+    programmaticScrollTimerRef.current = window.setTimeout(() => {
+      programmaticScrollRef.current = false
+      const viewport = listRef.current?.querySelector<HTMLElement>(
+        "[data-slot=scroll-area-viewport]"
+      )
+      if (!viewport) {
+        return
+      }
+      const toolbar =
+        listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
+      persistTreeLocation(
+        locationFromViewport(viewport, readingLineY(toolbar, viewport))
+      )
+    }, 400)
+  }
 
   function setDragging(nodeId: string | null) {
     draggedIdRef.current = nodeId
@@ -372,6 +341,9 @@ export function Roadmap({
     setExpandedHydrated(true)
     focusedRef.current = null
     appliedFocusNonceRef.current = 0
+    pendingRevealRef.current = focusNodeIdFromServer ?? null
+    // Restore from the role URL once on open, not when scroll rewrites ?node=.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roleId
   }, [roleId])
 
   useEffect(() => {
@@ -395,39 +367,22 @@ export function Roadmap({
       treeFocusRequest.nonce !== appliedFocusNonceRef.current
     ) {
       appliedFocusNonceRef.current = treeFocusRequest.nonce
-      pendingRevealRef.current = {
-        nodeId: treeFocusRequest.nodeId,
-        taskId: treeFocusRequest.taskId,
-      }
+      pendingRevealRef.current = treeFocusRequest.nodeId
       focusedRef.current = null
-      // Search (and other in-app jumps) must expand and scroll in this
-      // paint, not after a router round-trip.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUrlFocus({
-        nodeId: treeFocusRequest.nodeId,
-        taskId: treeFocusRequest.taskId,
-      })
-      setJumpHighlightTaskId(treeFocusRequest.taskId)
     }
 
-    const pending = pendingRevealRef.current
-    const nodeId = pending?.nodeId ?? focusNodeId ?? null
-    const taskId = pending ? pending.taskId : (focusTaskId ?? null)
-    const focusKey = nodeId ? `${nodeId}:${taskId ?? ""}` : null
-    if (!nodeId || !expandedHydrated || focusedRef.current === focusKey) {
+    const nodeId = pendingRevealRef.current
+    if (!nodeId || !expandedHydrated) {
       return
     }
 
     const node = nodes.find((item) => item.id === nodeId)
     if (!node) {
+      pendingRevealRef.current = null
       return
     }
 
     const idsToExpand = ancestorIds(nodes, nodeId)
-    if (taskId) {
-      idsToExpand.push(nodeId)
-    }
-
     const missing = idsToExpand.filter((id) => !expandedIds.has(id))
     if (missing.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -448,36 +403,24 @@ export function Roadmap({
       return
     }
 
-    const targetId = taskId ? `tree-task-${taskId}` : `tree-topic-${nodeId}`
-    const target = document.getElementById(targetId)
+    const target = document.getElementById(`tree-topic-${nodeId}`)
     const viewport = listRef.current?.querySelector<HTMLElement>(
       "[data-slot=scroll-area-viewport]"
     )
     if (!target || !viewport) {
+      pendingRevealRef.current = null
       return
     }
 
-    programmaticScrollRef.current = true
-    window.clearTimeout(programmaticScrollTimerRef.current)
-    programmaticScrollTimerRef.current = window.setTimeout(() => {
-      programmaticScrollRef.current = false
-    }, 400)
+    lockTreeLayout()
     const toolbar =
       listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
     scrollToReadingLine(viewport, target, readingLineY(toolbar, viewport))
-    focusedRef.current = focusKey
+    focusedRef.current = nodeId
     pendingRevealRef.current = null
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfigNodeId(nodeId)
-  }, [
-    expandedHydrated,
-    expandedIds,
-    focusNodeId,
-    focusTaskId,
-    nodes,
-    roleId,
-    treeFocusRequest,
-  ])
+  }, [expandedHydrated, expandedIds, nodes, roleId, treeFocusRequest])
 
   const skillNodes = useMemo(() => nodes.filter(isSkillNode), [nodes])
 
@@ -566,21 +509,18 @@ export function Roadmap({
     [childrenByParent, deleteNodes]
   )
 
-  function persistVisibleLocation(nodeId: string | null, taskId: string | null) {
-    focusedRef.current = nodeId ? `${nodeId}:${taskId ?? ""}` : null
-    persistTreeLocation(nodeId, taskId)
+  function persistVisibleLocation(nodeId: string | null) {
+    persistTreeLocation(nodeId)
   }
 
   function handleSelectNode(nodeId: string) {
     setConfigNodeId(nodeId)
-    setJumpHighlightTaskId(null)
-    persistVisibleLocation(nodeId, null)
+    persistVisibleLocation(nodeId)
   }
 
   function showOverview() {
     setConfigNodeId(null)
-    setJumpHighlightTaskId(null)
-    persistVisibleLocation(null, null)
+    persistVisibleLocation(null)
   }
 
   function handleTreeScroll(event: UIEvent<HTMLDivElement>) {
@@ -596,16 +536,14 @@ export function Roadmap({
       }
       const toolbar =
         listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
-      const next = locationFromViewport(
-        viewport,
-        readingLineY(toolbar, viewport)
+      persistVisibleLocation(
+        locationFromViewport(viewport, readingLineY(toolbar, viewport))
       )
-      persistVisibleLocation(next.nodeId, next.taskId)
-      setJumpHighlightTaskId((current) => (current ? null : current))
     }, 180)
   }
 
   function expandAll() {
+    lockTreeLayout()
     const next = new Set(
       skillNodes
         .filter((node) => {
@@ -621,6 +559,7 @@ export function Roadmap({
   }
 
   function collapseAll() {
+    lockTreeLayout()
     const next = new Set<string>()
     setExpandedIds(next)
     writeExpandedIds(roleId, next)
@@ -628,6 +567,7 @@ export function Roadmap({
   }
 
   function toggleExpand(nodeId: string) {
+    lockTreeLayout()
     setExpandedIds((current) => {
       const next = new Set(current)
       if (next.has(nodeId)) {
@@ -1267,7 +1207,7 @@ export function Roadmap({
                   onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
-                  focusedTaskId={jumpHighlightTaskId}
+                  focusedTaskId={null}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}
@@ -1290,9 +1230,6 @@ export function Roadmap({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <Suspense fallback={null}>
-        <RoadmapFocusFromUrl onFocus={onUrlFocus} />
-      </Suspense>
       <ResizablePanelGroup
         key={groupKey}
         orientation="horizontal"

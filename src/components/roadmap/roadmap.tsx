@@ -1215,7 +1215,10 @@ export function Roadmap({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={expandAll}
+            onClick={(event) => {
+              event.stopPropagation()
+              expandAll()
+            }}
           >
             <ChevronsUpDown data-icon="inline-start" />
             Expand all
@@ -1224,7 +1227,10 @@ export function Roadmap({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={collapseAll}
+            onClick={(event) => {
+              event.stopPropagation()
+              collapseAll()
+            }}
           >
             <ChevronsDownUp data-icon="inline-start" />
             Collapse all

@@ -10,6 +10,7 @@ import {
 } from "@/application/roles/actions"
 import { exportRoadmapAction } from "@/application/import-export/actions"
 import { DeleteRoleAlert } from "@/components/roles/delete-role-alert"
+import { GenerateImportPrompt } from "@/components/roles/generate-import-prompt"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -200,6 +201,8 @@ export function RoleSettings({ role }: { role: Role }) {
           </Button>
         </CardFooter>
       </Card>
+
+      <GenerateImportPrompt key={role.id} roleName={role.name} />
 
       <Card>
         <CardHeader>

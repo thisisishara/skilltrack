@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import { Link2, Pencil, Plus, Trash2 } from "lucide-react"
+import { CheckIcon, CopyIcon, Link2, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { previewLinkTitleAction } from "@/application/links/actions"
@@ -56,6 +56,32 @@ export function TopicLinksSection({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<NodeLink | null>(null)
   const [pendingDelete, setPendingDelete] = useState<NodeLink | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) {
+        clearTimeout(copiedTimer.current)
+      }
+    }
+  }, [])
+
+  async function copyLinkUrl(link: NodeLink) {
+    try {
+      await navigator.clipboard.writeText(link.url)
+      setCopiedId(link.id)
+      if (copiedTimer.current) {
+        clearTimeout(copiedTimer.current)
+      }
+      copiedTimer.current = setTimeout(() => {
+        copiedTimer.current = null
+        setCopiedId(null)
+      }, 1500)
+    } catch {
+      toast.error("Could not copy the link.")
+    }
+  }
 
   function openCreate() {
     setEditing(null)
@@ -113,8 +139,7 @@ export function TopicLinksSection({
                   </a>
                   <p className="truncate text-xs text-muted-foreground">{link.url}</p>
                 </div>
-                {editable ? (
-                <div className="flex shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+                <div className="flex shrink-0">
                   <Tooltip>
                     <TooltipTrigger
                       render={
@@ -122,33 +147,54 @@ export function TopicLinksSection({
                           type="button"
                           size="icon-sm"
                           variant="ghost"
-                          aria-label="Edit link"
-                          onClick={() => openEdit(link)}
+                          aria-label="Copy link"
+                          onClick={() => void copyLinkUrl(link)}
                         />
                       }
                     >
-                      <Pencil />
+                      {copiedId === link.id ? <CheckIcon /> : <CopyIcon />}
                     </TooltipTrigger>
-                    <TooltipContent>Edit link</TooltipContent>
+                    <TooltipContent>
+                      {copiedId === link.id ? "Copied" : "Copy link"}
+                    </TooltipContent>
                   </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          type="button"
-                          size="icon-sm"
-                          variant="ghost"
-                          aria-label="Delete link"
-                          onClick={() => setPendingDelete(link)}
-                        />
-                      }
-                    >
-                      <Trash2 />
-                    </TooltipTrigger>
-                    <TooltipContent>Delete link</TooltipContent>
-                  </Tooltip>
+                  {editable ? (
+                    <div className="flex opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              aria-label="Edit link"
+                              onClick={() => openEdit(link)}
+                            />
+                          }
+                        >
+                          <Pencil />
+                        </TooltipTrigger>
+                        <TooltipContent>Edit link</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              aria-label="Delete link"
+                              onClick={() => setPendingDelete(link)}
+                            />
+                          }
+                        >
+                          <Trash2 />
+                        </TooltipTrigger>
+                        <TooltipContent>Delete link</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ) : null}
                 </div>
-                ) : null}
               </li>
             ))}
           </ul>

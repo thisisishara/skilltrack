@@ -4,6 +4,7 @@ import { CircleAlert } from "lucide-react"
 import { listRoles } from "@/application/roles/roles-service"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
+import { NavigationProgressBar } from "@/components/layout/navigation-progress-bar"
 import { RoleRouteShell } from "@/components/roles/role-route-shell"
 import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -58,6 +59,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider className="h-dvh overflow-hidden">
       <RolesWorkspace roles={roles}>
+        <NavigationProgressBar />
         <AppSidebar
           githubUsername={githubUsername}
           displayName={displayName}

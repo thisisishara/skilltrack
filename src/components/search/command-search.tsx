@@ -27,15 +27,17 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { matchesSearch } from "@/domain/search/query"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const emptyIndex: SearchIndex = { roles: [], nodes: [], tasks: [] }
 
 export function CommandSearch() {
   const router = useRouter()
-  const { activeRole, focusTree } = useRolesUi()
+  const { activeRole, focusTree, beginNavigation } = useRolesUi()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [index, setIndex] = useState<SearchIndex>(emptyIndex)
+  const [indexLoading, setIndexLoading] = useState(false)
 
   // Scope search to the role currently open, so switching into a role's
   // roadmap never surfaces another role's nodes. With no active role (e.g.
@@ -59,13 +61,17 @@ export function CommandSearch() {
       return
     }
 
-    void getSearchIndexAction().then((result) => {
-      if (!result.ok) {
-        toast.error(result.message)
-        return
-      }
-      setIndex(result.index)
-    })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIndexLoading(true)
+    void getSearchIndexAction()
+      .then((result) => {
+        if (!result.ok) {
+          toast.error(result.message)
+          return
+        }
+        setIndex(result.index)
+      })
+      .finally(() => setIndexLoading(false))
   }, [open])
 
   const roles = useMemo(
@@ -141,7 +147,9 @@ export function CommandSearch() {
         return
       }
 
-      router.push(`/dashboard/roles/${roleId}?node=${nodeId}`, { scroll: false })
+      const href = `/dashboard/roles/${roleId}?node=${nodeId}`
+      beginNavigation(href)
+      router.push(href, { scroll: false })
     })
   }
 
@@ -171,7 +179,13 @@ export function CommandSearch() {
       >
         <Command shouldFilter={false}>
           <CommandInput placeholder={placeholder} value={query} onValueChange={setQuery} />
-          {noHits ? (
+          {indexLoading ? (
+            <div className="flex flex-col gap-1 p-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-9 w-full" />
+              ))}
+            </div>
+          ) : noHits ? (
             <Empty className="border-0 py-8">
               <EmptyHeader>
                 <EmptyTitle>No matches</EmptyTitle>
@@ -195,7 +209,9 @@ export function CommandSearch() {
                       value={`role ${role.name} ${role.id}`}
                       onSelect={() => {
                         closeAnd(() => {
-                          router.push(`/dashboard/roles/${role.id}`)
+                          const href = `/dashboard/roles/${role.id}`
+                          beginNavigation(href)
+                          router.push(href)
                         })
                       }}
                     >

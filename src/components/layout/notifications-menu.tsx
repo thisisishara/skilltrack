@@ -6,6 +6,7 @@ import { Bell, CheckCheck, X } from "lucide-react"
 
 import { listStaleRoadmapNotificationsAction } from "@/application/notifications/actions"
 import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
+import { useRolesUi } from "@/components/roles/roles-workspace"
 import { Button } from "@/components/ui/button"
 import {
   Empty,
@@ -23,20 +24,43 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function NotificationsMenu() {
   const router = useRouter()
+  const { beginNavigation } = useRolesUi()
   const [items, setItems] = useState<StaleRoadmapNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set())
+  const [loading, setLoading] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    void listStaleRoadmapNotificationsAction().then((result) => {
-      if (cancelled || !result.ok) {
-        return
-      }
-      setItems(result.items)
-    })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoadFailed(false)
+    void listStaleRoadmapNotificationsAction()
+      .then((result) => {
+        if (cancelled) {
+          return
+        }
+        if (!result.ok) {
+          setLoadFailed(true)
+          return
+        }
+        setItems(result.items)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadFailed(true)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
     return () => {
       cancelled = true
     }
@@ -93,7 +117,26 @@ export function NotificationsMenu() {
             </Button>
           ) : null}
         </div>
-        {count === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-2 p-2 pt-0">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : loadFailed ? (
+          <Empty className="border-0 py-8">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Bell />
+              </EmptyMedia>
+              <EmptyTitle>Couldn’t load notifications</EmptyTitle>
+              <EmptyDescription>
+                Something went wrong loading reminders. Refresh the page to
+                try again.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : count === 0 ? (
           <Empty className="border-0 py-8">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -115,7 +158,9 @@ export function NotificationsMenu() {
                     type="button"
                     className="min-w-0 flex-1 rounded-lg px-2 py-2 text-left hover:bg-muted"
                     onClick={() => {
-                      router.push(`/dashboard/roles/${item.roleId}`)
+                      const href = `/dashboard/roles/${item.roleId}`
+                      beginNavigation(href)
+                      router.push(href)
                     }}
                   >
                     <p className="truncate text-sm font-medium">{item.roleName}</p>

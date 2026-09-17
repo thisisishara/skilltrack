@@ -38,7 +38,7 @@ import { downloadTextFile } from "@/lib/roadmap/download"
 
 export function RoleSettings({ role }: { role: Role }) {
   const router = useRouter()
-  const { roles } = useRolesUi()
+  const { roles, beginNavigation } = useRolesUi()
   const [name, setName] = useState(role.name)
   const [error, setError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -115,37 +115,48 @@ export function RoleSettings({ role }: { role: Role }) {
 
   async function handleExport() {
     setExportPending(true)
-    const result = await exportRoadmapAction(role.id)
-    setExportPending(false)
+    try {
+      const result = await toast.promise(exportRoadmapAction(role.id), {
+        loading: "Exporting roadmap…",
+        success: (value) =>
+          value.ok ? "Roadmap exported" : "Export failed",
+        error: "Export failed",
+      }).unwrap()
 
-    if (!result.ok) {
-      toast.error(result.message)
-      return
+      if (!result.ok) {
+        return
+      }
+      downloadTextFile(result.filename, result.json)
+    } finally {
+      setExportPending(false)
     }
-
-    downloadTextFile(result.filename, result.json)
-    toast.success("Roadmap exported")
   }
 
   async function handleDelete() {
-    const result = await deleteRoleAction(role.id)
+    const result = await toast.promise(deleteRoleAction(role.id), {
+      loading: "Deleting role…",
+      success: (value) => (value.ok ? "Role deleted" : "Delete failed"),
+      error: "Delete failed",
+    }).unwrap()
+
     if (!result.ok) {
-      toast.error(result.message)
       return
     }
 
-    toast.success("Role deleted")
     setDeleteOpen(false)
 
     const remaining = roles.filter((item) => item.id !== role.id)
     if (remaining.length === 0) {
       clearStoredActiveRoleId()
+      beginNavigation("/dashboard")
       router.push("/dashboard")
       return
     }
 
+    const nextHref = `/dashboard/roles/${remaining[0].id}`
     writeStoredActiveRoleId(remaining[0].id)
-    router.push(`/dashboard/roles/${remaining[0].id}`)
+    beginNavigation(nextHref)
+    router.push(nextHref)
   }
 
   return (

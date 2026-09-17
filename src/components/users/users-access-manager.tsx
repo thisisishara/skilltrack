@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { ShieldAlert } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   approveUserAction,
@@ -11,6 +12,7 @@ import type { ApplicationUser } from "@/domain/users/types"
 import { isFixedAdminUsername } from "@/lib/auth/access"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Card,
   CardContent,
@@ -53,21 +55,28 @@ function formatWhen(value: string | null) {
 
 export function UsersAccessManager({ users }: { users: ApplicationUser[] }) {
   const pending = users.filter((user) => user.approvalStatus === "pending")
-  const [error, setError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function run(
     userId: string,
-    action: typeof approveUserAction | typeof denyUserAction
+    action: typeof approveUserAction | typeof denyUserAction,
+    verb: "Approving" | "Denying",
+    doneVerb: "Approved" | "Denied"
   ) {
-    setError(null)
     setPendingId(userId)
+    const user = users.find((item) => item.id === userId)
+    const label = user?.displayName ?? user?.githubUsername ?? "user"
     startTransition(async () => {
-      const result = await action(userId)
-      if (!result.ok) {
-        setError(result.message)
-      }
+      await toast
+        .promise(action(userId), {
+          loading: `${verb} ${label}…`,
+          success: (value) =>
+            value.ok ? `${doneVerb} ${label}` : `Could not update ${label}`,
+          error: `Could not update ${label}`,
+        })
+        .unwrap()
+        .catch(() => null)
       setPendingId(null)
     })
   }
@@ -81,10 +90,6 @@ export function UsersAccessManager({ users }: { users: ApplicationUser[] }) {
           database.
         </p>
       </div>
-
-      {error ? (
-        <p className="text-sm text-destructive">{error}</p>
-      ) : null}
 
       <Card>
         <CardHeader>
@@ -110,8 +115,10 @@ export function UsersAccessManager({ users }: { users: ApplicationUser[] }) {
             <UserTable
               users={pending}
               busyId={isPending ? pendingId : null}
-              onApprove={(id) => run(id, approveUserAction)}
-              onDeny={(id) => run(id, denyUserAction)}
+              onApprove={(id) =>
+                run(id, approveUserAction, "Approving", "Approved")
+              }
+              onDeny={(id) => run(id, denyUserAction, "Denying", "Denied")}
             />
           )}
         </CardContent>
@@ -129,8 +136,10 @@ export function UsersAccessManager({ users }: { users: ApplicationUser[] }) {
           <UserTable
             users={users}
             busyId={isPending ? pendingId : null}
-            onApprove={(id) => run(id, approveUserAction)}
-            onDeny={(id) => run(id, denyUserAction)}
+            onApprove={(id) =>
+              run(id, approveUserAction, "Approving", "Approved")
+            }
+            onDeny={(id) => run(id, denyUserAction, "Denying", "Denied")}
           />
         </CardContent>
       </Card>
@@ -194,6 +203,7 @@ function UserTable({
                         disabled={busy}
                         onClick={() => onApprove(user.id)}
                       >
+                        {busy ? <Spinner data-icon="inline-start" /> : null}
                         Approve
                       </Button>
                     ) : null}
@@ -204,6 +214,7 @@ function UserTable({
                         disabled={busy}
                         onClick={() => onDeny(user.id)}
                       >
+                        {busy ? <Spinner data-icon="inline-start" /> : null}
                         Deny
                       </Button>
                     ) : null}

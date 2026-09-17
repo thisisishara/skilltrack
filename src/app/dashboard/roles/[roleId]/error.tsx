@@ -2,7 +2,7 @@
 
 import { RouteErrorState } from "@/components/layout/route-error"
 
-export default function DashboardError({
+export default function RoleRoadmapError({
   error,
   reset,
 }: {
@@ -13,9 +13,9 @@ export default function DashboardError({
     <RouteErrorState
       error={error}
       reset={reset}
-      title="Dashboard could not be loaded"
-      description="Something went wrong loading your account. Try again, or sign out and sign back in."
-      event="dashboard.error"
+      title="Roadmap could not be loaded"
+      description="This role's roadmap failed to load. Try again, or pick another role from the sidebar."
+      event="role_roadmap.error"
     />
   )
 }

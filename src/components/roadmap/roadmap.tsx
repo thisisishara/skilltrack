@@ -495,15 +495,22 @@ export function Roadmap({
 
   async function handleExport() {
     setExportPending(true)
-    const result = await exportRoadmapAction(roleId)
-    setExportPending(false)
-    if (!result.ok) {
-      toast.error(result.message)
-      return
-    }
+    try {
+      const result = await toast
+        .promise(exportRoadmapAction(roleId), {
+          loading: "Exporting roadmap…",
+          success: (value) => (value.ok ? "Roadmap exported" : "Export failed"),
+          error: "Export failed",
+        })
+        .unwrap()
 
-    downloadTextFile(result.filename, result.json)
-    toast.success("Roadmap exported")
+      if (!result.ok) {
+        return
+      }
+      downloadTextFile(result.filename, result.json)
+    } finally {
+      setExportPending(false)
+    }
   }
 
   function openImport() {

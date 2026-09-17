@@ -38,6 +38,10 @@ type RolesUiContextValue = {
   focusTree: (target: { roleId: string; nodeId: string }) => void
   cachedRoadmap: RoadmapViewProps | null
   rememberRoadmap: (payload: RoadmapViewProps) => void
+  /** Href of an in-flight client navigation, or null when idle. */
+  pendingHref: string | null
+  /** Mark a navigation as started so UI can show progress/overlays. */
+  beginNavigation: (href: string) => void
 }
 
 const RolesUiContext = createContext<RolesUiContextValue | null>(null)
@@ -67,7 +71,36 @@ export function RolesWorkspace({
   const [cachedRoadmaps, setCachedRoadmaps] = useState<
     Record<string, RoadmapViewProps>
   >({})
+  const [rawPendingHref, setRawPendingHref] = useState<string | null>(null)
   const treeFocusNonceRef = useRef(0)
+
+  // Once the pathname actually matches where we were headed, the navigation
+  // is done — derive that instead of clearing state from an effect, so the
+  // "pending" flag can never outlive the render where it stops being true.
+  const pendingHref =
+    rawPendingHref && rawPendingHref.split("?")[0] !== pathname
+      ? rawPendingHref
+      : null
+
+  useEffect(() => {
+    if (!pendingHref) {
+      return
+    }
+    // Safety net: never let a stale "navigating" state stick around if a
+    // navigation errors out without the pathname ever changing.
+    const timer = setTimeout(() => setRawPendingHref(null), 8000)
+    return () => clearTimeout(timer)
+  }, [pendingHref])
+
+  const beginNavigation = useCallback(
+    (href: string) => {
+      if (href.split("?")[0] === pathname) {
+        return
+      }
+      setRawPendingHref(href)
+    },
+    [pathname]
+  )
 
   const rememberRoadmap = useCallback((payload: RoadmapViewProps) => {
     setCachedRoadmaps((current) => ({
@@ -125,10 +158,12 @@ export function RolesWorkspace({
 
   const selectRole = useCallback(
     (roleId: string) => {
+      const href = `/dashboard/roles/${roleId}`
       writeStoredActiveRoleId(roleId)
-      router.push(`/dashboard/roles/${roleId}`)
+      beginNavigation(href)
+      router.push(href)
     },
-    [router]
+    [beginNavigation, router]
   )
 
   const openCreate = useCallback(() => {
@@ -157,13 +192,15 @@ export function RolesWorkspace({
         return
       }
 
+      const nextHref = roleHrefForCurrentView(nextId, pathname, activeRole?.id)
       writeStoredActiveRoleId(nextId)
-      router.push(roleHrefForCurrentView(nextId, pathname, activeRole?.id))
+      beginNavigation(nextHref)
+      router.push(nextHref)
     }
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [activeRole?.id, pathname, roles, router])
+  }, [activeRole?.id, beginNavigation, pathname, roles, router])
 
   async function handleCreate(name: string) {
     const result = await createRoleAction(name)
@@ -171,10 +208,12 @@ export function RolesWorkspace({
       return result
     }
     if ("role" in result) {
+      const href = `/dashboard/roles/${result.role.id}`
       writeStoredActiveRoleId(result.role.id)
       toast.success("Role created")
       setCreateOpen(false)
-      router.push(`/dashboard/roles/${result.role.id}`)
+      beginNavigation(href)
+      router.push(href)
     }
     return result
   }
@@ -185,10 +224,12 @@ export function RolesWorkspace({
       return result
     }
     if ("role" in result) {
+      const href = `/dashboard/roles/${result.role.id}`
       writeStoredActiveRoleId(result.role.id)
       toast.success("Roadmap imported")
       setCreateOpen(false)
-      router.push(`/dashboard/roles/${result.role.id}`)
+      beginNavigation(href)
+      router.push(href)
     }
     return result
   }
@@ -203,6 +244,8 @@ export function RolesWorkspace({
       focusTree,
       cachedRoadmap,
       rememberRoadmap,
+      pendingHref,
+      beginNavigation,
     }),
     [
       roles,
@@ -213,6 +256,8 @@ export function RolesWorkspace({
       focusTree,
       cachedRoadmap,
       rememberRoadmap,
+      pendingHref,
+      beginNavigation,
     ]
   )
 

@@ -43,7 +43,7 @@ export function AppSidebar({
   avatarUrl,
   isAdmin = false,
 }: AppSidebarProps) {
-  const { activeRole } = useRolesUi()
+  const { activeRole, beginNavigation } = useRolesUi()
   const pathname = usePathname()
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
@@ -69,7 +69,12 @@ export function AppSidebar({
                   <SidebarMenuButton
                     isActive={pathname.startsWith("/dashboard/users")}
                     tooltip="Users"
-                    render={<Link href="/dashboard/users" />}
+                    render={
+                      <Link
+                        href="/dashboard/users"
+                        onClick={() => beginNavigation("/dashboard/users")}
+                      />
+                    }
                   >
                     <Users />
                     <span>Users</span>
@@ -87,7 +92,14 @@ export function AppSidebar({
                   <SidebarMenuButton
                     isActive={roadmapActive}
                     tooltip="Roadmap"
-                    render={<Link href={roleHref} prefetch scroll={false} />}
+                    render={
+                      <Link
+                        href={roleHref}
+                        prefetch
+                        scroll={false}
+                        onClick={() => beginNavigation(roleHref)}
+                      />
+                    }
                   >
                     <Map />
                     <span>Roadmap</span>
@@ -97,7 +109,14 @@ export function AppSidebar({
                   <SidebarMenuButton
                     isActive={settingsActive}
                     tooltip="Settings"
-                    render={<Link href={settingsHref} prefetch scroll={false} />}
+                    render={
+                      <Link
+                        href={settingsHref}
+                        prefetch
+                        scroll={false}
+                        onClick={() => beginNavigation(settingsHref)}
+                      />
+                    }
                   >
                     <Settings />
                     <span>Settings</span>

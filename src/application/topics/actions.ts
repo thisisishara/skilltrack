@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import {
+  clearRoadmap,
   createNode,
   deleteNode,
   moveNode,
@@ -19,6 +20,7 @@ import { requireSession } from "@/lib/auth/session"
 export type TopicActionResult =
   | { ok: true; node: RoadmapNode }
   | { ok: true; deletedNodeId: string }
+  | { ok: true }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 function fail(error: unknown): TopicActionResult {
@@ -199,6 +201,23 @@ export async function deleteNodeAction(input: {
     await deleteNode(applicationUser.id, input.roleId, input.nodeId)
     revalidateRole(input.roleId)
     return { ok: true, deletedNodeId: input.nodeId }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function clearRoadmapAction(input: {
+  roleId: string
+}): Promise<TopicActionResult> {
+  try {
+    if (!input.roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    await clearRoadmap(applicationUser.id, input.roleId)
+    revalidateRole(input.roleId)
+    return { ok: true }
   } catch (error) {
     return fail(error)
   }

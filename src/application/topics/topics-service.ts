@@ -1,6 +1,6 @@
 import "server-only"
 
-import { getRoleForUser } from "@/application/roles/roles-service"
+import { getRoleForUser, updateRoleNotes } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
 import {
   accentUpdatesForChange,
@@ -28,6 +28,7 @@ import {
 } from "@/domain/topics/layout"
 import { displayNodeTitle } from "@/domain/topics/title"
 import type { RoadmapNode } from "@/domain/topics/types"
+import * as linksRepository from "@/repositories/links/links-repository"
 import * as topicsRepository from "@/repositories/topics/topics-repository"
 
 function requireTitle(title: string) {
@@ -388,4 +389,11 @@ export async function placeNodeAtRoot(
 export async function deleteNode(userId: string, roleId: string, nodeId: string) {
   await requireOwnedNode(userId, roleId, nodeId)
   await topicsRepository.deleteForRole(roleId, nodeId)
+}
+
+export async function clearRoadmap(userId: string, roleId: string) {
+  await requireOwnedRole(userId, roleId)
+  await topicsRepository.deleteAllForRole(roleId)
+  await linksRepository.deleteAllForRole(roleId)
+  await updateRoleNotes(userId, roleId, null)
 }

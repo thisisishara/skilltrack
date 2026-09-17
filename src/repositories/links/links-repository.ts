@@ -161,6 +161,15 @@ export async function update(
   return toLink(data)
 }
 
+export async function deleteAllForRole(roleId: string) {
+  const supabase = getSupabaseServerClient()
+  const { error } = await supabase.from("links").delete().eq("role_id", roleId)
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+}
+
 export async function deleteLink(roleId: string, topicId: string | null, linkId: string) {
   const supabase = getSupabaseServerClient()
   let query = supabase.from("links").delete().eq("role_id", roleId).eq("id", linkId)

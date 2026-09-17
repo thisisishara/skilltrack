@@ -46,6 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
 import type { RoadmapNode } from "@/domain/topics/types"
@@ -70,6 +71,8 @@ export function TopicConfigSheet({
   onUpdateLink,
   onDeleteLink,
   onDelete,
+  onClearRoadmap,
+  canClearRoadmap = false,
   showChecklist = true,
   showIcon = true,
   showClose = true,
@@ -112,6 +115,8 @@ export function TopicConfigSheet({
   onUpdateLink: (link: NodeLink, label: string, url: string) => string | null
   onDeleteLink: (linkId: string) => void
   onDelete?: () => void
+  onClearRoadmap?: () => Promise<void>
+  canClearRoadmap?: boolean
   showChecklist?: boolean
   showIcon?: boolean
   showClose?: boolean
@@ -134,6 +139,7 @@ export function TopicConfigSheet({
   const [accentColor, setAccentColor] = useState<string | null>(null)
   const [notes, setNotes] = useState("")
   const [notesOpen, setNotesOpen] = useState(false)
+  const [clearOpen, setClearOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingAccent, setPendingAccent] = useState<string | null | undefined>(
     undefined
@@ -355,6 +361,26 @@ export function TopicConfigSheet({
                 onDelete={onDeleteLink}
               />
             </section>
+            {canClearRoadmap && onClearRoadmap ? (
+              <>
+                <Separator />
+                <section className="flex flex-col gap-3">
+                  <h3 className="text-sm font-medium">Delete roadmap</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Remove every topic, task, note, and link. This role stays in the
+                    sidebar so you can start over or import again.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => setClearOpen(true)}
+                  >
+                    <Trash2 data-icon="inline-start" />
+                    Delete roadmap
+                  </Button>
+                </section>
+              </>
+            ) : null}
           </div>
         </ScrollArea>
         <NotesDialog
@@ -365,6 +391,16 @@ export function TopicConfigSheet({
             setNotes(next)
             persistDetailsNow({ notes: next })
             setNotesOpen(false)
+          }}
+        />
+        <ConfirmDeleteAlert
+          open={clearOpen}
+          onOpenChange={setClearOpen}
+          title="Delete this roadmap?"
+          description="All topics, tasks, notes, and links will be removed. The role is kept."
+          confirmLabel="Delete roadmap"
+          onConfirm={async () => {
+            await onClearRoadmap?.()
           }}
         />
       </aside>

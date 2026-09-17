@@ -22,6 +22,7 @@ import {
   importRoadmapAction,
 } from "@/application/import-export/actions"
 import {
+  clearRoadmapAction,
   createNodeAction,
   deleteNodeAction,
   placeNodeAction,
@@ -1003,6 +1004,30 @@ export function Roadmap({
     setDeleteOpen(true)
   }
 
+  async function handleClearRoadmap() {
+    const previousNodes = nodes
+    const previousItems = items
+    const previousLinks = links
+    const previousNotes = overviewNotes
+    setNodes([])
+    setItems([])
+    setLinks([])
+    setOverviewNotes("")
+    setConfigNodeId(null)
+
+    const result = await clearRoadmapAction({ roleId })
+    if (!result.ok) {
+      setNodes(previousNodes)
+      setItems(previousItems)
+      setLinks(previousLinks)
+      setOverviewNotes(previousNotes)
+      toast.error(result.message)
+      return
+    }
+
+    toast.success("Roadmap deleted")
+  }
+
   function handleDelete() {
     if (deleteIds.length === 0) {
       return
@@ -1546,6 +1571,15 @@ export function Roadmap({
                     }
                   : undefined
               }
+              canClearRoadmap={
+                Boolean(
+                  isOverview &&
+                    (nodes.length > 0 ||
+                      links.length > 0 ||
+                      Boolean(overviewNotes.trim()))
+                )
+              }
+              onClearRoadmap={handleClearRoadmap}
             />
           </div>
         </ResizablePanel>

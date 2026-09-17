@@ -130,13 +130,8 @@ async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) 
 }
 
 async function applyRoadmapFields(userId: string, role: Role, document: NormalizedRoadmapDocument) {
-  let next = role
-  if (!role.description && document.description) {
-    next = await updateRoleDescription(userId, role.id, document.description)
-  }
-  if (!role.notes && document.notes) {
-    next = await updateRoleNotes(userId, role.id, document.notes)
-  }
+  let next = await updateRoleDescription(userId, role.id, document.description)
+  next = await updateRoleNotes(userId, next.id, document.notes)
   return next
 }
 

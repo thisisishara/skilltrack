@@ -369,6 +369,12 @@ export function Roadmap({
   }, [serverLinks])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOverviewDescription(roleDescription ?? "")
+    setOverviewNotes(roleNotes ?? "")
+  }, [roleDescription, roleNotes])
+
+  useEffect(() => {
     // Expanded state is per-role and lives in localStorage; hydrate once
     // after mount so SSR output doesn't depend on it. Nodes are collapsed
     // by default so opening a large roadmap stays instant.
@@ -518,15 +524,19 @@ export function Roadmap({
 
       void importRoadmapAction({ json: text, roleId }).then((result) => {
         importDropLock.current = false
-        if (result.ok) {
+        if (result.ok && "role" in result) {
+          setOverviewDescription(result.role.description ?? "")
+          setOverviewNotes(result.role.notes ?? "")
           toast.success("Roadmap imported")
           router.refresh()
           return
         }
 
-        setImportSeedJson(text)
-        setImportSeedError(result.message)
-        setImportOpen(true)
+        if (!result.ok) {
+          setImportSeedJson(text)
+          setImportSeedError(result.message)
+          setImportOpen(true)
+        }
       })
     },
     [nodes.length, roleId, router]
@@ -1677,6 +1687,8 @@ export function Roadmap({
         onImport={async (json) => {
           const result = await importRoadmapAction({ json, roleId })
           if (result.ok && "role" in result) {
+            setOverviewDescription(result.role.description ?? "")
+            setOverviewNotes(result.role.notes ?? "")
             toast.success("Roadmap imported")
             router.refresh()
           }

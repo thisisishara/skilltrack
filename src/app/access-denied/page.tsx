@@ -11,11 +11,9 @@ export default async function AccessDeniedPage({
 }) {
   const { error } = await searchParams
   const description =
-    error === "AccessDenied"
-      ? "This GitHub account is not on the SkillTrack allow-list."
-      : error === "Configuration"
-        ? "Authentication is not configured. Check AUTH_SECRET and GitHub OAuth environment variables."
-        : "Sign-in could not be completed. Try again with an allowed GitHub account."
+    error === "Configuration"
+      ? "Authentication is not configured. Check AUTH_SECRET and GitHub OAuth environment variables."
+      : "Sign-in could not be completed. Try again with GitHub."
 
   return (
     <main className="mx-auto flex min-h-full max-w-lg flex-1 flex-col justify-center gap-4 p-6">

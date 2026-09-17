@@ -12,7 +12,7 @@ import {
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import { failAction } from "@/lib/errors/present"
-import { requireSession } from "@/lib/auth/session"
+import { requireApprovedSession } from "@/lib/auth/session"
 
 export type TaskActionResult =
   | { ok: true; item: ChecklistItem }
@@ -39,7 +39,7 @@ export async function createChecklistItemAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const item = await createChecklistItem(
       applicationUser.id,
       input.roleId,
@@ -65,7 +65,7 @@ export async function updateChecklistItemAction(input: {
       throw new ApplicationError("validation", "Select a task first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const item = await updateChecklistItem(
       applicationUser.id,
       input.roleId,
@@ -91,7 +91,7 @@ export async function setChecklistItemCompletedAction(input: {
       throw new ApplicationError("validation", "Select a task first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const item = await setChecklistItemCompleted(
       applicationUser.id,
       input.roleId,
@@ -116,7 +116,7 @@ export async function reorderChecklistItemsAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await reorderChecklistItems(
       applicationUser.id,
       input.roleId,
@@ -140,7 +140,7 @@ export async function deleteChecklistItemAction(input: {
       throw new ApplicationError("validation", "Select a task first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await deleteChecklistItem(
       applicationUser.id,
       input.roleId,

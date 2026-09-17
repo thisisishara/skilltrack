@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown, LogOut, Map, Settings } from "lucide-react"
+import { ChevronsUpDown, LogOut, Map, Settings, Users } from "lucide-react"
 
 import { signOutAction } from "@/lib/auth/actions"
 import { RoleSwitcher } from "@/components/roles/role-switcher"
@@ -34,12 +34,14 @@ type AppSidebarProps = {
   githubUsername: string
   displayName?: string | null
   avatarUrl?: string | null
+  isAdmin?: boolean
 }
 
 export function AppSidebar({
   githubUsername,
   displayName,
   avatarUrl,
+  isAdmin = false,
 }: AppSidebarProps) {
   const { activeRole } = useRolesUi()
   const pathname = usePathname()
@@ -59,6 +61,24 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
+        {isAdmin ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith("/dashboard/users")}
+                    tooltip="Users"
+                    render={<Link href="/dashboard/users" />}
+                  >
+                    <Users />
+                    <span>Users</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
         {activeRole && roleHref && settingsHref ? (
           <SidebarGroup>
             <SidebarGroupContent>

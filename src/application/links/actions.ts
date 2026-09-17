@@ -12,7 +12,7 @@ import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { NodeLink } from "@/domain/links/types"
 import { auth } from "@/auth"
 import { failAction } from "@/lib/errors/present"
-import { requireSession } from "@/lib/auth/session"
+import { requireApprovedSession } from "@/lib/auth/session"
 
 export type LinkActionResult =
   | { ok: true; link: NodeLink }
@@ -52,7 +52,7 @@ export async function createNodeLinkAction(input: {
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const link = await createNodeLink(
       applicationUser.id,
       input.roleId,
@@ -78,7 +78,7 @@ export async function updateNodeLinkAction(input: {
       throw new ApplicationError("validation", "Select a link first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const link = await updateNodeLink(
       applicationUser.id,
       input.roleId,
@@ -103,7 +103,7 @@ export async function deleteNodeLinkAction(input: {
       throw new ApplicationError("validation", "Select a link first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await deleteNodeLink(
       applicationUser.id,
       input.roleId,

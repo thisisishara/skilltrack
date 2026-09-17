@@ -24,12 +24,14 @@ export default async function DashboardLayout({
   let roles: Role[] = []
   let notifications: StaleRoadmapNotification[] = []
   let databaseUnavailable = false
+  let isAdmin = false
 
   try {
     const { session, applicationUser } = await requireSession()
     githubUsername = session.user.githubUsername
     displayName = session.user.name
     avatarUrl = session.user.image
+    isAdmin = applicationUser.role === "admin"
     roles = await listRoles(applicationUser.id)
     notifications = await listStaleRoadmapNotifications(roles)
   } catch (error) {
@@ -63,6 +65,7 @@ export default async function DashboardLayout({
           githubUsername={githubUsername}
           displayName={displayName}
           avatarUrl={avatarUrl}
+          isAdmin={isAdmin}
         />
         <SidebarInset className="min-h-0 overflow-hidden">
           <DashboardHeader notifications={notifications} />

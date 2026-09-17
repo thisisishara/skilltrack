@@ -41,6 +41,8 @@ describeDb("repository and service persistence", () => {
       displayName: "E10",
       avatarUrl: null,
     })
+    expect(user.role).toBe("user")
+    expect(user.approvalStatus).toBe("pending")
     const fixture = { userId: user.id, roleIds: [] as string[] }
     fixtures.push(fixture)
     return { user, fixture }

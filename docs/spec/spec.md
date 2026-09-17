@@ -270,7 +270,6 @@ Required environment variables:
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
-ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 ```
 
 The exact production redirect/proxy configuration should follow the chosen Auth.js deployment configuration for Vercel.
@@ -311,29 +310,22 @@ GitHub OAuth
 GitHub profile
    │
    ▼
-Validate GitHub username
+Create/load application user
    │
-   ├── Not allowed → reject
+   ├── pending or denied → Approval needed to log in
    │
-   └── Allowed
-          │
-          ▼
-      Create/load
-      application user
-          │
-          ▼
-       Dashboard
+   └── approved → Dashboard
 ```
 
-The unauthenticated login screen is a shadcn `Card` with Inter typography, Lucide icons, and a GitHub sign-in `Button`. Unauthorized users after OAuth see `Alert` (not a custom error page). Session restore uses `Skeleton`.
+The unauthenticated login screen is a shadcn `Card` with Inter typography, Lucide icons, and a GitHub sign-in `Button`. Users waiting for access see `Alert` on `/pending-approval`. Session restore uses `Skeleton`.
 
 ## 6.2 Allowed User
 
-The MVP uses an allow-list of configured GitHub usernames. If a wildcard `*` is present, any account is allowed.
+GitHub is the identity provider. Access is stored on the `users` row:
 
-```env
-ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
-```
+- `thisisishara` is the fixed admin (`role = admin`, always approved). Postgres prevents promoting or demoting admins.
+- Every other GitHub account is `role = user` and starts `pending` on first sign-in.
+- The admin approves or denies requests in the product. Denied and pending users cannot use the dashboard.
 
 The application must never rely on a client-provided username for authorization.
 
@@ -1217,6 +1209,9 @@ github_user_id text unique not null
 github_username text unique not null
 display_name text
 avatar_url text
+role text not null default 'user'  -- admin | user
+approval_status text not null default 'pending'  -- pending | approved | denied
+approved_at timestamptz
 created_at timestamptz not null
 updated_at timestamptz not null
 ```

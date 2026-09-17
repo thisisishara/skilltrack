@@ -12,7 +12,7 @@ import {
   type ApplicationErrorCode,
 } from "@/domain/errors"
 import { failAction } from "@/lib/errors/present"
-import { requireSession } from "@/lib/auth/session"
+import { requireApprovedSession } from "@/lib/auth/session"
 
 export type ExportRoadmapResult =
   | { ok: true; filename: string; json: string }
@@ -33,7 +33,7 @@ export async function importRoadmapAction(input: {
   nameOverride?: string
 }): Promise<RoleActionResult> {
   try {
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const role = await importRoadmap(applicationUser.id, input.json, {
       roleId: input.roleId,
       nameOverride: input.nameOverride,
@@ -53,7 +53,7 @@ export async function exportRoadmapAction(
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const exported = await exportRoadmap(applicationUser.id, roleId)
     return { ok: true, ...exported }
   } catch (error) {

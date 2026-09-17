@@ -12,7 +12,7 @@ import {
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { Role } from "@/domain/roles/types"
 import { failAction } from "@/lib/errors/present"
-import { requireSession } from "@/lib/auth/session"
+import { requireApprovedSession } from "@/lib/auth/session"
 
 export type RoleActionResult =
   | { ok: true; role: Role }
@@ -29,7 +29,7 @@ function revalidateRoles() {
 
 export async function createRoleAction(name: string): Promise<RoleActionResult> {
   try {
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const role = await createEmptyRole(applicationUser.id, name)
     revalidateRoles()
     return { ok: true, role }
@@ -47,7 +47,7 @@ export async function renameRoleAction(
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const role = await renameRole(applicationUser.id, roleId, name)
     revalidateRoles()
     return { ok: true, role }
@@ -65,7 +65,7 @@ export async function updateRoleNotesAction(
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const role = await updateRoleNotes(applicationUser.id, roleId, notes)
     revalidateRoles()
     return { ok: true, role }
@@ -83,7 +83,7 @@ export async function updateRoleDescriptionAction(
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const role = await updateRoleDescription(applicationUser.id, roleId, description)
     revalidateRoles()
     return { ok: true, role }
@@ -100,7 +100,7 @@ export async function deleteRoleAction(
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await deleteRole(applicationUser.id, roleId)
     revalidateRoles()
     return { ok: true, deletedRoleId: roleId }

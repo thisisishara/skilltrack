@@ -15,7 +15,7 @@ import {
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { RoadmapNode } from "@/domain/topics/types"
 import { failAction } from "@/lib/errors/present"
-import { requireSession } from "@/lib/auth/session"
+import { requireApprovedSession } from "@/lib/auth/session"
 
 export type TopicActionResult =
   | { ok: true; node: RoadmapNode }
@@ -49,7 +49,7 @@ export async function createNodeAction(input: {
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await createNode(applicationUser.id, input)
     revalidateRole(input.roleId)
     return { ok: true, node }
@@ -76,7 +76,7 @@ export async function updateNodeAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await updateNodeDetails(
       applicationUser.id,
       input.roleId,
@@ -101,7 +101,7 @@ export async function moveNodeAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await moveNode(
       applicationUser.id,
       input.roleId,
@@ -126,7 +126,7 @@ export async function reparentNodeAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await reparentNode(
       applicationUser.id,
       input.roleId,
@@ -151,7 +151,7 @@ export async function placeNodeAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await placeNode(
       applicationUser.id,
       input.roleId,
@@ -175,7 +175,7 @@ export async function placeNodeAtRootAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     const node = await placeNodeAtRoot(
       applicationUser.id,
       input.roleId,
@@ -197,7 +197,7 @@ export async function deleteNodeAction(input: {
       throw new ApplicationError("validation", "Select a topic first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await deleteNode(applicationUser.id, input.roleId, input.nodeId)
     revalidateRole(input.roleId)
     return { ok: true, deletedNodeId: input.nodeId }
@@ -214,7 +214,7 @@ export async function clearRoadmapAction(input: {
       throw new ApplicationError("validation", "Select a role first.")
     }
 
-    const { applicationUser } = await requireSession()
+    const { applicationUser } = await requireApprovedSession()
     await clearRoadmap(applicationUser.id, input.roleId)
     revalidateRole(input.roleId)
     return { ok: true }

@@ -12,7 +12,6 @@ jobs:
       AUTH_SECRET: ci-dummy-secret-at-least-32-characters-long
       AUTH_GITHUB_ID: ci
       AUTH_GITHUB_SECRET: ci
-      ALLOWED_GITHUB_USERNAMES: "*"
       AUTH_TRUST_HOST: "true"
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIn0.ci

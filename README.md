@@ -18,7 +18,6 @@ Personal skill-roadmap tracker. GitHub OAuth signs you in; two Supabase projects
 AUTH_SECRET=
 AUTH_GITHUB_ID=
 AUTH_GITHUB_SECRET=
-ALLOWED_GITHUB_USERNAMES=thisisishara,dinushiTJ
 AUTH_TRUST_HOST=true
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -27,7 +26,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 Optional helpers such as `SUPABASE_PROD_URL`, `SUPABASE_PROD_ANON_KEY`, and `SUPABASE_PROD_SERVICE_ROLE_KEY` can live in `.env.local` as a notepad for the production project. The Next.js app never reads those names. Vercel Production must get the **same unsuffixed names**, with the prod values copied in.
 
-`ALLOWED_GITHUB_USERNAMES` is a comma-separated list of GitHub logins. Use `*` to allow any GitHub account.
+GitHub accounts can sign in; they stay pending until the admin (`thisisishara`) approves them. That admin role is enforced in Postgres and cannot be changed in the UI.
 
 `AUTH_TRUST_HOST=true` is required on Vercel so Auth.js trusts the forwarded host. The app also sets `trustHost: true` in Auth.js.
 
@@ -72,7 +71,7 @@ To apply by hand instead of the CLI, open **SQL Editor → New query** in each p
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Unauthenticated users are sent to login; allowed GitHub users land on `/dashboard`. The first dashboard load upserts a `users` row in **skilltrack-dev**. Confirm it in the Table Editor (`public.users`). Production should stay empty until you sign in on the production URL.
+Open [http://localhost:3000](http://localhost:3000). Unauthenticated users are sent to login. The first successful GitHub sign-in upserts a `users` row in **skilltrack-dev**. New accounts see **Approval needed to log in** until the admin approves them on `/dashboard/users`. Confirm rows in the Table Editor (`public.users`). Production should stay empty until you sign in on the production URL.
 
 ## CI
 

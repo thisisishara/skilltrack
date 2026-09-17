@@ -233,7 +233,7 @@
     },
     {
       "id": "E02",
-      "title": "GitHub authentication and allow-list",
+      "title": "GitHub authentication",
       "phase": 1,
       "spec": [
         "§6",
@@ -263,7 +263,7 @@
             },
             {
               "id": "E02-P01-S03",
-              "title": "Document AUTH_SECRET, AUTH_GITHUB_ID, AUTH_GITHUB_SECRET, ALLOWED_GITHUB_USERNAME",
+              "title": "Document AUTH_SECRET, AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
               "status": "done"
             },
             {
@@ -275,7 +275,7 @@
         },
         {
           "id": "E02-P02",
-          "title": "Server-side GitHub username allow-list",
+          "title": "Admin approval for GitHub users",
           "status": "done",
           "spec": [
             "§6.2"
@@ -283,17 +283,17 @@
           "subtasks": [
             {
               "id": "E02-P02-S01",
-              "title": "Read allowed username from env, never from the client",
+              "title": "Store access role and approval status on the users row",
               "status": "done"
             },
             {
               "id": "E02-P02-S02",
-              "title": "Reject non-allowed GitHub logins in the signIn callback",
+              "title": "Require admin approval after first GitHub sign-in",
               "status": "done"
             },
             {
               "id": "E02-P02-S03",
-              "title": "Support wildcard * to allow any GitHub account",
+              "title": "Fix thisisishara as the database-level admin",
               "status": "done"
             },
             {
@@ -1362,7 +1362,7 @@
             },
             {
               "id": "E10-P01-S04",
-              "title": "GitHub allow-list helper",
+              "title": "GitHub access helpers",
               "status": "done"
             }
           ]

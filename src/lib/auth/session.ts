@@ -5,14 +5,15 @@ import { ensureApplicationUser } from "@/application/users/users-service"
 import { auth } from "@/auth"
 import { ApplicationError } from "@/domain/errors"
 import type { ApplicationUser } from "@/domain/users/types"
+import { isApprovedStatus } from "@/lib/auth/access"
 import { logFailure } from "@/lib/observability/log"
 
-export const requireSession = cache(async () => {
+async function loadAccount() {
   const session = await auth()
   const githubUsername = session?.user?.githubUsername
   const githubUserId = session?.user?.githubUserId
 
-  if (!githubUsername || !githubUserId) {
+  if (!session || !githubUsername || !githubUserId) {
     redirect("/login")
   }
 
@@ -41,4 +42,29 @@ export const requireSession = cache(async () => {
   session.user.applicationUserId = applicationUser.id
 
   return { session, applicationUser }
+}
+
+export const requireAccount = cache(loadAccount)
+
+export const requireSession = cache(async () => {
+  const account = await requireAccount()
+
+  if (!isApprovedStatus(account.applicationUser.approvalStatus)) {
+    redirect("/pending-approval")
+  }
+
+  return account
+})
+
+export const requireApprovedSession = cache(async () => {
+  const account = await requireAccount()
+
+  if (!isApprovedStatus(account.applicationUser.approvalStatus)) {
+    throw new ApplicationError(
+      "authorization",
+      "Approval needed to log in."
+    )
+  }
+
+  return account
 })

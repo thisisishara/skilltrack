@@ -246,7 +246,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      latest_role_content_activity: {
+        Args: { p_role_ids: string[] }
+        Returns: {
+          role_id: string
+          last_activity_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

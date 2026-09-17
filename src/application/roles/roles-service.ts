@@ -1,5 +1,7 @@
 import "server-only"
 
+import { cache } from "react"
+
 import { ApplicationError } from "@/domain/errors"
 import { displayRoleName } from "@/domain/roles/name"
 import * as rolesRepository from "@/repositories/roles/roles-repository"
@@ -14,13 +16,13 @@ function requireName(name: string) {
   return trimmed
 }
 
-export async function listRoles(userId: string) {
+export const listRoles = cache(async (userId: string) => {
   return rolesRepository.listByUserId(userId)
-}
+})
 
-export async function getRoleForUser(userId: string, roleId: string) {
+export const getRoleForUser = cache(async (userId: string, roleId: string) => {
   return rolesRepository.getByIdForUser(userId, roleId)
-}
+})
 
 export async function createEmptyRole(
   userId: string,

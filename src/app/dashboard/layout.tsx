@@ -1,15 +1,14 @@
 import type { ReactNode } from "react"
 import { CircleAlert } from "lucide-react"
 
-import { listStaleRoadmapNotifications } from "@/application/notifications/stale-roadmaps"
 import { listRoles } from "@/application/roles/roles-service"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
+import { RoleRouteShell } from "@/components/roles/role-route-shell"
 import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { isApplicationError } from "@/domain/errors"
-import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import type { Role } from "@/domain/roles/types"
 import { requireSession } from "@/lib/auth/session"
 
@@ -22,7 +21,6 @@ export default async function DashboardLayout({
   let displayName: string | null | undefined
   let avatarUrl: string | null | undefined
   let roles: Role[] = []
-  let notifications: StaleRoadmapNotification[] = []
   let databaseUnavailable = false
   let isAdmin = false
 
@@ -33,7 +31,6 @@ export default async function DashboardLayout({
     avatarUrl = session.user.image
     isAdmin = applicationUser.role === "admin"
     roles = await listRoles(applicationUser.id)
-    notifications = await listStaleRoadmapNotifications(roles)
   } catch (error) {
     if (isApplicationError(error) && error.code === "database") {
       databaseUnavailable = true
@@ -68,8 +65,8 @@ export default async function DashboardLayout({
           isAdmin={isAdmin}
         />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <DashboardHeader notifications={notifications} />
-          {children}
+          <DashboardHeader />
+          <RoleRouteShell>{children}</RoleRouteShell>
         </SidebarInset>
       </RolesWorkspace>
     </SidebarProvider>

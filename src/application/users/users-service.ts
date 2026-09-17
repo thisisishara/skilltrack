@@ -9,15 +9,31 @@ import {
 } from "@/lib/auth/access"
 import { isE2eSessionEnabled } from "@/lib/e2e"
 import {
+  getByGithubUserId,
   getUserById,
   listUsers,
   setApprovalStatus,
   upsertByGithubProfile,
 } from "@/repositories/users/users-repository"
 
-export async function ensureApplicationUser(input: GithubProfileInput) {
-  const user = await upsertByGithubProfile(input)
+function profileMatches(user: ApplicationUser, input: GithubProfileInput) {
+  return (
+    user.githubUsername === input.githubUsername &&
+    (user.displayName ?? null) === (input.displayName ?? null) &&
+    (user.avatarUrl ?? null) === (input.avatarUrl ?? null)
+  )
+}
 
+export async function ensureApplicationUser(input: GithubProfileInput) {
+  const existing = await getByGithubUserId(input.githubUserId)
+  if (existing && profileMatches(existing, input)) {
+    return finishE2eUser(existing)
+  }
+
+  return finishE2eUser(await upsertByGithubProfile(input))
+}
+
+function finishE2eUser(user: ApplicationUser) {
   if (
     isE2eSessionEnabled() &&
     user.githubUsername === E2E_GITHUB_USERNAME &&

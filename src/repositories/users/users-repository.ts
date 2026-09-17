@@ -24,6 +24,26 @@ function toApplicationUser(row: UserRow): ApplicationUser {
   }
 }
 
+export async function getByGithubUserId(githubUserId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("users")
+    .select()
+    .eq("github_user_id", githubUserId)
+    .maybeSingle()
+
+  if (error) {
+    logEvent("error", "database.users.get_by_github_failed")
+    throw new ApplicationError(
+      "database",
+      "Could not load your SkillTrack account.",
+      { cause: error }
+    )
+  }
+
+  return data ? toApplicationUser(data) : null
+}
+
 export async function upsertByGithubProfile(input: GithubProfileInput) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase

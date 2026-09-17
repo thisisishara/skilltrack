@@ -255,6 +255,18 @@ function createLocalNode(input: {
   }
 }
 
+export type RoadmapViewProps = {
+  userId: string
+  roleId: string
+  roleName: string
+  roleDescription: string | null
+  roleNotes: string | null
+  nodes: RoadmapNode[]
+  checklistItems: ChecklistItem[]
+  links: NodeLink[]
+  focusNodeId?: string
+}
+
 export function Roadmap({
   userId,
   roleId,
@@ -265,17 +277,7 @@ export function Roadmap({
   checklistItems: serverItems,
   links: serverLinks,
   focusNodeId: focusNodeIdFromServer,
-}: {
-  userId: string
-  roleId: string
-  roleName: string
-  roleDescription: string | null
-  roleNotes: string | null
-  nodes: RoadmapNode[]
-  checklistItems: ChecklistItem[]
-  links: NodeLink[]
-  focusNodeId?: string
-}) {
+}: RoadmapViewProps) {
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
   const [links, setLinks] = useState<NodeLink[]>(serverLinks ?? [])

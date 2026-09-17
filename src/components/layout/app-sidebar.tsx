@@ -87,7 +87,7 @@ export function AppSidebar({
                   <SidebarMenuButton
                     isActive={roadmapActive}
                     tooltip="Roadmap"
-                    render={<Link href={roleHref} />}
+                    render={<Link href={roleHref} prefetch scroll={false} />}
                   >
                     <Map />
                     <span>Roadmap</span>
@@ -97,7 +97,7 @@ export function AppSidebar({
                   <SidebarMenuButton
                     isActive={settingsActive}
                     tooltip="Settings"
-                    render={<Link href={settingsHref} />}
+                    render={<Link href={settingsHref} prefetch scroll={false} />}
                   >
                     <Settings />
                     <span>Settings</span>

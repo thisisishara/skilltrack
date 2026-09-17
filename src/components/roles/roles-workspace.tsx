@@ -21,6 +21,7 @@ import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
 import { CreateRoleDialog } from "@/components/roles/create-role-dialog"
+import type { RoadmapViewProps } from "@/components/roadmap/roadmap"
 
 export type TreeFocusRequest = {
   nonce: number
@@ -35,6 +36,8 @@ type RolesUiContextValue = {
   openCreate: () => void
   treeFocusRequest: TreeFocusRequest | null
   focusTree: (target: { roleId: string; nodeId: string }) => void
+  cachedRoadmap: RoadmapViewProps | null
+  rememberRoadmap: (payload: RoadmapViewProps) => void
 }
 
 const RolesUiContext = createContext<RolesUiContextValue | null>(null)
@@ -61,7 +64,17 @@ export function RolesWorkspace({
   const [treeFocusRequest, setTreeFocusRequest] = useState<TreeFocusRequest | null>(
     null
   )
+  const [cachedRoadmaps, setCachedRoadmaps] = useState<
+    Record<string, RoadmapViewProps>
+  >({})
   const treeFocusNonceRef = useRef(0)
+
+  const rememberRoadmap = useCallback((payload: RoadmapViewProps) => {
+    setCachedRoadmaps((current) => ({
+      ...current,
+      [payload.roleId]: payload,
+    }))
+  }, [])
 
   const focusTree = useCallback((target: { roleId: string; nodeId: string }) => {
     treeFocusNonceRef.current += 1
@@ -76,6 +89,39 @@ export function RolesWorkspace({
     () => roles.find((role) => role.id === params.roleId) ?? null,
     [params.roleId, roles]
   )
+
+  const cachedRoadmap = params.roleId
+    ? (cachedRoadmaps[params.roleId] ?? null)
+    : null
+
+  useEffect(() => {
+    if (!activeRole) {
+      return
+    }
+
+    setCachedRoadmaps((current) => {
+      const cached = current[activeRole.id]
+      if (!cached) {
+        return current
+      }
+      if (
+        cached.roleName === activeRole.name &&
+        cached.roleDescription === activeRole.description &&
+        cached.roleNotes === activeRole.notes
+      ) {
+        return current
+      }
+      return {
+        ...current,
+        [activeRole.id]: {
+          ...cached,
+          roleName: activeRole.name,
+          roleDescription: activeRole.description,
+          roleNotes: activeRole.notes,
+        },
+      }
+    })
+  }, [activeRole])
 
   const selectRole = useCallback(
     (roleId: string) => {
@@ -155,8 +201,19 @@ export function RolesWorkspace({
       openCreate,
       treeFocusRequest,
       focusTree,
+      cachedRoadmap,
+      rememberRoadmap,
     }),
-    [roles, activeRole, selectRole, openCreate, treeFocusRequest, focusTree]
+    [
+      roles,
+      activeRole,
+      selectRole,
+      openCreate,
+      treeFocusRequest,
+      focusTree,
+      cachedRoadmap,
+      rememberRoadmap,
+    ]
   )
 
   return (

@@ -1,8 +1,9 @@
+"use client"
+
 import { Map } from "lucide-react"
 
-import { getRoleForUser } from "@/application/roles/roles-service"
-import { PersistActiveRole } from "@/components/roles/persist-active-role"
 import { RoleSettings } from "@/components/roles/role-settings"
+import { useRolesUi } from "@/components/roles/roles-workspace"
 import {
   Empty,
   EmptyDescription,
@@ -10,18 +11,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import { requireSession } from "@/lib/auth/session"
 
-export default async function RoleSettingsPage({
-  params,
-}: {
-  params: Promise<{ roleId: string }>
-}) {
-  const { roleId } = await params
-  const { applicationUser } = await requireSession()
-  const role = await getRoleForUser(applicationUser.id, roleId)
+export default function RoleSettingsPage() {
+  const { activeRole } = useRolesUi()
 
-  if (!role) {
+  if (!activeRole) {
     return (
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
         <Empty className="h-full">
@@ -42,8 +36,7 @@ export default async function RoleSettingsPage({
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-      <PersistActiveRole roleId={role.id} />
-      <RoleSettings role={role} />
+      <RoleSettings role={activeRole} />
     </main>
   )
 }

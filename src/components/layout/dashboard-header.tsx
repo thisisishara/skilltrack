@@ -3,7 +3,6 @@
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { CommandSearch } from "@/components/search/command-search"
-import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -17,11 +16,7 @@ import {
 } from "@/components/ui/sheet"
 import { APP_VERSION, CHANGELOG } from "@/lib/app-release"
 
-export function DashboardHeader({
-  notifications = [],
-}: {
-  notifications?: StaleRoadmapNotification[]
-}) {
+export function DashboardHeader() {
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b px-4">
       <div className="flex min-w-0 items-center gap-2">
@@ -29,7 +24,7 @@ export function DashboardHeader({
         <CommandSearch />
       </div>
       <div className="flex items-center gap-1">
-        <NotificationsMenu items={notifications} />
+        <NotificationsMenu />
         <ModeToggle />
         <Sheet>
           <SheetTrigger

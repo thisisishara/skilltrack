@@ -1,9 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, CheckCheck, X } from "lucide-react"
 
+import { listStaleRoadmapNotificationsAction } from "@/application/notifications/actions"
 import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,13 +24,23 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-export function NotificationsMenu({
-  items,
-}: {
-  items: StaleRoadmapNotification[]
-}) {
+export function NotificationsMenu() {
   const router = useRouter()
+  const [items, setItems] = useState<StaleRoadmapNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    let cancelled = false
+    void listStaleRoadmapNotificationsAction().then((result) => {
+      if (cancelled || !result.ok) {
+        return
+      }
+      setItems(result.items)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const visible = useMemo(
     () => items.filter((item) => !dismissedIds.has(item.id)),
     [dismissedIds, items]

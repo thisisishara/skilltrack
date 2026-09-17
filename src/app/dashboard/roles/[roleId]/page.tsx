@@ -4,8 +4,7 @@ import { listTasksForRole } from "@/application/tasks/tasks-service"
 import { listLinksForRole } from "@/application/links/links-service"
 import { listTopicsForRole } from "@/application/topics/topics-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
-import { PersistActiveRole } from "@/components/roles/persist-active-role"
-import { Roadmap } from "@/components/roadmap/roadmap"
+import { RegisterRoadmap } from "@/components/roles/role-route-shell"
 import {
   Empty,
   EmptyDescription,
@@ -54,8 +53,7 @@ export default async function RoleDashboardPage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <PersistActiveRole roleId={role.id} />
-      <Roadmap
+      <RegisterRoadmap
         userId={applicationUser.id}
         roleId={role.id}
         roleName={role.name}

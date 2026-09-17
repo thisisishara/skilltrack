@@ -30,7 +30,7 @@ import {
   reorderChecklistItemsAction,
   setChecklistItemCompletedAction,
   updateChecklistItemAction,
-} from "@/application/checklists/actions"
+} from "@/application/tasks/actions"
 import {
   createNodeLinkAction,
   deleteNodeLinkAction,
@@ -42,7 +42,7 @@ import {
   moveNodeAction,
   reparentNodeAction,
   updateNodeAction,
-} from "@/application/nodes/actions"
+} from "@/application/topics/actions"
 import { exportRoadmapAction, importRoadmapAction } from "@/application/import-export/actions"
 import {
   CanvasToolbar,
@@ -51,9 +51,9 @@ import {
 import { EmptyRoadmap } from "@/components/canvas/empty-roadmap"
 import { LabelDialog, type LabelDialogMode } from "@/components/canvas/label-dialog"
 import { LabelNodeCard, type LabelFlowNode } from "@/components/canvas/label-node"
-import { DeleteNodeAlert } from "@/components/roadmap/delete-node-alert"
-import { NodeConfigSheet } from "@/components/roadmap/node-config-sheet"
-import { NodeDialog, type NodeDialogMode } from "@/components/roadmap/node-dialog"
+import { DeleteTopicAlert } from "@/components/roadmap/delete-topic-alert"
+import { TopicConfigSheet } from "@/components/roadmap/topic-config-sheet"
+import { TopicDialog, type TopicDialogMode } from "@/components/roadmap/topic-dialog"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 import {
@@ -66,27 +66,27 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { applyChecklistCompletion } from "@/domain/checklists/completion"
-import { displayChecklistTitle } from "@/domain/checklists/title"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import { applyChecklistCompletion } from "@/domain/tasks/completion"
+import { displayChecklistTitle } from "@/domain/tasks/title"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
 import { resolveLinkFields } from "@/domain/links/url"
 import {
   nodeCanHaveChildren,
   nodeCanHaveParent,
   type NodeHandleKind,
-} from "@/domain/nodes/handle"
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
-import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/nodes/icon"
-import { isLabelNode, isSkillNode } from "@/domain/nodes/kind"
+} from "@/domain/topics/handle"
+import { wouldCreateCycle } from "@/domain/topics/hierarchy"
+import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/topics/icon"
+import { isLabelNode, isSkillNode } from "@/domain/topics/kind"
 import {
   CHILD_OFFSET_Y,
   LABEL_OFFSET_X,
   LABEL_ORIGIN_Y,
   ROOT_OFFSET_X,
-} from "@/domain/nodes/layout"
-import { displayNodeTitle } from "@/domain/nodes/title"
-import type { RoadmapNode } from "@/domain/nodes/types"
+} from "@/domain/topics/layout"
+import { displayNodeTitle } from "@/domain/topics/title"
+import type { RoadmapNode } from "@/domain/topics/types"
 import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { downloadTextFile } from "@/lib/roadmap/download"
 import {
@@ -307,7 +307,7 @@ function createLocalNode(input: {
   return {
     ...input,
     notes: null,
-    accentColor: null,
+    color: null,
     createdAt: now,
     updatedAt: now,
   }
@@ -352,7 +352,7 @@ function RoadmapCanvasInner({
   const [configNodeId, setConfigNodeId] = useState<string | null>(null)
   const [canvasTool, setCanvasTool] = useState<CanvasInteractionTool>("pointer")
   const [deleteIds, setDeleteIds] = useState<string[]>([])
-  const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
+  const [dialogMode, setDialogMode] = useState<TopicDialogMode | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [labelMode, setLabelMode] = useState<LabelDialogMode | null>(null)
   const [labelOpen, setLabelOpen] = useState(false)
@@ -452,19 +452,19 @@ function RoadmapCanvasInner({
   }, [fitView, focusNodeId, nodes])
 
   const selectedItems = useMemo(
-    () => items.filter((item) => item.nodeId === configNodeId),
+    () => items.filter((item) => item.topicId === configNodeId),
     [items, configNodeId]
   )
 
   const selectedLinks = useMemo(
-    () => links.filter((link) => link.nodeId === configNodeId),
+    () => links.filter((link) => link.topicId === configNodeId),
     [links, configNodeId]
   )
 
   const skillNodes = useMemo(() => nodes.filter(isSkillNode), [nodes])
   const overallProgress = useMemo(() => {
     const skillIds = new Set(skillNodes.map((node) => node.id))
-    return roadmapProgress(items.filter((item) => skillIds.has(item.nodeId)))
+    return roadmapProgress(items.filter((item) => skillIds.has(item.topicId)))
   }, [items, skillNodes])
   const statusCounts = useMemo(
     () => nodeStatusCounts(skillNodes, items),
@@ -864,6 +864,7 @@ function RoadmapCanvasInner({
     icon: string
     notes: string
     accentColor: string | null
+    nestedAccents?: "keep" | "apply"
   }) {
     if (!configNode) {
       return {
@@ -889,7 +890,7 @@ function RoadmapCanvasInner({
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
-      accentColor: input.accentColor,
+      color: input.accentColor,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
 
@@ -900,7 +901,8 @@ function RoadmapCanvasInner({
       description: next.description,
       icon: next.icon,
       notes: next.notes,
-      accentColor: next.accentColor,
+      color: next.color,
+      nestedAccents: input.nestedAccents,
       handleKind: next.handleKind,
     }).then((result) => {
       if (!result.ok) {
@@ -949,10 +951,10 @@ function RoadmapCanvasInner({
         : Math.max(...selectedItems.map((item) => item.sortOrder)) + 1
     const item: ChecklistItem = {
       id,
-      nodeId: configNodeId,
+      topicId: configNodeId,
       title,
       description: input.description.trim() || null,
-      isCompleted: false,
+      completed: false,
       sortOrder,
       createdAt: now,
       updatedAt: now,
@@ -995,7 +997,7 @@ function RoadmapCanvasInner({
 
     void updateChecklistItemAction({
       roleId,
-      nodeId: item.nodeId,
+      nodeId: item.topicId,
       itemId: item.id,
       title: nextTitle,
       description: nextDescription,
@@ -1060,7 +1062,8 @@ function RoadmapCanvasInner({
     const now = new Date().toISOString()
     const link: NodeLink = {
       id,
-      nodeId: configNodeId,
+      roleId,
+      topicId: configNodeId,
       label,
       url,
       createdAt: now,
@@ -1101,7 +1104,7 @@ function RoadmapCanvasInner({
 
     void updateNodeLinkAction({
       roleId,
-      nodeId: link.nodeId,
+      nodeId: link.topicId,
       linkId: link.id,
       label: resolved.label,
       url: resolved.url,
@@ -1233,8 +1236,10 @@ function RoadmapCanvasInner({
     const onlyLabel =
       deleteNodes.length === 1 && deleteNodes[0] && isLabelNode(deleteNodes[0])
     setNodes((current) => current.filter((node) => !removing.has(node.id)))
-    setItems((current) => current.filter((item) => !removing.has(item.nodeId)))
-    setLinks((current) => current.filter((link) => !removing.has(link.nodeId)))
+    setItems((current) => current.filter((item) => !removing.has(item.topicId)))
+    setLinks((current) =>
+      current.filter((link) => !link.topicId || !removing.has(link.topicId))
+    )
     setDeleteOpen(false)
     setConfigNodeId(null)
     setSelectedIds([])
@@ -1380,7 +1385,7 @@ function RoadmapCanvasInner({
               maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
             >
               <div className="h-full min-h-0 overflow-hidden">
-                <NodeConfigSheet
+                <TopicConfigSheet
                   open={sheetOpen}
                   onOpenChange={(open) => {
                     if (!open) {
@@ -1393,6 +1398,10 @@ function RoadmapCanvasInner({
                   nodeProgress={selectedNodeProgress}
                   subtreeProgress={selectedSubtreeProgress}
                   onSaveDetails={async (input) => handleSaveDetails(input)}
+                  hasNestedTopics={
+                    Boolean(configNode && nodes.some((item) => item.parentId === configNode.id))
+                  }
+                  canInheritAccent={Boolean(configNode?.parentId)}
                   onToggleChecklist={async (itemId, isCompleted) =>
                     handleToggleChecklist(itemId, isCompleted)
                   }
@@ -1414,7 +1423,7 @@ function RoadmapCanvasInner({
         progress={overallProgress}
         counts={statusCounts}
       />
-      <NodeDialog
+      <TopicDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
@@ -1426,7 +1435,7 @@ function RoadmapCanvasInner({
         mode={labelMode}
         onSubmit={handleLabelSubmit}
       />
-      <DeleteNodeAlert
+      <DeleteTopicAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         count={deleteIds.length}

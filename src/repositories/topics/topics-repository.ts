@@ -5,14 +5,14 @@ import { logEvent } from "@/lib/observability/log"
 import {
   normalizeNodeHandleKind,
   type NodeHandleKind,
-} from "@/domain/nodes/handle"
-import { normalizeNodeKind, type NodeKind } from "@/domain/nodes/kind"
-import { displayNodeTitle } from "@/domain/nodes/title"
-import type { RoadmapNode } from "@/domain/nodes/types"
+} from "@/domain/topics/handle"
+import { normalizeNodeKind, type NodeKind } from "@/domain/topics/kind"
+import { displayNodeTitle } from "@/domain/topics/title"
+import type { RoadmapNode } from "@/domain/topics/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 
-type NodeRow = Database["public"]["Tables"]["roadmap_nodes"]["Row"]
+type NodeRow = Database["public"]["Tables"]["topics"]["Row"]
 
 function toNode(row: NodeRow): RoadmapNode {
   return {
@@ -24,7 +24,7 @@ function toNode(row: NodeRow): RoadmapNode {
     description: row.description,
     notes: row.notes,
     icon: row.icon,
-    accentColor: row.accent_color,
+    color: row.color,
     handleKind: normalizeNodeHandleKind(row.handle_kind),
     incomingEdgeAnimated: Boolean(row.incoming_edge_animated),
     positionX: row.position_x,
@@ -36,10 +36,10 @@ function toNode(row: NodeRow): RoadmapNode {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  logEvent("error", "database.roadmap_nodes.failed", {
+  logEvent("error", "database.topics.failed", {
     code: error?.code ?? null,
   })
-  throw new ApplicationError("database", "Could not update roadmap nodes.", {
+  throw new ApplicationError("database", "Could not update topics.", {
     cause: error,
   })
 }
@@ -47,7 +47,7 @@ function throwFromSupabase(error: { code?: string; message?: string } | null): n
 export async function listByRoleId(roleId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .select()
     .eq("role_id", roleId)
     .order("sort_order", { ascending: true })
@@ -63,7 +63,7 @@ export async function listByRoleId(roleId: string) {
 export async function getByIdForRole(roleId: string, nodeId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .select()
     .eq("role_id", roleId)
     .eq("id", nodeId)
@@ -92,7 +92,7 @@ export async function insert(input: {
 }) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .insert({
       ...(input.id ? { id: input.id } : {}),
       role_id: input.roleId,
@@ -127,7 +127,7 @@ export async function insertMany(
     description: string | null
     notes: string | null
     icon: string
-    accentColor: string | null
+    color: string | null
     handleKind: NodeHandleKind
     incomingEdgeAnimated: boolean
     positionX: number
@@ -141,7 +141,7 @@ export async function insertMany(
 
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .insert(
       rows.map((row) => ({
         id: row.id,
@@ -152,7 +152,7 @@ export async function insertMany(
         description: row.description,
         notes: row.notes,
         icon: row.icon,
-        accent_color: row.accentColor,
+        color: row.color,
         handle_kind: row.handleKind,
         incoming_edge_animated: row.incomingEdgeAnimated,
         position_x: row.positionX,
@@ -179,7 +179,7 @@ export async function listExistingIds(ids: string[]) {
   for (let index = 0; index < ids.length; index += 100) {
     const chunk = ids.slice(index, index + 100)
     const { data, error } = await supabase
-      .from("roadmap_nodes")
+      .from("topics")
       .select("id")
       .in("id", chunk)
     if (error) {
@@ -195,7 +195,7 @@ export async function listExistingIds(ids: string[]) {
 
 export async function deleteAllForRole(roleId: string) {
   const supabase = getSupabaseServerClient()
-  const { error } = await supabase.from("roadmap_nodes").delete().eq("role_id", roleId)
+  const { error } = await supabase.from("topics").delete().eq("role_id", roleId)
 
   if (error) {
     throwFromSupabase(error)
@@ -210,20 +210,20 @@ export async function updateDetails(
     description: string | null
     icon: string
     notes?: string | null
-    accentColor?: string | null
+    color?: string | null
     handleKind?: NodeHandleKind
     incomingEdgeAnimated?: boolean
   }
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .update({
       title: displayNodeTitle(input.title),
       description: input.description,
       icon: input.icon,
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      ...(input.accentColor !== undefined ? { accent_color: input.accentColor } : {}),
+      ...(input.color !== undefined ? { color: input.color } : {}),
       ...(input.handleKind !== undefined ? { handle_kind: input.handleKind } : {}),
       ...(input.incomingEdgeAnimated !== undefined
         ? { incoming_edge_animated: input.incomingEdgeAnimated }
@@ -245,6 +245,30 @@ export async function updateDetails(
   return toNode(data)
 }
 
+export async function updateAccentColors(
+  roleId: string,
+  updates: { id: string; color: string | null }[]
+) {
+  if (updates.length === 0) {
+    return
+  }
+
+  await Promise.all(
+    updates.map(async (update) => {
+      const supabase = getSupabaseServerClient()
+      const { error } = await supabase
+        .from("topics")
+        .update({ color: update.color })
+        .eq("role_id", roleId)
+        .eq("id", update.id)
+
+      if (error) {
+        throwFromSupabase(error)
+      }
+    })
+  )
+}
+
 export async function updatePosition(
   roleId: string,
   nodeId: string,
@@ -253,7 +277,7 @@ export async function updatePosition(
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .update({
       position_x: positionX,
       position_y: positionY,
@@ -282,7 +306,7 @@ export async function updateParent(
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .update({
       parent_id: parentId,
       sort_order: sortOrder,
@@ -319,7 +343,7 @@ export async function updatePlacements(
 export async function deleteForRole(roleId: string, nodeId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("roadmap_nodes")
+    .from("topics")
     .delete()
     .eq("role_id", roleId)
     .eq("id", nodeId)

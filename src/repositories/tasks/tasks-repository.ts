@@ -1,21 +1,21 @@
 import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
-import { displayChecklistTitle } from "@/domain/checklists/title"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import { displayChecklistTitle } from "@/domain/tasks/title"
+import type { Task } from "@/domain/tasks/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { logEvent } from "@/lib/observability/log"
 
-type ChecklistRow = Database["public"]["Tables"]["checklist_items"]["Row"]
+type TaskRow = Database["public"]["Tables"]["tasks"]["Row"]
 
-function toItem(row: ChecklistRow): ChecklistItem {
+function toItem(row: TaskRow): Task {
   return {
     id: row.id,
-    nodeId: row.node_id,
+    topicId: row.topic_id,
     title: row.title,
     description: row.description,
-    isCompleted: row.is_completed,
+    completed: row.completed,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -24,10 +24,10 @@ function toItem(row: ChecklistRow): ChecklistItem {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  logEvent("error", "database.checklist_items.failed", {
+  logEvent("error", "database.tasks.failed", {
     code: error?.code ?? null,
   })
-  throw new ApplicationError("database", "Could not update checklist items.", {
+  throw new ApplicationError("database", "Could not update tasks.", {
     cause: error,
   })
 }
@@ -35,9 +35,9 @@ function throwFromSupabase(error: { code?: string; message?: string } | null): n
 export async function listByRoleId(roleId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
-    .select("*, roadmap_nodes!inner(role_id)")
-    .eq("roadmap_nodes.role_id", roleId)
+    .from("tasks")
+    .select("*, topics!inner(role_id)")
+    .eq("topics.role_id", roleId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -48,12 +48,12 @@ export async function listByRoleId(roleId: string) {
   return (data ?? []).map((row) => toItem(row))
 }
 
-export async function listByNodeId(nodeId: string) {
+export async function listByTopicId(topicId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .select()
-    .eq("node_id", nodeId)
+    .eq("topic_id", topicId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -64,19 +64,22 @@ export async function listByNodeId(nodeId: string) {
   return (data ?? []).map(toItem)
 }
 
+/** @deprecated Use listByTopicId */
+export const listByNodeId = listByTopicId
+
 export async function insert(input: {
   id?: string
-  nodeId: string
+  topicId: string
   title: string
   description: string | null
   sortOrder: number
 }) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .insert({
       ...(input.id ? { id: input.id } : {}),
-      node_id: input.nodeId,
+      topic_id: input.topicId,
       title: displayChecklistTitle(input.title),
       description: input.description,
       sort_order: input.sortOrder,
@@ -94,11 +97,11 @@ export async function insert(input: {
 export async function insertMany(
   rows: {
     id: string
-    nodeId: string
+    topicId: string
     title: string
     description: string | null
     sortOrder: number
-    isCompleted: boolean
+    completed: boolean
     completedAt: string | null
   }[]
 ) {
@@ -108,15 +111,15 @@ export async function insertMany(
 
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .insert(
       rows.map((row) => ({
         id: row.id,
-        node_id: row.nodeId,
+        topic_id: row.topicId,
         title: displayChecklistTitle(row.title),
         description: row.description,
         sort_order: row.sortOrder,
-        is_completed: row.isCompleted,
+        completed: row.completed,
         completed_at: row.completedAt,
       }))
     )
@@ -138,10 +141,7 @@ export async function listExistingIds(ids: string[]) {
   const supabase = getSupabaseServerClient()
   for (let index = 0; index < ids.length; index += 100) {
     const chunk = ids.slice(index, index + 100)
-    const { data, error } = await supabase
-      .from("checklist_items")
-      .select("id")
-      .in("id", chunk)
+    const { data, error } = await supabase.from("tasks").select("id").in("id", chunk)
     if (error) {
       throwFromSupabase(error)
     }
@@ -154,7 +154,7 @@ export async function listExistingIds(ids: string[]) {
 }
 
 export async function updateDetails(
-  nodeId: string,
+  topicId: string,
   itemId: string,
   input: {
     title: string
@@ -163,12 +163,12 @@ export async function updateDetails(
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .update({
       title: displayChecklistTitle(input.title),
       description: input.description,
     })
-    .eq("node_id", nodeId)
+    .eq("topic_id", topicId)
     .eq("id", itemId)
     .select()
     .maybeSingle()
@@ -185,19 +185,19 @@ export async function updateDetails(
 }
 
 export async function setCompleted(
-  nodeId: string,
+  topicId: string,
   itemId: string,
-  isCompleted: boolean,
+  completed: boolean,
   completedAt: string | null
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .update({
-      is_completed: isCompleted,
+      completed,
       completed_at: completedAt,
     })
-    .eq("node_id", nodeId)
+    .eq("topic_id", topicId)
     .eq("id", itemId)
     .select()
     .maybeSingle()
@@ -214,16 +214,16 @@ export async function setCompleted(
 }
 
 export async function updateSortOrders(
-  nodeId: string,
+  topicId: string,
   orders: { id: string; sortOrder: number }[]
 ) {
   const supabase = getSupabaseServerClient()
 
   for (const order of orders) {
     const { error } = await supabase
-      .from("checklist_items")
+      .from("tasks")
       .update({ sort_order: order.sortOrder })
-      .eq("node_id", nodeId)
+      .eq("topic_id", topicId)
       .eq("id", order.id)
 
     if (error) {
@@ -232,12 +232,12 @@ export async function updateSortOrders(
   }
 }
 
-export async function deleteForNode(nodeId: string, itemId: string) {
+export async function deleteForTopic(topicId: string, itemId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("checklist_items")
+    .from("tasks")
     .delete()
-    .eq("node_id", nodeId)
+    .eq("topic_id", topicId)
     .eq("id", itemId)
     .select("id")
     .maybeSingle()
@@ -250,3 +250,6 @@ export async function deleteForNode(nodeId: string, itemId: string) {
     throw new ApplicationError("not_found", "That task no longer exists.")
   }
 }
+
+/** @deprecated Use deleteForTopic */
+export const deleteForNode = deleteForTopic

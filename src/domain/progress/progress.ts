@@ -1,6 +1,6 @@
-import type { ChecklistItem } from "@/domain/checklists/types"
-import { isSkillNode } from "@/domain/nodes/kind"
-import type { RoadmapNode } from "@/domain/nodes/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
+import { isSkillNode } from "@/domain/topics/kind"
+import type { RoadmapNode } from "@/domain/topics/types"
 
 export type ProgressStatus = "pending" | "in_progress" | "done"
 
@@ -55,8 +55,8 @@ export function progressFromCounts(completed: number, total: number): ProgressSn
 }
 
 export function nodeProgress(items: ChecklistItem[], nodeId: string) {
-  const own = items.filter((item) => item.nodeId === nodeId)
-  const completed = own.filter((item) => item.isCompleted).length
+  const own = items.filter((item) => item.topicId === nodeId)
+  const completed = own.filter((item) => item.completed).length
   return progressFromCounts(completed, own.length)
 }
 
@@ -97,13 +97,13 @@ export function subtreeProgress(
   rootId: string
 ) {
   const ids = subtreeNodeIds(nodes, rootId)
-  const subtreeItems = items.filter((item) => ids.has(item.nodeId))
-  const completed = subtreeItems.filter((item) => item.isCompleted).length
+  const subtreeItems = items.filter((item) => ids.has(item.topicId))
+  const completed = subtreeItems.filter((item) => item.completed).length
   return progressFromCounts(completed, subtreeItems.length)
 }
 
 export function roadmapProgress(items: ChecklistItem[]) {
-  const completed = items.filter((item) => item.isCompleted).length
+  const completed = items.filter((item) => item.completed).length
   return progressFromCounts(completed, items.length)
 }
 

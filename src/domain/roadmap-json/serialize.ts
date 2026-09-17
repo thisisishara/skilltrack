@@ -1,79 +1,105 @@
-import type { ChecklistItem } from "@/domain/checklists/types"
-import type { NodeLink } from "@/domain/links/types"
-import { isLabelNode } from "@/domain/nodes/kind"
-import type { RoadmapNode } from "@/domain/nodes/types"
+import type { Task } from "@/domain/tasks/types"
+import type { Link } from "@/domain/links/types"
+import { isLabelNode } from "@/domain/topics/kind"
+import type { Topic } from "@/domain/topics/types"
 import type { Role } from "@/domain/roles/types"
 
 import { parseRoadmapJson } from "@/domain/roadmap-json/parse"
-import { ROADMAP_SCHEMA_ID } from "@/domain/roadmap-json/types"
 
-function sortedSiblings(nodes: RoadmapNode[]) {
-  return [...nodes].sort((left, right) => {
-    if (left.sortOrder !== right.sortOrder) {
-      return left.sortOrder - right.sortOrder
-    }
+function sortedSiblings(topics: Topic[], parentId: string | null) {
+  return topics
+    .filter((topic) => topic.parentId === parentId && !isLabelNode(topic))
+    .sort((left, right) => {
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder
+      }
 
-    return left.createdAt.localeCompare(right.createdAt)
-  })
+      return left.createdAt.localeCompare(right.createdAt)
+    })
+}
+
+function serializeTopic(
+  topic: Topic,
+  allTopics: Topic[],
+  tasksByTopic: Map<string, Task[]>,
+  linksByTopic: Map<string, Link[]>
+): Record<string, unknown> {
+  const tasks = (tasksByTopic.get(topic.id) ?? [])
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      ...(item.description ? { description: item.description } : {}),
+      completed: item.completed,
+    }))
+
+  const links = (linksByTopic.get(topic.id) ?? []).map((link) => ({
+    id: link.id,
+    label: link.label,
+    url: link.url,
+  }))
+
+  const children = sortedSiblings(allTopics, topic.id).map((child) =>
+    serializeTopic(child, allTopics, tasksByTopic, linksByTopic)
+  )
+
+  return {
+    id: topic.id,
+    title: topic.title,
+    ...(topic.description ? { description: topic.description } : {}),
+    icon: topic.icon,
+    ...(topic.color ? { color: topic.color } : {}),
+    ...(topic.notes ? { notes: topic.notes } : {}),
+    ...(tasks.length > 0 ? { tasks } : {}),
+    ...(links.length > 0 ? { links } : {}),
+    ...(children.length > 0 ? { topics: children } : {}),
+  }
 }
 
 export function serializeRoadmapDocument(
-  role: Pick<Role, "name" | "description">,
-  nodes: RoadmapNode[],
-  items: ChecklistItem[],
-  links: NodeLink[]
+  role: Pick<Role, "name" | "description" | "notes">,
+  topics: Topic[],
+  tasks: Task[],
+  links: Link[]
 ) {
-  const itemsByNode = new Map<string, ChecklistItem[]>()
-  for (const item of items) {
-    const list = itemsByNode.get(item.nodeId) ?? []
-    list.push(item)
-    itemsByNode.set(item.nodeId, list)
+  const tasksByTopic = new Map<string, Task[]>()
+  for (const task of tasks) {
+    const list = tasksByTopic.get(task.topicId) ?? []
+    list.push(task)
+    tasksByTopic.set(task.topicId, list)
   }
 
-  const linksByNode = new Map<string, NodeLink[]>()
+  const linksByTopic = new Map<string, Link[]>()
+  const roadmapLinks: Link[] = []
   for (const link of links) {
-    const list = linksByNode.get(link.nodeId) ?? []
+    if (!link.topicId) {
+      roadmapLinks.push(link)
+      continue
+    }
+    const list = linksByTopic.get(link.topicId) ?? []
     list.push(link)
-    linksByNode.set(link.nodeId, list)
+    linksByTopic.set(link.topicId, list)
   }
 
   const document = {
-    schema: ROADMAP_SCHEMA_ID,
     roadmap: {
-      name: role.name,
+      title: role.name,
       ...(role.description ? { description: role.description } : {}),
+      ...(role.notes ? { notes: role.notes } : {}),
+      ...(roadmapLinks.length > 0
+        ? {
+            links: roadmapLinks.map((link) => ({
+              id: link.id,
+              label: link.label,
+              url: link.url,
+            })),
+          }
+        : {}),
     },
-    nodes: sortedSiblings(nodes)
-      .filter((node) => !isLabelNode(node))
-      .map((node) => {
-        const checklist = (itemsByNode.get(node.id) ?? [])
-          .slice()
-          .sort((left, right) => left.sortOrder - right.sortOrder)
-          .map((item) => ({
-            id: item.id,
-            title: item.title,
-            ...(item.description ? { description: item.description } : {}),
-            completed: item.isCompleted,
-          }))
-
-        const nodeLinks = (linksByNode.get(node.id) ?? []).map((link) => ({
-          id: link.id,
-          label: link.label,
-          url: link.url,
-        }))
-
-        return {
-          id: node.id,
-          title: node.title,
-          ...(node.parentId ? { parent_id: node.parentId } : {}),
-          ...(node.description ? { description: node.description } : {}),
-          icon: node.icon,
-          ...(node.accentColor ? { accent_color: node.accentColor } : {}),
-          ...(node.notes ? { notes: node.notes } : {}),
-          ...(checklist.length > 0 ? { checklist } : {}),
-          ...(nodeLinks.length > 0 ? { links: nodeLinks } : {}),
-        }
-      }),
+    topics: sortedSiblings(topics, null).map((topic) =>
+      serializeTopic(topic, topics, tasksByTopic, linksByTopic)
+    ),
   }
 
   const json = `${JSON.stringify(document, null, 2)}\n`

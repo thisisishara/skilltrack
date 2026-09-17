@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, GripVertical, Link2, ListTree, NotebookPen, Pencil, Plus, SquareCheck, Trash2 } from "lucide-react"
 import { useRef, useState, type DragEvent } from "react"
 
-import { TaskDialog } from "@/components/roadmap/node-checklist-section"
+import { TaskDialog } from "@/components/roadmap/topic-tasks-section"
 import { NodeLucideIcon } from "@/components/roadmap/lucide-icon"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -21,16 +21,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import {
   dropPositionFromOffset,
   type TreeDropPosition,
-} from "@/domain/nodes/placement"
+} from "@/domain/topics/placement"
 import {
   accentIconStyle,
   inheritedAccentColor,
-} from "@/domain/nodes/accent"
-import type { RoadmapNode } from "@/domain/nodes/types"
+} from "@/domain/topics/accent"
+import type { RoadmapNode } from "@/domain/topics/types"
 import {
   DONE_CHECKBOX_CLASS,
   type ProgressSnapshot,
@@ -173,7 +173,7 @@ function TaskTickList({
                 data-task-row
                 className={cn(
                   "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
-                  item.isCompleted && "opacity-80",
+                  item.completed && "opacity-80",
                   draggedId === item.id && "opacity-50",
                   focusedTaskId === item.id && "bg-accent ring-2 ring-primary/50",
                   hint === "before" &&
@@ -239,7 +239,7 @@ function TaskTickList({
                 </span>
                 ) : null}
                 <Checkbox
-                  checked={item.isCompleted}
+                  checked={item.completed}
                   className={DONE_CHECKBOX_CLASS}
                   onCheckedChange={(checked) => {
                     void onToggle(item.id, checked === true)
@@ -249,7 +249,7 @@ function TaskTickList({
                 <span
                   className={cn(
                     "min-w-0 flex-1 truncate leading-5",
-                    item.isCompleted && "text-muted-foreground line-through"
+                    item.completed && "text-muted-foreground line-through"
                   )}
                 >
                   {item.title}
@@ -355,7 +355,7 @@ function TaskTickList({
   )
 }
 
-export function RoadmapNodeRow({
+export function TopicRow({
   node,
   depth,
   childrenByParent,
@@ -403,7 +403,7 @@ export function RoadmapNodeRow({
   canDropOn: (nodeId: string, position: TreeDropPosition) => boolean
 }) {
   const children = childrenByParent.get(node.id) ?? []
-  const ownItems = items.filter((item) => item.nodeId === node.id)
+  const ownItems = items.filter((item) => item.topicId === node.id)
   const expanded = expandedIds.has(node.id)
   const subtree = subtreeProgressFor(node.id)
   const selected = selectedNodeId === node.id
@@ -558,7 +558,7 @@ export function RoadmapNodeRow({
               }}
             >
               <ListTree />
-              Sub-topic
+              Subtopic
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -693,6 +693,7 @@ export function RoadmapNodeRow({
           {grip}
           {expandIcon}
           <span className="flex min-w-0 flex-1 items-center gap-2.5 py-0.5 text-left">
+            {isSubgroup ? null : (
             <span
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-md",
@@ -702,6 +703,7 @@ export function RoadmapNodeRow({
             >
               <NodeLucideIcon name={node.icon} className="size-4" />
             </span>
+            )}
             <span className="min-w-0 flex-1 truncate text-sm font-medium">
               {node.title}
             </span>
@@ -757,7 +759,7 @@ export function RoadmapNodeRow({
           {children.length > 0 ? (
             <ul className="flex flex-col gap-1.5 py-1.5">
               {children.map((child) => (
-                <RoadmapNodeRow
+                <TopicRow
                   key={child.id}
                   node={child}
                   depth={depth + 1}

@@ -190,7 +190,7 @@ export function RoleSettings({ role }: { role: Role }) {
         <CardHeader>
           <CardTitle>Export roadmap</CardTitle>
           <CardDescription>
-            Download skilltrack.roadmap.v1 JSON. Re-import it into a new role or
+            Download this role as SkillTrack roadmap JSON. Re-import it into a new role or
             an empty roadmap.
           </CardDescription>
         </CardHeader>

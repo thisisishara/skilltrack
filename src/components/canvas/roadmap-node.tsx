@@ -8,7 +8,7 @@ import {
   nodeCanHaveChildren,
   nodeCanHaveParent,
   type NodeHandleKind,
-} from "@/domain/nodes/handle"
+} from "@/domain/topics/handle"
 import type { ProgressStatus } from "@/domain/progress/progress"
 
 export type RoadmapFlowNode = Node<

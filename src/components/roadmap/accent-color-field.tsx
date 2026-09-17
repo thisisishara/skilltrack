@@ -16,14 +16,16 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
-import { ACCENT_PRESETS, parseAccentHex } from "@/domain/nodes/accent"
+import { ACCENT_PRESETS, parseAccentHex } from "@/domain/topics/accent"
 
 export function AccentColorField({
   value,
   onChange,
+  canInherit = true,
 }: {
   value: string | null
   onChange: (next: string | null) => void
+  canInherit?: boolean
 }) {
   const [custom, setCustom] = useState(value?.replace(/^#/, "") ?? "")
   const [invalid, setInvalid] = useState(false)
@@ -50,7 +52,7 @@ export function AccentColorField({
     <Field data-invalid={invalid ? true : undefined}>
       <FieldLabel>Accent color</FieldLabel>
       <FieldDescription>
-        Topic icons in this subtree use this color.
+        Color for this topic’s icon. Nested topics can keep their own colors.
       </FieldDescription>
       <div className="flex flex-wrap items-center gap-2">
         {ACCENT_PRESETS.map((preset) => {
@@ -69,14 +71,16 @@ export function AccentColorField({
             />
           )
         })}
-        <Button
-          type="button"
-          size="sm"
-          variant={value ? "outline" : "secondary"}
-          onClick={() => onChange(null)}
-        >
-          Inherit
-        </Button>
+        {canInherit ? (
+          <Button
+            type="button"
+            size="sm"
+            variant={value ? "outline" : "secondary"}
+            onClick={() => onChange(null)}
+          >
+            Inherit
+          </Button>
+        ) : null}
       </div>
       <InputGroup>
         <InputGroupAddon>
@@ -89,7 +93,9 @@ export function AccentColorField({
             setCustom(next)
             if (!next.trim()) {
               setInvalid(false)
-              onChange(null)
+              if (canInherit) {
+                onChange(null)
+              }
               return
             }
             if (next.replace(/^#/, "").length === 6) {

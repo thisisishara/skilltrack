@@ -1,8 +1,8 @@
 import { ListTree } from "lucide-react"
 
-import { listChecklistsForRole } from "@/application/checklists/checklists-service"
+import { listTasksForRole } from "@/application/tasks/tasks-service"
 import { listLinksForRole } from "@/application/links/links-service"
-import { listNodesForRole } from "@/application/nodes/nodes-service"
+import { listTopicsForRole } from "@/application/topics/topics-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { PersistActiveRole } from "@/components/roles/persist-active-role"
 import { Roadmap } from "@/components/roadmap/roadmap"
@@ -47,8 +47,8 @@ export default async function RoleDashboardPage({
   }
 
   const [nodes, checklistItems, links] = await Promise.all([
-    listNodesForRole(applicationUser.id, role.id),
-    listChecklistsForRole(applicationUser.id, role.id),
+    listTopicsForRole(applicationUser.id, role.id),
+    listTasksForRole(applicationUser.id, role.id),
     listLinksForRole(applicationUser.id, role.id),
   ])
 
@@ -59,6 +59,8 @@ export default async function RoleDashboardPage({
         userId={applicationUser.id}
         roleId={role.id}
         roleName={role.name}
+        roleDescription={role.description}
+        roleNotes={role.notes}
         nodes={nodes}
         checklistItems={checklistItems}
         links={links}

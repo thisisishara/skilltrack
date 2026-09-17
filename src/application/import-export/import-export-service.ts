@@ -1,6 +1,12 @@
 import "server-only"
 
-import { getRoleForUser, createEmptyRole, deleteRole, updateRoleDescription } from "@/application/roles/roles-service"
+import {
+  getRoleForUser,
+  createEmptyRole,
+  deleteRole,
+  updateRoleDescription,
+  updateRoleNotes,
+} from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
 import { displayRoleName } from "@/domain/roles/name"
 import type { Role } from "@/domain/roles/types"
@@ -12,35 +18,36 @@ import {
   exportFileName,
   type NormalizedRoadmapDocument,
 } from "@/domain/roadmap-json"
-import * as checklistsRepository from "@/repositories/checklists/checklists-repository"
+import * as tasksRepository from "@/repositories/tasks/tasks-repository"
 import * as linksRepository from "@/repositories/links/links-repository"
-import * as nodesRepository from "@/repositories/nodes/nodes-repository"
+import * as topicsRepository from "@/repositories/topics/topics-repository"
 
 async function documentIdsCollide(document: NormalizedRoadmapDocument) {
   const ids = collectDocumentIds(document)
-  const nodeIds = document.nodes.map((node) => node.id)
-  const checklistIds = document.nodes.flatMap((node) => node.checklist.map((item) => item.id))
-  const linkIds = document.nodes.flatMap((node) => node.links.map((link) => link.id))
+  const topicIds = document.topics.map((topic) => topic.id)
+  const taskIds = document.topics.flatMap((topic) => topic.tasks.map((task) => task.id))
+  const linkIds = [
+    ...document.links.map((link) => link.id),
+    ...document.topics.flatMap((topic) => topic.links.map((link) => link.id)),
+  ]
 
-  const [nodes, checklists, links] = await Promise.all([
-    nodesRepository.listExistingIds(nodeIds),
-    checklistsRepository.listExistingIds(checklistIds),
+  const [topics, tasks, links] = await Promise.all([
+    topicsRepository.listExistingIds(topicIds),
+    tasksRepository.listExistingIds(taskIds),
     linksRepository.listExistingIds(linkIds),
   ])
 
-  return ids.some(
-    (id) => nodes.has(id) || checklists.has(id) || links.has(id)
-  )
+  return ids.some((id) => topics.has(id) || tasks.has(id) || links.has(id))
 }
 
 function siblingSortOrders(document: NormalizedRoadmapDocument) {
   const counters = new Map<string, number>()
   const orders = new Map<string, number>()
 
-  for (const node of document.nodes) {
-    const key = node.parentId ?? "__root__"
+  for (const topic of document.topics) {
+    const key = topic.parentId ?? "__root__"
     const next = counters.get(key) ?? 0
-    orders.set(node.id, next)
+    orders.set(topic.id, next)
     counters.set(key, next + 1)
   }
 
@@ -49,67 +56,88 @@ function siblingSortOrders(document: NormalizedRoadmapDocument) {
 
 async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) {
   const sortOrders = siblingSortOrders(document)
-  const remaining = [...document.nodes]
+  const remaining = [...document.topics]
   const inserted = new Set<string>()
 
   while (remaining.length > 0) {
     const ready = remaining.filter(
-      (node) => !node.parentId || inserted.has(node.parentId)
+      (topic) => !topic.parentId || inserted.has(topic.parentId)
     )
 
     if (ready.length === 0) {
       throw new ApplicationError("validation", "Topics cannot form a loop.")
     }
 
-    await nodesRepository.insertMany(
-      ready.map((node) => ({
-        id: node.id,
+    await topicsRepository.insertMany(
+      ready.map((topic) => ({
+        id: topic.id,
         roleId,
-        parentId: node.parentId,
+        parentId: topic.parentId,
         kind: "skill",
-        title: node.title,
-        description: node.description,
-        notes: node.notes,
-        icon: node.icon,
-        accentColor: node.accentColor,
+        title: topic.title,
+        description: topic.description,
+        notes: topic.notes,
+        icon: topic.icon,
+        color: topic.color,
         handleKind: "regular",
         incomingEdgeAnimated: false,
         positionX: 0,
         positionY: 0,
-        sortOrder: sortOrders.get(node.id) ?? 0,
+        sortOrder: sortOrders.get(topic.id) ?? 0,
       }))
     )
 
-    for (const node of ready) {
-      inserted.add(node.id)
+    for (const topic of ready) {
+      inserted.add(topic.id)
     }
 
-    remaining.splice(0, remaining.length, ...remaining.filter((node) => !inserted.has(node.id)))
+    remaining.splice(0, remaining.length, ...remaining.filter((topic) => !inserted.has(topic.id)))
   }
 
   const now = new Date().toISOString()
-  const checklistRows = document.nodes.flatMap((node) =>
-    node.checklist.map((item, index) => ({
-      id: item.id,
-      nodeId: node.id,
-      title: item.title,
-      description: item.description,
+  const taskRows = document.topics.flatMap((topic) =>
+    topic.tasks.map((task, index) => ({
+      id: task.id,
+      topicId: topic.id,
+      title: task.title,
+      description: task.description,
       sortOrder: index,
-      isCompleted: item.completed,
-      completedAt: item.completed ? now : null,
+      completed: task.completed,
+      completedAt: task.completed ? now : null,
     }))
   )
-  const linkRows = document.nodes.flatMap((node) =>
-    node.links.map((link) => ({
+  const linkRows = [
+    ...document.links.map((link) => ({
       id: link.id,
-      nodeId: node.id,
+      roleId,
+      topicId: null as string | null,
       label: link.label,
       url: link.url,
-    }))
-  )
+    })),
+    ...document.topics.flatMap((topic) =>
+      topic.links.map((link) => ({
+        id: link.id,
+        roleId,
+        topicId: topic.id,
+        label: link.label,
+        url: link.url,
+      }))
+    ),
+  ]
 
-  await checklistsRepository.insertMany(checklistRows)
+  await tasksRepository.insertMany(taskRows)
   await linksRepository.insertMany(linkRows)
+}
+
+async function applyRoadmapFields(userId: string, role: Role, document: NormalizedRoadmapDocument) {
+  let next = role
+  if (!role.description && document.description) {
+    next = await updateRoleDescription(userId, role.id, document.description)
+  }
+  if (!role.notes && document.notes) {
+    next = await updateRoleNotes(userId, role.id, document.notes)
+  }
+  return next
 }
 
 export async function importRoadmap(
@@ -129,7 +157,7 @@ export async function importRoadmap(
       throw new ApplicationError("not_found", "That role no longer exists.")
     }
 
-    const existing = await nodesRepository.listByRoleId(role.id)
+    const existing = await topicsRepository.listByRoleId(role.id)
     if (existing.length > 0) {
       throw new ApplicationError(
         "validation",
@@ -138,7 +166,7 @@ export async function importRoadmap(
     }
 
     try {
-      const stillEmpty = await nodesRepository.listByRoleId(role.id)
+      const stillEmpty = await topicsRepository.listByRoleId(role.id)
       if (stillEmpty.length > 0) {
         throw new ApplicationError(
           "validation",
@@ -147,14 +175,9 @@ export async function importRoadmap(
       }
 
       await insertGraph(role.id, document)
-
-      if (!role.description && document.description) {
-        return updateRoleDescription(userId, role.id, document.description)
-      }
-
-      return role
+      return applyRoadmapFields(userId, role, document)
     } catch (error) {
-      await nodesRepository.deleteAllForRole(role.id)
+      await topicsRepository.deleteAllForRole(role.id)
       throw error
     }
   }
@@ -168,7 +191,7 @@ export async function importRoadmap(
 
   try {
     await insertGraph(role.id, document)
-    return role
+    return applyRoadmapFields(userId, role, document)
   } catch (error) {
     await deleteRole(userId, role.id)
     throw error
@@ -181,13 +204,13 @@ export async function exportRoadmap(userId: string, roleId: string) {
     throw new ApplicationError("not_found", "That role no longer exists.")
   }
 
-  const [nodes, items, links] = await Promise.all([
-    nodesRepository.listByRoleId(role.id),
-    checklistsRepository.listByRoleId(role.id),
+  const [topics, tasks, links] = await Promise.all([
+    topicsRepository.listByRoleId(role.id),
+    tasksRepository.listByRoleId(role.id),
     linksRepository.listByRoleId(role.id),
   ])
 
-  const json = serializeRoadmapDocument(role, nodes, items, links)
+  const json = serializeRoadmapDocument(role, topics, tasks, links)
   return {
     filename: exportFileName(role.name),
     json,

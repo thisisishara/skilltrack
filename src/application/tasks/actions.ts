@@ -8,18 +8,18 @@ import {
   reorderChecklistItems,
   setChecklistItemCompleted,
   updateChecklistItem,
-} from "@/application/checklists/checklists-service"
+} from "@/application/tasks/tasks-service"
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
-export type ChecklistActionResult =
+export type TaskActionResult =
   | { ok: true; item: ChecklistItem }
   | { ok: true }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
-function fail(error: unknown): ChecklistActionResult {
+function fail(error: unknown): TaskActionResult {
   return failAction(error, "checklists.action_failed")
 }
 
@@ -33,7 +33,7 @@ export async function createChecklistItemAction(input: {
   nodeId: string
   title: string
   description?: string | null
-}): Promise<ChecklistActionResult> {
+}): Promise<TaskActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -59,7 +59,7 @@ export async function updateChecklistItemAction(input: {
   itemId: string
   title: string
   description?: string | null
-}): Promise<ChecklistActionResult> {
+}): Promise<TaskActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
       throw new ApplicationError("validation", "Select a task first.")
@@ -85,7 +85,7 @@ export async function setChecklistItemCompletedAction(input: {
   nodeId: string
   itemId: string
   isCompleted: boolean
-}): Promise<ChecklistActionResult> {
+}): Promise<TaskActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
       throw new ApplicationError("validation", "Select a task first.")
@@ -110,7 +110,7 @@ export async function reorderChecklistItemsAction(input: {
   roleId: string
   nodeId: string
   orderedIds: string[]
-}): Promise<ChecklistActionResult> {
+}): Promise<TaskActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -134,7 +134,7 @@ export async function deleteChecklistItemAction(input: {
   roleId: string
   nodeId: string
   itemId: string
-}): Promise<ChecklistActionResult> {
+}): Promise<TaskActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.itemId) {
       throw new ApplicationError("validation", "Select a task first.")

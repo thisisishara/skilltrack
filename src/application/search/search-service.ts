@@ -1,11 +1,11 @@
 import "server-only"
 
 import { listRoles } from "@/application/roles/roles-service"
-import { isLabelNode } from "@/domain/nodes/kind"
+import { isLabelNode } from "@/domain/topics/kind"
 import { nodeProgress } from "@/domain/progress/progress"
 import { ancestorTitlePath } from "@/domain/search/query"
-import * as checklistsRepository from "@/repositories/checklists/checklists-repository"
-import * as nodesRepository from "@/repositories/nodes/nodes-repository"
+import * as tasksRepository from "@/repositories/tasks/tasks-repository"
+import * as topicsRepository from "@/repositories/topics/topics-repository"
 
 export type SearchRoleHit = {
   id: string
@@ -44,8 +44,8 @@ export async function getSearchIndex(userId: string): Promise<SearchIndex> {
   const graphs = await Promise.all(
     roles.map(async (role) => {
       const [nodes, items] = await Promise.all([
-        nodesRepository.listByRoleId(role.id),
-        checklistsRepository.listByRoleId(role.id),
+        topicsRepository.listByRoleId(role.id),
+        tasksRepository.listByRoleId(role.id),
       ])
       return { role, nodes, items }
     })
@@ -70,7 +70,7 @@ export async function getSearchIndex(userId: string): Promise<SearchIndex> {
     tasks: graphs.flatMap(({ role, nodes, items }) => {
       const byId = new Map(nodes.map((node) => [node.id, node]))
       return items.flatMap((item) => {
-        const node = byId.get(item.nodeId)
+        const node = byId.get(item.topicId)
         if (!node || isLabelNode(node)) {
           return []
         }
@@ -85,7 +85,7 @@ export async function getSearchIndex(userId: string): Promise<SearchIndex> {
             title: item.title,
             description: item.description,
             parentPath,
-            isCompleted: item.isCompleted,
+            isCompleted: item.completed,
           },
         ]
       })

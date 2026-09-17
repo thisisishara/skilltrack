@@ -1,11 +1,14 @@
-export type ChecklistItem = {
+export type Task = {
   id: string
-  nodeId: string
+  topicId: string
   title: string
   description: string | null
-  isCompleted: boolean
+  completed: boolean
   sortOrder: number
   createdAt: string
   updatedAt: string
   completedAt: string | null
 }
+
+/** @deprecated Use Task */
+export type ChecklistItem = Task

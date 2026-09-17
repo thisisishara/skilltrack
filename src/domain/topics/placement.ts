@@ -1,5 +1,5 @@
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
-import type { RoadmapNode } from "@/domain/nodes/types"
+import { wouldCreateCycle } from "@/domain/topics/hierarchy"
+import type { RoadmapNode } from "@/domain/topics/types"
 
 export type TreeDropPosition = "before" | "after" | "inside"
 
@@ -97,6 +97,31 @@ export function placementUpdates(
   }
 
   return [...updates.values()]
+}
+
+export function rootPlacementUpdates(
+  nodes: Placeable[],
+  draggedId: string
+): NodePlacement[] | null {
+  const dragged = nodes.find((node) => node.id === draggedId)
+  if (!dragged) {
+    return null
+  }
+
+  if (dragged.parentId === null) {
+    return null
+  }
+
+  const nextSiblings = childrenOf(nodes, null).filter((node) => node.id !== draggedId)
+  const orderedIds = [...nextSiblings.map((node) => node.id), draggedId]
+  const previousIds = childrenOf(nodes, dragged.parentId)
+    .filter((node) => node.id !== draggedId)
+    .map((node) => node.id)
+
+  return [
+    ...ordersFor(null, orderedIds),
+    ...ordersFor(dragged.parentId, previousIds),
+  ]
 }
 
 export function applyPlacements<T extends Placeable>(nodes: T[], placements: NodePlacement[]) {

@@ -1,8 +1,12 @@
-export type NodeLink = {
+export type Link = {
   id: string
-  nodeId: string
+  roleId: string
+  topicId: string | null
   label: string
   url: string
   createdAt: string
   updatedAt: string
 }
+
+/** @deprecated Use Link */
+export type NodeLink = Link

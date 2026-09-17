@@ -34,7 +34,7 @@ export function parentLinkError(
   }
 
   if (parentKind && !nodeCanHaveChildren(parentKind)) {
-    return "This topic cannot have sub-topics."
+    return "This topic cannot have subtopics."
   }
 
   return null
@@ -42,7 +42,7 @@ export function parentLinkError(
 
 export function childrenLinkError(kind: NodeHandleKind, childCount: number) {
   if (childCount > 0 && !nodeCanHaveChildren(kind)) {
-    return "This topic cannot have sub-topics."
+    return "This topic cannot have subtopics."
   }
 
   return null

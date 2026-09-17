@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ChecklistItem } from "@/domain/checklists/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import {
   nodeProgress,
   nodeStatusCounts,
@@ -10,20 +10,20 @@ import {
 } from "@/domain/progress/progress"
 
 function item(
-  nodeId: string,
+  topicId: string,
   id: string,
-  isCompleted: boolean
+  completed: boolean
 ): ChecklistItem {
   return {
     id,
-    nodeId,
+    topicId,
     title: id,
     description: null,
-    isCompleted,
+    completed,
     sortOrder: 0,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
-    completedAt: isCompleted ? "2026-01-01T00:00:00.000Z" : null,
+    completedAt: completed ? "2026-01-01T00:00:00.000Z" : null,
   }
 }
 

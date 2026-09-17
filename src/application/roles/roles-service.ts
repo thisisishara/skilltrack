@@ -42,6 +42,15 @@ export async function updateRoleDescription(
   return rolesRepository.updateDescription(userId, roleId, description)
 }
 
+export async function updateRoleNotes(
+  userId: string,
+  roleId: string,
+  notes: string | null
+) {
+  const trimmed = notes?.trim() ?? ""
+  return rolesRepository.updateNotes(userId, roleId, trimmed ? trimmed : null)
+}
+
 export async function deleteRole(userId: string, roleId: string) {
   await rolesRepository.deleteForUser(userId, roleId)
 }

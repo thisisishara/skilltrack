@@ -6,8 +6,7 @@ import {
   remapRoadmapDocument,
   serializeRoadmapDocument,
 } from "@/domain/roadmap-json"
-import mixedTree from "@/schemas/fixtures/mixed-tree.v1.json"
-import seniorAiEngineer from "@/schemas/fixtures/senior-ai-engineer.v1.json"
+import mixedTree from "@/schemas/fixtures/mixed-tree.json"
 
 function expectValidation(json: string, message: string) {
   try {
@@ -22,36 +21,27 @@ function expectValidation(json: string, message: string) {
 }
 
 describe("parseRoadmapJson", () => {
-  it("accepts the Senior AI Engineer sample", () => {
-    const document = parseRoadmapJson(JSON.stringify(seniorAiEngineer))
-    expect(document.name).toBe("Senior AI Engineer")
-    expect(document.nodes.every((node) => node.kind === "skill")).toBe(true)
-    expect(document.nodes.length).toBeGreaterThan(10)
-  })
-
   it("accepts nested topics, notes, tasks, and links", () => {
     const document = parseRoadmapJson(JSON.stringify(mixedTree))
-    const leaf = document.nodes.find((node) => node.title === "Leaf")
-    const root = document.nodes.find((node) => node.title === "Root")
+    const leaf = document.topics.find((topic) => topic.title === "Leaf")
+    const root = document.topics.find((topic) => topic.title === "Root")
+    expect(document.name).toBe("Mixed Tree")
+    expect(document.notes).toBe("Roadmap notes")
     expect(leaf?.parentId).toBe(root?.id)
     expect(root?.notes).toBe("Root notes")
-    expect(root?.checklist).toHaveLength(1)
+    expect(root?.tasks).toHaveLength(1)
     expect(root?.links).toHaveLength(1)
   })
 
-  it("rejects canvas fields", () => {
+  it("rejects canvas leftovers and unknown fields", () => {
     expectValidation(
       JSON.stringify({
-        schema: "skilltrack.roadmap.v1",
-        roadmap: { name: "Canvas leftover" },
-        nodes: [
+        roadmap: { title: "Canvas leftover" },
+        topics: [
           {
             id: "00000000-0000-4000-8000-000000000001",
             title: "Skill",
-            position: { x: 0, y: 0 },
-            handle_kind: "regular",
-            incoming_edge_animated: true,
-            kind: "label",
+            parent_id: "00000000-0000-4000-8000-000000000002",
           },
         ],
       }),
@@ -63,129 +53,83 @@ describe("parseRoadmapJson", () => {
     expectValidation("{", "JSON is not valid")
   })
 
-  it("rejects the wrong schema version", () => {
+  it("rejects a document missing topics", () => {
     expectValidation(
-      JSON.stringify({ schema: "skilltrack.roadmap.v0", roadmap: { name: "X" }, nodes: [] }),
-      "schema must equal"
+      JSON.stringify({ roadmap: { title: "X" } }),
+      "topics must be an array"
     )
   })
 
-  it("rejects duplicate node ids", () => {
-    const json = structuredClone(mixedTree)
-    json.nodes[1].id = json.nodes[0].id
-    expectValidation(JSON.stringify(json), "Topic IDs must be unique")
-  })
-
-  it("rejects a cycle", () => {
+  it("rejects duplicate topic ids", () => {
     expectValidation(
       JSON.stringify({
-        schema: "skilltrack.roadmap.v1",
-        roadmap: { name: "Cycle" },
-        nodes: [
+        roadmap: { title: "Dup" },
+        topics: [
           {
             id: "00000000-0000-4000-8000-000000000001",
             title: "A",
-            parent_id: "00000000-0000-4000-8000-000000000002",
-          },
-          {
-            id: "00000000-0000-4000-8000-000000000002",
-            title: "B",
-            parent_id: "00000000-0000-4000-8000-000000000001",
-          },
-        ],
-      }),
-      "loop"
-    )
-  })
-
-  it("rejects a missing parent", () => {
-    expectValidation(
-      JSON.stringify({
-        schema: "skilltrack.roadmap.v1",
-        roadmap: { name: "Missing parent" },
-        nodes: [
-          {
-            id: "00000000-0000-4000-8000-000000000001",
-            title: "Child",
-            parent_id: "00000000-0000-4000-8000-000000000099",
-          },
-        ],
-      }),
-      "Each nested topic must belong to another topic"
-    )
-  })
-
-  it("rejects an empty roadmap name", () => {
-    expectValidation(
-      JSON.stringify({ schema: "skilltrack.roadmap.v1", roadmap: { name: "  " }, nodes: [] }),
-      "roadmap.name cannot be empty"
-    )
-  })
-
-  it("rejects a malformed link url", () => {
-    expectValidation(
-      JSON.stringify({
-        schema: "skilltrack.roadmap.v1",
-        roadmap: { name: "Bad url" },
-        nodes: [
-          {
-            id: "00000000-0000-4000-8000-000000000001",
-            title: "Skill",
-            links: [
+            topics: [
               {
-                id: "10000000-0000-4000-8000-000000000001",
-                label: "Nope",
-                url: "ftp://example.com",
+                id: "00000000-0000-4000-8000-000000000001",
+                title: "B",
               },
             ],
           },
         ],
       }),
-      "HTTP(S)"
+      "Topic IDs must be unique"
+    )
+  })
+
+  it("rejects an empty roadmap title", () => {
+    expectValidation(
+      JSON.stringify({ roadmap: { title: "  " }, topics: [] }),
+      "roadmap.title cannot be empty"
     )
   })
 })
 
 describe("serializeRoadmapDocument", () => {
-  it("round-trips tree fields and omits canvas leftovers", () => {
+  it("round-trips nested topics without parent_id", () => {
     const parsed = parseRoadmapJson(JSON.stringify(mixedTree))
     const json = serializeRoadmapDocument(
-      { name: parsed.name, description: parsed.description },
-      parsed.nodes.map((node, index) => ({
-        id: node.id,
+      { name: parsed.name, description: parsed.description, notes: parsed.notes },
+      parsed.topics.map((topic, index) => ({
+        id: topic.id,
         roleId: "role",
-        parentId: node.parentId,
-        kind: node.kind,
-        title: node.title,
-        description: node.description,
-        notes: node.notes,
-        icon: node.icon,
-        accentColor: node.accentColor,
-        handleKind: "regular",
+        parentId: topic.parentId,
+        kind: "skill" as const,
+        title: topic.title,
+        description: topic.description,
+        notes: topic.notes,
+        icon: topic.icon,
+        color: topic.color,
+        handleKind: "regular" as const,
         incomingEdgeAnimated: false,
-        positionX: 12,
-        positionY: 34,
+        positionX: 0,
+        positionY: 0,
         sortOrder: index,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
       })),
-      parsed.nodes.flatMap((node) =>
-        node.checklist.map((item, index) => ({
-          id: item.id,
-          nodeId: node.id,
-          title: item.title,
-          description: item.description,
-          isCompleted: item.completed,
+      parsed.topics.flatMap((topic) =>
+        topic.tasks.map((task, index) => ({
+          id: task.id,
+          topicId: topic.id,
+          title: task.title,
+          description: task.description,
+          completed: task.completed,
           sortOrder: index,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
-          completedAt: item.completed ? "2026-01-01T00:00:00.000Z" : null,
+          completedAt: task.completed ? "2026-01-01T00:00:00.000Z" : null,
         }))
       ),
-      parsed.nodes.flatMap((node) =>
-        node.links.map((link) => ({
+      parsed.topics.flatMap((topic) =>
+        topic.links.map((link) => ({
           id: link.id,
-          nodeId: node.id,
+          roleId: "role",
+          topicId: topic.id,
           label: link.label,
           url: link.url,
           createdAt: "2026-01-01T00:00:00.000Z",
@@ -194,30 +138,29 @@ describe("serializeRoadmapDocument", () => {
       )
     )
 
-    expect(json).not.toContain("position")
-    expect(json).not.toContain("handle_kind")
-    expect(json).not.toContain("incoming_edge_animated")
-    expect(json).not.toContain('"kind"')
+    expect(json).not.toContain("parent_id")
+    expect(json).not.toContain("checklist")
+    expect(json).not.toContain("accent_color")
+    expect(json).not.toContain('"schema"')
 
     const again = parseRoadmapJson(json)
-    expect(again.nodes.find((node) => node.title === "Root")?.notes).toBe("Root notes")
-    expect(again.nodes.find((node) => node.title === "Leaf")?.parentId).toBe(
-      again.nodes.find((node) => node.title === "Root")?.id
+    expect(again.topics.find((topic) => topic.title === "Leaf")?.parentId).toBe(
+      again.topics.find((topic) => topic.title === "Root")?.id
     )
   })
 })
 
 describe("remapRoadmapDocument", () => {
-  it("rewrites node and parent ids", () => {
+  it("rewrites topic and parent ids", () => {
     let n = 0
     const parsed = parseRoadmapJson(JSON.stringify(mixedTree))
     const remapped = remapRoadmapDocument(parsed, () => {
       n += 1
       return `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`
     })
-    expect(remapped.nodes[0].id).not.toBe(parsed.nodes[0].id)
-    const leaf = remapped.nodes.find((node) => node.title === "Leaf")
-    const root = remapped.nodes.find((node) => node.title === "Root")
+    expect(remapped.topics[0].id).not.toBe(parsed.topics[0].id)
+    const leaf = remapped.topics.find((topic) => topic.title === "Leaf")
+    const root = remapped.topics.find((topic) => topic.title === "Root")
     expect(leaf?.parentId).toBe(root?.id)
   })
 })

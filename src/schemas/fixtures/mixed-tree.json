@@ -1,16 +1,16 @@
 {
-  "schema": "skilltrack.roadmap.v1",
   "roadmap": {
-    "name": "Mixed Tree",
-    "description": "Skills, notes, tasks, and links"
+    "title": "Mixed Tree",
+    "description": "Topics, notes, tasks, and links",
+    "notes": "Roadmap notes"
   },
-  "nodes": [
+  "topics": [
     {
       "id": "00000000-0000-4000-8000-0000000000a1",
       "title": "Root",
       "icon": "brain",
       "notes": "Root notes",
-      "checklist": [
+      "tasks": [
         {
           "id": "10000000-0000-4000-8000-0000000000a1",
           "title": "Ship a service",
@@ -23,13 +23,14 @@
           "label": "Docs",
           "url": "https://example.com/docs"
         }
+      ],
+      "topics": [
+        {
+          "id": "00000000-0000-4000-8000-0000000000a2",
+          "title": "Leaf",
+          "icon": "circle-dot"
+        }
       ]
-    },
-    {
-      "id": "00000000-0000-4000-8000-0000000000a2",
-      "title": "Leaf",
-      "parent_id": "00000000-0000-4000-8000-0000000000a1",
-      "icon": "circle-dot"
     }
   ]
 }

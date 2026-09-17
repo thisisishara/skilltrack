@@ -150,7 +150,7 @@ export function CanvasToolbar({
       <ToolbarButton label="Add label" onClick={onAddLabel}>
         <Type />
       </ToolbarButton>
-      <ToolbarButton label="Add sub-topic" disabled={!canAddChild} onClick={onAddChild}>
+      <ToolbarButton label="Add subtopic" disabled={!canAddChild} onClick={onAddChild}>
         <GitBranch />
       </ToolbarButton>
       <ToolbarButton label="Edit" disabled={!canEdit} onClick={onEdit}>

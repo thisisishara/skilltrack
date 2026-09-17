@@ -40,7 +40,7 @@ import {
 import { defaultLinkLabel, faviconUrlFor, isValidHttpUrl, normalizeLinkUrl } from "@/domain/links/url"
 import type { NodeLink } from "@/domain/links/types"
 
-export function NodeLinksSection({
+export function TopicLinksSection({
   links,
   editable = true,
   onCreate,

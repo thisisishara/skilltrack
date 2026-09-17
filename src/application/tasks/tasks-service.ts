@@ -1,12 +1,12 @@
 import "server-only"
 
-import { requireOwnedNode } from "@/application/nodes/nodes-service"
+import { requireOwnedNode } from "@/application/topics/topics-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
-import { applyChecklistCompletion } from "@/domain/checklists/completion"
-import { displayChecklistTitle } from "@/domain/checklists/title"
-import { isLabelNode } from "@/domain/nodes/kind"
-import * as checklistsRepository from "@/repositories/checklists/checklists-repository"
+import { applyChecklistCompletion } from "@/domain/tasks/completion"
+import { displayChecklistTitle } from "@/domain/tasks/title"
+import { isLabelNode } from "@/domain/topics/kind"
+import * as tasksRepository from "@/repositories/tasks/tasks-repository"
 
 function requireTitle(title: string) {
   const trimmed = displayChecklistTitle(title)
@@ -33,9 +33,9 @@ async function requireOwnedRole(userId: string, roleId: string) {
   return role
 }
 
-export async function listChecklistsForRole(userId: string, roleId: string) {
+export async function listTasksForRole(userId: string, roleId: string) {
   await requireOwnedRole(userId, roleId)
-  return checklistsRepository.listByRoleId(roleId)
+  return tasksRepository.listByRoleId(roleId)
 }
 
 export async function createChecklistItem(
@@ -52,13 +52,13 @@ export async function createChecklistItem(
   if (isLabelNode(node)) {
     throw new ApplicationError("validation", "Labels cannot have tasks.")
   }
-  const items = await checklistsRepository.listByNodeId(nodeId)
+  const items = await tasksRepository.listByTopicId(nodeId)
   const sortOrder =
     items.length === 0 ? 0 : Math.max(...items.map((item) => item.sortOrder)) + 1
 
-  return checklistsRepository.insert({
+  return tasksRepository.insert({
     id: input.id,
-    nodeId,
+    topicId: nodeId,
     title: requireTitle(input.title),
     description: optionalDescription(input.description),
     sortOrder,
@@ -76,7 +76,7 @@ export async function updateChecklistItem(
   }
 ) {
   await requireOwnedNode(userId, roleId, nodeId)
-  return checklistsRepository.updateDetails(nodeId, itemId, {
+  return tasksRepository.updateDetails(nodeId, itemId, {
     title: requireTitle(input.title),
     description: optionalDescription(input.description),
   })
@@ -90,7 +90,7 @@ export async function setChecklistItemCompleted(
   isCompleted: boolean
 ) {
   await requireOwnedNode(userId, roleId, nodeId)
-  const items = await checklistsRepository.listByNodeId(nodeId)
+  const items = await tasksRepository.listByTopicId(nodeId)
   const current = items.find((item) => item.id === itemId)
 
   if (!current) {
@@ -98,10 +98,10 @@ export async function setChecklistItemCompleted(
   }
 
   const next = applyChecklistCompletion(current, isCompleted)
-  return checklistsRepository.setCompleted(
+  return tasksRepository.setCompleted(
     nodeId,
     itemId,
-    next.isCompleted,
+    next.completed,
     next.completedAt
   )
 }
@@ -113,14 +113,14 @@ export async function reorderChecklistItems(
   orderedIds: string[]
 ) {
   await requireOwnedNode(userId, roleId, nodeId)
-  const items = await checklistsRepository.listByNodeId(nodeId)
+  const items = await tasksRepository.listByTopicId(nodeId)
   const itemIds = new Set(items.map((item) => item.id))
 
   if (orderedIds.length !== items.length || orderedIds.some((id) => !itemIds.has(id))) {
     throw new ApplicationError("validation", "Task order is invalid.")
   }
 
-  await checklistsRepository.updateSortOrders(
+  await tasksRepository.updateSortOrders(
     nodeId,
     orderedIds.map((id, index) => ({ id, sortOrder: index }))
   )
@@ -133,5 +133,5 @@ export async function deleteChecklistItem(
   itemId: string
 ) {
   await requireOwnedNode(userId, roleId, nodeId)
-  await checklistsRepository.deleteForNode(nodeId, itemId)
+  await tasksRepository.deleteForTopic(nodeId, itemId)
 }

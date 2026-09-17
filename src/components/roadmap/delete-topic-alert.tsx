@@ -16,14 +16,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-export function DeleteNodeAlert({
+export function DeleteTopicAlert({
   open,
   onOpenChange,
   count,
   nodeTitle,
   onConfirm,
   noun = "topic",
-  childNoun = "sub-topics",
+  childNoun = "subtopics",
   childNames = [],
 }: {
   open: boolean

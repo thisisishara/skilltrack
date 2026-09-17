@@ -6,6 +6,8 @@ import {
   createEmptyRole,
   deleteRole,
   renameRole,
+  updateRoleDescription,
+  updateRoleNotes,
 } from "@/application/roles/roles-service"
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { Role } from "@/domain/roles/types"
@@ -47,6 +49,42 @@ export async function renameRoleAction(
 
     const { applicationUser } = await requireSession()
     const role = await renameRole(applicationUser.id, roleId, name)
+    revalidateRoles()
+    return { ok: true, role }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function updateRoleNotesAction(
+  roleId: string,
+  notes: string | null
+): Promise<RoleActionResult> {
+  try {
+    if (!roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    const role = await updateRoleNotes(applicationUser.id, roleId, notes)
+    revalidateRoles()
+    return { ok: true, role }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
+export async function updateRoleDescriptionAction(
+  roleId: string,
+  description: string | null
+): Promise<RoleActionResult> {
+  try {
+    if (!roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    const role = await updateRoleDescription(applicationUser.id, roleId, description)
     revalidateRoles()
     return { ok: true, role }
   } catch (error) {

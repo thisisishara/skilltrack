@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react"
 import { NotebookPen, Pencil, Trash2, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import type { NodeActionResult } from "@/application/nodes/actions"
+import type { TopicActionResult } from "@/application/topics/actions"
 import { AccentColorField } from "@/components/roadmap/accent-color-field"
 import { IconPicker } from "@/components/roadmap/icon-picker"
 import {
-  NodeChecklistSection,
-  type NodeChecklistCopy,
-} from "@/components/roadmap/node-checklist-section"
-import { NodeLinksSection } from "@/components/roadmap/node-links-section"
+  TopicTasksSection,
+  type TopicTasksCopy,
+} from "@/components/roadmap/topic-tasks-section"
+import { TopicLinksSection } from "@/components/roadmap/topic-links-section"
 import { ProgressStatusBadge } from "@/components/roadmap/progress-status-badge"
 import { Button } from "@/components/ui/button"
 import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress"
@@ -46,13 +46,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
-import type { RoadmapNode } from "@/domain/nodes/types"
-import { displayNodeTitle } from "@/domain/nodes/title"
+import type { RoadmapNode } from "@/domain/topics/types"
+import { displayNodeTitle } from "@/domain/topics/title"
 import type { ProgressSnapshot } from "@/domain/progress/progress"
 
-export function NodeConfigSheet({
+export function TopicConfigSheet({
   open,
   onOpenChange,
   node,
@@ -81,6 +81,10 @@ export function NodeConfigSheet({
   checklistHeading = "Tasks",
   checklistCopy,
   deleteLabel = "Delete topic",
+  hasNestedTopics = false,
+  canInheritAccent = true,
+  overviewDescription = "",
+  overviewNotes = "",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -95,7 +99,8 @@ export function NodeConfigSheet({
     icon: string
     notes: string
     accentColor: string | null
-  }) => Promise<NodeActionResult>
+    nestedAccents?: "keep" | "apply"
+  }) => Promise<TopicActionResult>
   onToggleChecklist: (itemId: string, isCompleted: boolean) => Promise<void>
   onCreateChecklist: (input: { title: string; description: string }) => {
     ok: true
@@ -116,8 +121,12 @@ export function NodeConfigSheet({
   fallbackTitle?: string
   subtitle?: string
   checklistHeading?: string
-  checklistCopy?: NodeChecklistCopy
+  checklistCopy?: TopicTasksCopy
   deleteLabel?: string
+  hasNestedTopics?: boolean
+  canInheritAccent?: boolean
+  overviewDescription?: string | null
+  overviewNotes?: string | null
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -126,7 +135,11 @@ export function NodeConfigSheet({
   const [notes, setNotes] = useState("")
   const [notesOpen, setNotesOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingAccent, setPendingAccent] = useState<string | null | undefined>(
+    undefined
+  )
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const accentChoiceRef = useRef<"keep" | "apply" | null>(null)
   const selectedNodeId = node?.id ?? null
 
   useEffect(() => {
@@ -138,7 +151,7 @@ export function NodeConfigSheet({
   }, [])
 
   useEffect(() => {
-    if (!node || !open) {
+    if (!open) {
       return
     }
 
@@ -147,20 +160,34 @@ export function NodeConfigSheet({
       persistTimer.current = null
     }
 
+    if (mode === "overview") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTitle(fallbackTitle ?? "Roadmap")
+      setDescription(overviewDescription ?? "")
+      setNotes(overviewNotes ?? "")
+      setNotesOpen(false)
+      setError(null)
+      return
+    }
+
+    if (!node) {
+      return
+    }
+
     // Re-sync when the selected node or panel open state changes, not on
     // every autosave that updates the same node.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(node.title)
     setDescription(node.description ?? "")
     setIcon(node.icon)
-    setAccentColor(node.accentColor)
+    setAccentColor(node.color)
     setNotes(node.notes ?? "")
     setNotesOpen(false)
     setError(null)
     // selectedNodeId/open are enough; including `node` would reset the form
     // on every optimistic autosave of the same node.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNodeId, open])
+  }, [selectedNodeId, open, mode, fallbackTitle, overviewDescription, overviewNotes])
 
   type DetailSnapshot = {
     title: string
@@ -168,31 +195,64 @@ export function NodeConfigSheet({
     icon: string
     notes: string
     accentColor: string | null
+    nestedAccents?: "keep" | "apply"
   }
 
   function snapshotWith(patch: Partial<DetailSnapshot>): DetailSnapshot {
+    const accentPending = pendingAccent !== undefined && !patch.nestedAccents
     return {
       title: patch.title ?? title,
       description: patch.description ?? description,
       icon: patch.icon ?? icon,
       notes: patch.notes ?? notes,
-      accentColor: patch.accentColor !== undefined ? patch.accentColor : accentColor,
+      accentColor: accentPending
+        ? (node?.color ?? null)
+        : patch.accentColor !== undefined
+          ? patch.accentColor
+          : accentColor,
+      nestedAccents: patch.nestedAccents,
     }
   }
 
+  function confirmNestedAccent(choice: "keep" | "apply") {
+    const next = pendingAccent ?? null
+    accentChoiceRef.current = choice
+    setPendingAccent(undefined)
+    persistDetailsNow({ accentColor: next, nestedAccents: choice })
+  }
+
+  function cancelNestedAccent() {
+    if (accentChoiceRef.current) {
+      accentChoiceRef.current = null
+      setPendingAccent(undefined)
+      return
+    }
+    setAccentColor(node?.color ?? null)
+    setPendingAccent(undefined)
+  }
+
   function flushDetails(next: DetailSnapshot) {
-    if (!displayNodeTitle(next.title)) {
+    if (mode !== "overview" && !displayNodeTitle(next.title)) {
       setError("Topic title cannot be empty.")
       return
     }
 
-    if (
+    if (mode === "overview") {
+      if (
+        !next.nestedAccents &&
+        (next.description.trim() || null) === (overviewDescription?.trim() || null) &&
+        (next.notes.trim() || null) === (overviewNotes?.trim() || null)
+      ) {
+        return
+      }
+    } else if (
       node &&
+      !next.nestedAccents &&
       next.title === node.title &&
       (next.description.trim() || null) === node.description &&
       next.icon === node.icon &&
       (next.notes.trim() || null) === node.notes &&
-      next.accentColor === node.accentColor
+      next.accentColor === node.color
     ) {
       return
     }
@@ -244,11 +304,27 @@ export function NodeConfigSheet({
                 id="node-config-title"
                 className="font-heading text-base font-medium text-pretty"
               >
-                {node?.title || fallbackTitle || "Roadmap"}
+                {fallbackTitle || "Roadmap"}
               </h2>
-              {node?.description ? (
+              {editMode ? (
+                <Field className="mt-3">
+                  <FieldLabel htmlFor="roadmap-description">Description</FieldLabel>
+                  <Textarea
+                    id="roadmap-description"
+                    value={description}
+                    onChange={(event) => {
+                      const next = event.target.value
+                      setDescription(next)
+                      scheduleDetails({ description: next })
+                    }}
+                    onBlur={() => persistDetailsNow({ description })}
+                    placeholder="What this roadmap covers"
+                    className="field-sizing-fixed max-h-40 min-h-24 resize-y overflow-auto"
+                  />
+                </Field>
+              ) : description.trim() ? (
                 <p className="mt-1.5 text-sm leading-6 text-muted-foreground text-pretty">
-                  {node.description}
+                  {description}
                 </p>
               ) : null}
             </div>
@@ -258,31 +334,27 @@ export function NodeConfigSheet({
                 {() => `${subtreeProgress.percent}%`}
               </ProgressValue>
             </Progress>
-            {node ? (
-              <>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-sm font-medium">Notes</h3>
-                <NotesSection
-                  notes={notes}
-                  emptyDescription="Capture free-form notes for this roadmap."
-                  editable={editMode}
-                  onEdit={() => setNotesOpen(true)}
-                />
-                </section>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-sm font-medium">Links</h3>
-                  <NodeLinksSection
-                    links={links}
-                    editable={editMode}
-                    onCreate={onCreateLink}
-                    onUpdate={onUpdateLink}
-                    onDelete={onDeleteLink}
-                  />
-                </section>
-              </>
-            ) : null}
+            <Separator />
+            <section className="flex flex-col gap-3">
+              <h3 className="text-sm font-medium">Notes</h3>
+              <NotesSection
+                notes={notes}
+                emptyDescription="Capture free-form notes for this roadmap."
+                editable={editMode}
+                onEdit={() => setNotesOpen(true)}
+              />
+            </section>
+            <Separator />
+            <section className="flex flex-col gap-3">
+              <h3 className="text-sm font-medium">Links</h3>
+              <TopicLinksSection
+                links={links}
+                editable={editMode}
+                onCreate={onCreateLink}
+                onUpdate={onUpdateLink}
+                onDelete={onDeleteLink}
+              />
+            </section>
           </div>
         </ScrollArea>
         <NotesDialog
@@ -396,8 +468,17 @@ export function NodeConfigSheet({
                     </Field>
                     <AccentColorField
                       value={accentColor}
+                      canInherit={canInheritAccent}
                       onChange={(next) => {
                         setAccentColor(next)
+                        if (hasNestedTopics && next !== node?.color) {
+                          if (persistTimer.current) {
+                            clearTimeout(persistTimer.current)
+                            persistTimer.current = null
+                          }
+                          setPendingAccent(next)
+                          return
+                        }
                         persistDetailsNow({ accentColor: next })
                       }}
                     />
@@ -430,7 +511,7 @@ export function NodeConfigSheet({
                     <Separator />
                     <section className="flex flex-col gap-3">
                       <h3 className="text-sm font-medium">{checklistHeading}</h3>
-                      <NodeChecklistSection
+                      <TopicTasksSection
                         onCreate={onCreateChecklist}
                         copy={checklistCopy}
                       />
@@ -440,7 +521,7 @@ export function NodeConfigSheet({
                 <Separator />
                 <section className="flex flex-col gap-3">
                   <h3 className="text-sm font-medium">Links</h3>
-                  <NodeLinksSection
+                  <TopicLinksSection
                     links={links}
                     editable={editMode}
                     onCreate={onCreateLink}
@@ -480,6 +561,50 @@ export function NodeConfigSheet({
             setNotesOpen(false)
           }}
         />
+        <Dialog
+          open={pendingAccent !== undefined}
+          onOpenChange={(next) => {
+            if (!next) {
+              cancelNestedAccent()
+            }
+          }}
+        >
+          <DialogContent
+            className="sm:max-w-md"
+            showCloseButton={false}
+          >
+            <DialogHeader>
+              <DialogTitle>Update nested topic colors?</DialogTitle>
+              <DialogDescription>
+                {node
+                  ? `“${displayNodeTitle(node.title)}” includes other topics. Apply this color to those topics too, or leave their colors as they are.`
+                  : "This topic includes other topics. Apply this color to those topics too, or leave their colors as they are."}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={cancelNestedAccent}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => confirmNestedAccent("keep")}
+              >
+                Keep current colors
+              </Button>
+              <Button
+                type="button"
+                onClick={() => confirmNestedAccent("apply")}
+              >
+                Update nested topics
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </aside>
   )
 }

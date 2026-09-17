@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createClient } from "@supabase/supabase-js"
 
-import { createChecklistItem } from "@/application/checklists/checklists-service"
+import { createChecklistItem } from "@/application/tasks/tasks-service"
 import {
   exportRoadmap,
   importRoadmap,
 } from "@/application/import-export/import-export-service"
-import { createNode } from "@/application/nodes/nodes-service"
+import { createNode } from "@/application/topics/topics-service"
 import {
   createEmptyRole,
   deleteRole,
@@ -15,8 +15,8 @@ import {
 } from "@/application/roles/roles-service"
 import { ensureApplicationUser } from "@/application/users/users-service"
 import { isApplicationError } from "@/domain/errors"
-import * as nodesRepository from "@/repositories/nodes/nodes-repository"
-import mixedTree from "@/schemas/fixtures/mixed-tree.v1.json"
+import * as topicsRepository from "@/repositories/topics/topics-repository"
+import mixedTree from "@/schemas/fixtures/mixed-tree.json"
 import { hasLiveSupabase } from "./setup"
 
 const describeDb = hasLiveSupabase() ? describe : describe.skip
@@ -62,7 +62,7 @@ describeDb("repository and service persistence", () => {
 
     expect(node.title).toBe("Retrieval")
     expect(item.title).toBe("Read the paper")
-    expect(item.isCompleted).toBe(false)
+    expect(item.completed).toBe(false)
   })
 
   it("denies anon/client reads via RLS", async () => {
@@ -93,10 +93,10 @@ describeDb("repository and service persistence", () => {
     fixture.roleIds.push(again.id)
 
     const second = await exportRoadmap(user.id, again.id)
-    const firstDoc = JSON.parse(exported.json) as { nodes: { title: string }[] }
-    const secondDoc = JSON.parse(second.json) as { nodes: { title: string }[] }
-    expect(secondDoc.nodes.map((node) => node.title)).toEqual(
-      firstDoc.nodes.map((node) => node.title)
+    const firstDoc = JSON.parse(exported.json) as { topics: { title: string }[] }
+    const secondDoc = JSON.parse(second.json) as { topics: { title: string }[] }
+    expect(secondDoc.topics.map((topic) => topic.title)).toEqual(
+      firstDoc.topics.map((topic) => topic.title)
     )
   })
 
@@ -104,7 +104,7 @@ describeDb("repository and service persistence", () => {
     const { user } = await seedUser()
     const name = `E10 rollback ${randomUUID().slice(0, 8)}`
     const spy = vi
-      .spyOn(nodesRepository, "insertMany")
+      .spyOn(topicsRepository, "insertMany")
       .mockRejectedValueOnce(new Error("forced insert failure"))
 
     await expect(importRoadmap(user.id, JSON.stringify(mixedTree), { nameOverride: name })).rejects.toBeTruthy()
@@ -130,7 +130,7 @@ describeDb("repository and service persistence", () => {
       }
     }
 
-    const nodes = await nodesRepository.listByRoleId(role.id)
+    const nodes = await topicsRepository.listByRoleId(role.id)
     expect(nodes).toHaveLength(1)
     expect(nodes[0]?.title).toBe("Existing")
   })

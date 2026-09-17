@@ -4,7 +4,8 @@ import {
   applyPlacements,
   dropPositionFromOffset,
   placementUpdates,
-} from "@/domain/nodes/placement"
+  rootPlacementUpdates,
+} from "@/domain/topics/placement"
 
 const nodes = [
   { id: "root", parentId: null, sortOrder: 0 },
@@ -74,5 +75,21 @@ describe("dropPositionFromOffset", () => {
   it("uses the middle band to nest", () => {
     expect(dropPositionFromOffset(50, 100, true)).toBe("inside")
     expect(dropPositionFromOffset(10, 100, true)).toBe("before")
+  })
+})
+
+describe("rootPlacementUpdates", () => {
+  it("promotes a nested topic to the root", () => {
+    const updates = rootPlacementUpdates(nodes, "a1")
+    expect(updates?.find((item) => item.id === "a1")).toEqual({
+      id: "a1",
+      parentId: null,
+      sortOrder: 1,
+    })
+    expect(updates?.find((item) => item.id === "a2")).toEqual({
+      id: "a2",
+      parentId: "a",
+      sortOrder: 0,
+    })
   })
 })

@@ -50,12 +50,26 @@ export async function listContentUpdatedAtByRoleId(roleIds: string[]) {
 
   for (const roleChunk of chunk(roleIds, IN_FILTER_CHUNK)) {
     const { data: nodes, error: nodeError } = await supabase
-      .from("roadmap_nodes")
+      .from("topics")
       .select("id, role_id, updated_at")
       .in("role_id", roleChunk)
 
     if (nodeError) {
       throwFromSupabase(nodeError)
+    }
+
+    const { data: roadmapLinks, error: roadmapLinkError } = await supabase
+      .from("links")
+      .select("role_id, updated_at")
+      .in("role_id", roleChunk)
+      .is("topic_id", null)
+
+    if (roadmapLinkError) {
+      throwFromSupabase(roadmapLinkError)
+    }
+
+    for (const link of roadmapLinks ?? []) {
+      remember(times, link.role_id, link.updated_at)
     }
 
     const nodeIds: string[] = []
@@ -74,10 +88,10 @@ export async function listContentUpdatedAtByRoleId(roleIds: string[]) {
       const [{ data: items, error: itemError }, { data: links, error: linkError }] =
         await Promise.all([
           supabase
-            .from("checklist_items")
-            .select("node_id, updated_at")
-            .in("node_id", nodeChunk),
-          supabase.from("node_links").select("node_id, updated_at").in("node_id", nodeChunk),
+            .from("tasks")
+            .select("topic_id, updated_at")
+            .in("topic_id", nodeChunk),
+          supabase.from("links").select("topic_id, role_id, updated_at").in("topic_id", nodeChunk),
         ])
 
       if (itemError) {
@@ -88,10 +102,14 @@ export async function listContentUpdatedAtByRoleId(roleIds: string[]) {
       }
 
       for (const item of items ?? []) {
-        remember(times, roleByNodeId.get(item.node_id), item.updated_at)
+        remember(times, roleByNodeId.get(item.topic_id), item.updated_at)
       }
       for (const link of links ?? []) {
-        remember(times, roleByNodeId.get(link.node_id), link.updated_at)
+        remember(
+          times,
+          (link.topic_id ? roleByNodeId.get(link.topic_id) : link.role_id) ?? null,
+          link.updated_at
+        )
       }
     }
   }

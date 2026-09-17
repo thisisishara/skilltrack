@@ -1,4 +1,4 @@
-import type { RoadmapNode } from "@/domain/nodes/types"
+import type { RoadmapNode } from "@/domain/topics/types"
 
 export function wouldCreateCycle(
   nodes: Pick<RoadmapNode, "id" | "parentId">[],

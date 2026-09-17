@@ -88,7 +88,7 @@ export function ImportJsonFields({
             id="import-roadmap-json"
             value={json}
             onChange={(event) => onJsonChange(event.target.value)}
-            placeholder='{ "schema": "skilltrack.roadmap.v1", ... }'
+            placeholder='{ "roadmap": { "title": "..." }, "topics": [] }'
             rows={6}
             spellCheck={false}
             wrap="off"
@@ -98,7 +98,7 @@ export function ImportJsonFields({
         )}
         {error ? <FieldError>{error}</FieldError> : (
           <FieldDescription>
-            Must be skilltrack.roadmap.v1. Import does not merge into an existing graph.
+            Must match the SkillTrack roadmap schema. Import does not merge into an existing graph.
           </FieldDescription>
         )}
       </FieldContent>

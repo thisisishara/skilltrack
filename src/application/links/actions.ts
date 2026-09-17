@@ -43,20 +43,20 @@ export async function previewLinkTitleAction(url: string): Promise<{ title: stri
 export async function createNodeLinkAction(input: {
   id?: string
   roleId: string
-  nodeId: string
+  nodeId?: string | null
   label: string
   url: string
 }): Promise<LinkActionResult> {
   try {
-    if (!input.roleId || !input.nodeId) {
-      throw new ApplicationError("validation", "Select a topic first.")
+    if (!input.roleId) {
+      throw new ApplicationError("validation", "Select a role first.")
     }
 
     const { applicationUser } = await requireSession()
     const link = await createNodeLink(
       applicationUser.id,
       input.roleId,
-      input.nodeId,
+      input.nodeId ?? null,
       input
     )
     revalidateRole(input.roleId)
@@ -68,13 +68,13 @@ export async function createNodeLinkAction(input: {
 
 export async function updateNodeLinkAction(input: {
   roleId: string
-  nodeId: string
+  nodeId?: string | null
   linkId: string
   label: string
   url: string
 }): Promise<LinkActionResult> {
   try {
-    if (!input.roleId || !input.nodeId || !input.linkId) {
+    if (!input.roleId || !input.linkId) {
       throw new ApplicationError("validation", "Select a link first.")
     }
 
@@ -82,7 +82,7 @@ export async function updateNodeLinkAction(input: {
     const link = await updateNodeLink(
       applicationUser.id,
       input.roleId,
-      input.nodeId,
+      input.nodeId ?? null,
       input.linkId,
       input
     )
@@ -95,11 +95,11 @@ export async function updateNodeLinkAction(input: {
 
 export async function deleteNodeLinkAction(input: {
   roleId: string
-  nodeId: string
+  nodeId?: string | null
   linkId: string
 }): Promise<LinkActionResult> {
   try {
-    if (!input.roleId || !input.nodeId || !input.linkId) {
+    if (!input.roleId || !input.linkId) {
       throw new ApplicationError("validation", "Select a link first.")
     }
 
@@ -107,7 +107,7 @@ export async function deleteNodeLinkAction(input: {
     await deleteNodeLink(
       applicationUser.id,
       input.roleId,
-      input.nodeId,
+      input.nodeId ?? null,
       input.linkId
     )
     revalidateRole(input.roleId)

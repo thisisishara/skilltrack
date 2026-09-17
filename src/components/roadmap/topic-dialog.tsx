@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
 
-import type { NodeActionResult } from "@/application/nodes/actions"
+import type { TopicActionResult } from "@/application/topics/actions"
 import { IconPicker } from "@/components/roadmap/icon-picker"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,14 +25,14 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   DEFAULT_NODE_HANDLE_KIND,
   type NodeHandleKind,
-} from "@/domain/nodes/handle"
-import { DEFAULT_NODE_ICON } from "@/domain/nodes/icon"
+} from "@/domain/topics/handle"
+import { DEFAULT_NODE_ICON } from "@/domain/topics/icon"
 
-export type NodeDialogMode =
+export type TopicDialogMode =
   | { kind: "create"; parentId: string | null; asGroup?: boolean }
   | { kind: "edit"; nodeId: string; title: string; description: string | null; icon: string }
 
-export type NodeDialogCopy = {
+export type TopicDialogCopy = {
   createTitle?: string
   createDescription?: string
   childTitle?: string
@@ -45,7 +45,7 @@ export type NodeDialogCopy = {
   submitChildLabel?: string
 }
 
-export function NodeDialog({
+export function TopicDialog({
   open,
   onOpenChange,
   mode,
@@ -54,20 +54,20 @@ export function NodeDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: NodeDialogMode | null
+  mode: TopicDialogMode | null
   onSubmit: (input: {
     title: string
     description: string
     icon: string
     handleKind: NodeHandleKind
-  }) => Promise<NodeActionResult>
-  copy?: NodeDialogCopy
+  }) => Promise<TopicActionResult>
+  copy?: TopicDialogCopy
 }) {
   const {
     createTitle = "Add topic",
     createDescription = "Add a top-level topic to this roadmap.",
-    childTitle = "Add sub-topic",
-    childDescription = "Create a sub-topic nested under the selected topic.",
+    childTitle = "Add subtopic",
+    childDescription = "Create a subtopic nested under the selected topic.",
     editTitle = "Edit topic",
     editDescription = "Update this topic without changing its progress.",
     titlePlaceholder = "Retrieval",

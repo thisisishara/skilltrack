@@ -20,12 +20,12 @@ test.describe("authenticated roadmap", () => {
     await page.getByRole("button", { name: "Create Role" }).click()
     await page.getByLabel("Name").fill(roleName)
     await page.getByRole("button", { name: "Create role" }).click()
-    await expect(page.getByText("No topic groups yet")).toBeVisible()
+    await expect(page.getByText("No topics yet")).toBeVisible()
 
     await page.getByRole("switch", { name: "Edit mode" }).click()
-    await page.getByRole("button", { name: "Add Topic Group" }).first().click()
+    await page.getByRole("button", { name: "Add topic" }).first().click()
     await page.getByLabel("Title").fill("Retrieval")
-    await page.getByRole("button", { name: "Add topic group" }).click()
+    await page.getByRole("button", { name: "Add topic" }).click()
     await expect(page.getByText("Retrieval").first()).toBeVisible()
 
     await page.getByText("Retrieval").first().click()
@@ -47,13 +47,12 @@ test.describe("authenticated roadmap", () => {
     page,
   }) => {
     const json = {
-      schema: "skilltrack.roadmap.v1",
-      roadmap: { name: `E2E import ${Date.now()}` },
-      nodes: [
+      roadmap: { title: `E2E import ${Date.now()}` },
+      topics: [
         {
           id: "00000000-0000-4000-8000-000000000001",
           title: "Root",
-          checklist: [
+          tasks: [
             {
               id: "10000000-0000-4000-8000-000000000001",
               title: "Done item",
@@ -65,11 +64,12 @@ test.describe("authenticated roadmap", () => {
               completed: false,
             },
           ],
-        },
-        {
-          id: "00000000-0000-4000-8000-000000000002",
-          title: "Child",
-          parent_id: "00000000-0000-4000-8000-000000000001",
+          topics: [
+            {
+              id: "00000000-0000-4000-8000-000000000002",
+              title: "Child",
+            },
+          ],
         },
       ],
     }
@@ -77,7 +77,7 @@ test.describe("authenticated roadmap", () => {
     await page.goto("/dashboard")
     await page.getByRole("button", { name: "Create Role" }).click()
     await page.getByText("Import JSON").click()
-    await page.getByPlaceholder(/skilltrack.roadmap.v1/).fill(JSON.stringify(json))
+    await page.getByPlaceholder(/"topics": \[\]/).fill(JSON.stringify(json))
     await page.getByRole("button", { name: "Import role" }).click()
 
     await expect(page.getByText("Root").first()).toBeVisible()

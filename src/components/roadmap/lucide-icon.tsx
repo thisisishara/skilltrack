@@ -71,7 +71,7 @@ import {
   BRAND_ICONS,
   FEATURED_BRAND_ICONS,
 } from "@/components/roadmap/brand-icons"
-import { DEFAULT_NODE_ICON } from "@/domain/nodes/icon"
+import { DEFAULT_NODE_ICON } from "@/domain/topics/icon"
 
 const LUCIDE_ICONS = {
   "circle-dot": CircleDot,

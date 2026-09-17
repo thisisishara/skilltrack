@@ -7,20 +7,21 @@ import {
   deleteNode,
   moveNode,
   placeNode,
+  placeNodeAtRoot,
   reparentNode,
   updateNodeDetails,
-} from "@/application/nodes/nodes-service"
+} from "@/application/topics/topics-service"
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
-import type { RoadmapNode } from "@/domain/nodes/types"
+import type { RoadmapNode } from "@/domain/topics/types"
 import { failAction } from "@/lib/errors/present"
 import { requireSession } from "@/lib/auth/session"
 
-export type NodeActionResult =
+export type TopicActionResult =
   | { ok: true; node: RoadmapNode }
   | { ok: true; deletedNodeId: string }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
-function fail(error: unknown): NodeActionResult {
+function fail(error: unknown): TopicActionResult {
   return failAction(error, "nodes.action_failed")
 }
 
@@ -40,7 +41,7 @@ export async function createNodeAction(input: {
   incomingEdgeAnimated?: boolean
   positionX?: number
   positionY?: number
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId) {
       throw new ApplicationError("validation", "Select a role first.")
@@ -63,9 +64,11 @@ export async function updateNodeAction(input: {
   icon?: string | null
   notes?: string | null
   accentColor?: string | null
+  color?: string | null
+  nestedAccents?: "keep" | "apply"
   handleKind?: string | null
   incomingEdgeAnimated?: boolean
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -90,7 +93,7 @@ export async function moveNodeAction(input: {
   nodeId: string
   positionX: number
   positionY: number
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -115,7 +118,7 @@ export async function reparentNodeAction(input: {
   roleId: string
   nodeId: string
   parentId: string | null
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -140,7 +143,7 @@ export async function placeNodeAction(input: {
   nodeId: string
   targetId: string
   position: "before" | "after" | "inside"
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId || !input.nodeId || !input.targetId) {
       throw new ApplicationError("validation", "Select a topic first.")
@@ -161,10 +164,32 @@ export async function placeNodeAction(input: {
   }
 }
 
+export async function placeNodeAtRootAction(input: {
+  roleId: string
+  nodeId: string
+}): Promise<TopicActionResult> {
+  try {
+    if (!input.roleId || !input.nodeId) {
+      throw new ApplicationError("validation", "Select a topic first.")
+    }
+
+    const { applicationUser } = await requireSession()
+    const node = await placeNodeAtRoot(
+      applicationUser.id,
+      input.roleId,
+      input.nodeId
+    )
+    revalidateRole(input.roleId)
+    return { ok: true, node }
+  } catch (error) {
+    return fail(error)
+  }
+}
+
 export async function deleteNodeAction(input: {
   roleId: string
   nodeId: string
-}): Promise<NodeActionResult> {
+}): Promise<TopicActionResult> {
   try {
     if (!input.roleId || !input.nodeId) {
       throw new ApplicationError("validation", "Select a topic first.")

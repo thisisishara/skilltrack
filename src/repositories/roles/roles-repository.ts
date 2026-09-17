@@ -15,6 +15,7 @@ function toRole(row: RoleRow): Role {
     userId: row.user_id,
     name: row.name,
     description: row.description,
+    notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -121,6 +122,31 @@ export async function updateDescription(
   const { data, error } = await supabase
     .from("roles")
     .update({ description })
+    .eq("user_id", userId)
+    .eq("id", roleId)
+    .select()
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That role no longer exists.")
+  }
+
+  return toRole(data)
+}
+
+export async function updateNotes(
+  userId: string,
+  roleId: string,
+  notes: string | null
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("roles")
+    .update({ notes })
     .eq("user_id", userId)
     .eq("id", roleId)
     .select()

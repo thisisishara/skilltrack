@@ -2,29 +2,33 @@ import "server-only"
 
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { ApplicationError } from "@/domain/errors"
-import { parseAccentHex } from "@/domain/nodes/accent"
+import {
+  accentUpdatesForChange,
+  parseAccentHex,
+  type NestedAccentMode,
+} from "@/domain/topics/accent"
 import {
   childrenLinkError,
   normalizeNodeHandleKind,
   parentLinkError,
   type NodeHandleKind,
-} from "@/domain/nodes/handle"
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
-import { normalizeNodeIcon } from "@/domain/nodes/icon"
+} from "@/domain/topics/handle"
+import { wouldCreateCycle } from "@/domain/topics/hierarchy"
+import { normalizeNodeIcon } from "@/domain/topics/icon"
 import {
   isLabelNode,
   normalizeNodeKind,
-} from "@/domain/nodes/kind"
-import { placementUpdates } from "@/domain/nodes/placement"
+} from "@/domain/topics/kind"
+import { placementUpdates, rootPlacementUpdates } from "@/domain/topics/placement"
 import {
   CHILD_OFFSET_Y,
   LABEL_OFFSET_X,
   LABEL_ORIGIN_Y,
   ROOT_OFFSET_X,
-} from "@/domain/nodes/layout"
-import { displayNodeTitle } from "@/domain/nodes/title"
-import type { RoadmapNode } from "@/domain/nodes/types"
-import * as nodesRepository from "@/repositories/nodes/nodes-repository"
+} from "@/domain/topics/layout"
+import { displayNodeTitle } from "@/domain/topics/title"
+import type { RoadmapNode } from "@/domain/topics/types"
+import * as topicsRepository from "@/repositories/topics/topics-repository"
 
 function requireTitle(title: string) {
   const trimmed = displayNodeTitle(title)
@@ -99,7 +103,7 @@ async function requireOwnedRole(userId: string, roleId: string) {
 
 export async function requireOwnedNode(userId: string, roleId: string, nodeId: string) {
   await requireOwnedRole(userId, roleId)
-  const node = await nodesRepository.getByIdForRole(roleId, nodeId)
+  const node = await topicsRepository.getByIdForRole(roleId, nodeId)
 
   if (!node) {
     throw new ApplicationError("not_found", "That topic no longer exists.")
@@ -108,9 +112,9 @@ export async function requireOwnedNode(userId: string, roleId: string, nodeId: s
   return node
 }
 
-export async function listNodesForRole(userId: string, roleId: string) {
+export async function listTopicsForRole(userId: string, roleId: string) {
   await requireOwnedRole(userId, roleId)
-  return nodesRepository.listByRoleId(roleId)
+  return topicsRepository.listByRoleId(roleId)
 }
 
 export async function createNode(
@@ -134,7 +138,7 @@ export async function createNode(
   const kind = normalizeNodeKind(input.kind)
   const handleKind =
     kind === "label" ? "regular" : normalizeNodeHandleKind(input.handleKind)
-  const nodes = await nodesRepository.listByRoleId(input.roleId)
+  const nodes = await topicsRepository.listByRoleId(input.roleId)
 
   if (kind === "label" && input.parentId) {
     throw new ApplicationError("validation", "Labels cannot nest under a topic.")
@@ -184,7 +188,7 @@ export async function createNode(
     assertParentAssignment(nodes, handleKind, parentId)
   }
 
-  return nodesRepository.insert({
+  return topicsRepository.insert({
     id: input.id,
     roleId: input.roleId,
     parentId,
@@ -210,12 +214,14 @@ export async function updateNodeDetails(
     icon?: string | null
     notes?: string | null
     accentColor?: string | null
+    color?: string | null
+    nestedAccents?: NestedAccentMode
     handleKind?: string | null
     incomingEdgeAnimated?: boolean
   }
 ) {
   const node = await requireOwnedNode(userId, roleId, nodeId)
-  const nodes = await nodesRepository.listByRoleId(roleId)
+  const nodes = await topicsRepository.listByRoleId(roleId)
   const handleKind =
     input.handleKind !== undefined
       ? normalizeNodeHandleKind(input.handleKind)
@@ -228,21 +234,36 @@ export async function updateNodeDetails(
 
   assertParentAssignment(nodes, handleKind, node.parentId)
 
-  return nodesRepository.updateDetails(roleId, nodeId, {
+  const updated = await topicsRepository.updateDetails(roleId, nodeId, {
     title: requireTitle(input.title),
     description: optionalDescription(input.description),
     icon: normalizeNodeIcon(input.icon),
     ...(input.notes !== undefined
       ? { notes: optionalDescription(input.notes) }
       : {}),
-    ...(input.accentColor !== undefined
-      ? { accentColor: optionalAccent(input.accentColor) }
+    ...(input.color !== undefined || input.accentColor !== undefined
+      ? { color: optionalAccent(input.color ?? input.accentColor) }
       : {}),
     ...(input.handleKind !== undefined ? { handleKind } : {}),
     ...(input.incomingEdgeAnimated !== undefined
       ? { incomingEdgeAnimated: Boolean(input.incomingEdgeAnimated) }
       : {}),
   })
+
+  const nextColor =
+    input.color !== undefined ? input.color : input.accentColor
+  if (nextColor !== undefined && input.nestedAccents) {
+    const nextAccent = optionalAccent(nextColor) ?? null
+    const updates = accentUpdatesForChange(
+      nodes,
+      nodeId,
+      nextAccent,
+      input.nestedAccents
+    ).filter((update) => update.id !== nodeId)
+    await topicsRepository.updateAccentColors(roleId, updates)
+  }
+
+  return updated
 }
 
 export async function moveNode(
@@ -258,7 +279,7 @@ export async function moveNode(
     throw new ApplicationError("validation", "That topic position is invalid.")
   }
 
-  return nodesRepository.updatePosition(roleId, nodeId, positionX, positionY)
+  return topicsRepository.updatePosition(roleId, nodeId, positionX, positionY)
 }
 
 export async function reparentNode(
@@ -268,7 +289,7 @@ export async function reparentNode(
   parentId: string | null
 ) {
   const node = await requireOwnedNode(userId, roleId, nodeId)
-  const nodes = await nodesRepository.listByRoleId(roleId)
+  const nodes = await topicsRepository.listByRoleId(roleId)
 
   if (isLabelNode(node) && parentId) {
     throw new ApplicationError("validation", "Labels cannot nest under a topic.")
@@ -298,7 +319,7 @@ export async function reparentNode(
     assertParentAssignment(nodes, node.handleKind, parentId)
   }
 
-  return nodesRepository.updateParent(
+  return topicsRepository.updateParent(
     roleId,
     nodeId,
     parentId,
@@ -315,7 +336,7 @@ export async function placeNode(
 ) {
   const node = await requireOwnedNode(userId, roleId, nodeId)
   await requireOwnedNode(userId, roleId, targetId)
-  const nodes = await nodesRepository.listByRoleId(roleId)
+  const nodes = await topicsRepository.listByRoleId(roleId)
 
   if (isLabelNode(node)) {
     throw new ApplicationError("validation", "Labels cannot be nested under topics.")
@@ -331,8 +352,33 @@ export async function placeNode(
     throw new ApplicationError("validation", "That topic cannot be moved there.")
   }
 
-  await nodesRepository.updatePlacements(roleId, updates)
-  const next = await nodesRepository.getByIdForRole(roleId, nodeId)
+  await topicsRepository.updatePlacements(roleId, updates)
+  const next = await topicsRepository.getByIdForRole(roleId, nodeId)
+  if (!next) {
+    throw new ApplicationError("not_found", "That topic no longer exists.")
+  }
+  return next
+}
+
+export async function placeNodeAtRoot(
+  userId: string,
+  roleId: string,
+  nodeId: string
+) {
+  const node = await requireOwnedNode(userId, roleId, nodeId)
+  const nodes = await topicsRepository.listByRoleId(roleId)
+
+  if (isLabelNode(node)) {
+    throw new ApplicationError("validation", "Labels cannot be nested under topics.")
+  }
+
+  const updates = rootPlacementUpdates(nodes, nodeId)
+  if (!updates) {
+    throw new ApplicationError("validation", "That topic cannot be moved there.")
+  }
+
+  await topicsRepository.updatePlacements(roleId, updates)
+  const next = await topicsRepository.getByIdForRole(roleId, nodeId)
   if (!next) {
     throw new ApplicationError("not_found", "That topic no longer exists.")
   }
@@ -341,5 +387,5 @@ export async function placeNode(
 
 export async function deleteNode(userId: string, roleId: string, nodeId: string) {
   await requireOwnedNode(userId, roleId, nodeId)
-  await nodesRepository.deleteForRole(roleId, nodeId)
+  await topicsRepository.deleteForRole(roleId, nodeId)
 }

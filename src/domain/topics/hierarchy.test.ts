@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { wouldCreateCycle } from "@/domain/nodes/hierarchy"
+import { wouldCreateCycle } from "@/domain/topics/hierarchy"
 import { displayRoleName } from "@/domain/roles/name"
 
 describe("wouldCreateCycle", () => {

@@ -1,10 +1,10 @@
-import type { NormalizedRoadmapDocument } from "@/domain/roadmap-json/types"
+import type { NormalizedRoadmapDocument, NormalizedTopic } from "@/domain/roadmap-json/types"
 
 export function remapRoadmapDocument(
   document: NormalizedRoadmapDocument,
   nextId: () => string = () => crypto.randomUUID()
 ): NormalizedRoadmapDocument {
-  const nodeIds = new Map<string, string>()
+  const topicIds = new Map<string, string>()
   const otherIds = new Map<string, string>()
 
   function mapped(source: string, store: Map<string, string>) {
@@ -20,15 +20,19 @@ export function remapRoadmapDocument(
 
   return {
     ...document,
-    nodes: document.nodes.map((node) => ({
-      ...node,
-      id: mapped(node.id, nodeIds),
-      parentId: node.parentId ? mapped(node.parentId, nodeIds) : null,
-      checklist: node.checklist.map((item) => ({
-        ...item,
-        id: mapped(item.id, otherIds),
+    links: document.links.map((link) => ({
+      ...link,
+      id: mapped(link.id, otherIds),
+    })),
+    topics: document.topics.map((topic) => ({
+      ...topic,
+      id: mapped(topic.id, topicIds),
+      parentId: topic.parentId ? mapped(topic.parentId, topicIds) : null,
+      tasks: topic.tasks.map((task) => ({
+        ...task,
+        id: mapped(task.id, otherIds),
       })),
-      links: node.links.map((link) => ({
+      links: topic.links.map((link) => ({
         ...link,
         id: mapped(link.id, otherIds),
       })),
@@ -39,15 +43,23 @@ export function remapRoadmapDocument(
 export function collectDocumentIds(document: NormalizedRoadmapDocument) {
   const ids: string[] = []
 
-  for (const node of document.nodes) {
-    ids.push(node.id)
-    for (const item of node.checklist) {
-      ids.push(item.id)
+  for (const link of document.links) {
+    ids.push(link.id)
+  }
+
+  for (const topic of document.topics) {
+    ids.push(topic.id)
+    for (const task of topic.tasks) {
+      ids.push(task.id)
     }
-    for (const link of node.links) {
+    for (const link of topic.links) {
       ids.push(link.id)
     }
   }
 
   return ids
+}
+
+export function walkTopics(topics: NormalizedTopic[]) {
+  return topics
 }

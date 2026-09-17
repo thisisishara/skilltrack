@@ -1,37 +1,43 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://skilltrack.app/schemas/roadmap.v1.json",
+  "$id": "https://skilltrack.app/schemas/roadmap.json",
   "title": "SkillTrack Roadmap",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "roadmap", "nodes"],
+  "required": ["roadmap", "topics"],
   "properties": {
-    "schema": {
-      "const": "skilltrack.roadmap.v1"
-    },
     "roadmap": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name"],
+      "required": ["title"],
       "properties": {
-        "name": {
+        "title": {
           "type": "string",
           "minLength": 1
         },
         "description": {
           "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
         }
       }
     },
-    "nodes": {
+    "topics": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/node"
+        "$ref": "#/$defs/topic"
       }
     }
   },
   "$defs": {
-    "checklistItem": {
+    "task": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "title", "completed"],
@@ -71,7 +77,7 @@
         }
       }
     },
-    "node": {
+    "topic": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "title"],
@@ -84,34 +90,34 @@
           "type": "string",
           "minLength": 1
         },
-        "parent_id": {
-          "type": ["string", "null"],
-          "format": "uuid"
-        },
         "description": {
           "type": "string"
         },
         "icon": {
-          "type": "string",
-          "description": "Lucide kebab-case icon name (e.g. brain, circle-dot). Unknown values fall back to circle-dot."
+          "type": "string"
         },
-        "accent_color": {
-          "type": "string",
-          "description": "Optional 3 or 6 digit hex color."
-        },
-        "checklist": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/checklistItem"
-          }
+        "color": {
+          "type": "string"
         },
         "notes": {
           "type": "string"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task"
+          }
         },
         "links": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/link"
+          }
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/topic"
           }
         }
       }

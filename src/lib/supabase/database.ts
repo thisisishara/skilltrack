@@ -39,6 +39,7 @@ export type Database = {
           user_id: string
           name: string
           description: string | null
+          notes: string | null
           created_at: string
           updated_at: string
         }
@@ -47,6 +48,7 @@ export type Database = {
           user_id: string
           name: string
           description?: string | null
+          notes?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -55,6 +57,7 @@ export type Database = {
           user_id?: string
           name?: string
           description?: string | null
+          notes?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -68,7 +71,7 @@ export type Database = {
           },
         ]
       }
-      roadmap_nodes: {
+      topics: {
         Row: {
           id: string
           role_id: string
@@ -78,7 +81,7 @@ export type Database = {
           description: string | null
           notes: string | null
           icon: string
-          accent_color: string | null
+          color: string | null
           handle_kind: string
           incoming_edge_animated: boolean
           position_x: number
@@ -96,7 +99,7 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
-          accent_color?: string | null
+          color?: string | null
           handle_kind?: string
           incoming_edge_animated?: boolean
           position_x?: number
@@ -114,7 +117,7 @@ export type Database = {
           description?: string | null
           notes?: string | null
           icon?: string
-          accent_color?: string | null
+          color?: string | null
           handle_kind?: string
           incoming_edge_animated?: boolean
           position_x?: number
@@ -125,28 +128,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "roadmap_nodes_role_id_fkey"
+            foreignKeyName: "topics_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "roadmap_nodes_parent_id_fkey"
+            foreignKeyName: "topics_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
-            referencedRelation: "roadmap_nodes"
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
       }
-      checklist_items: {
+      tasks: {
         Row: {
           id: string
-          node_id: string
+          topic_id: string
           title: string
           description: string | null
-          is_completed: boolean
+          completed: boolean
           sort_order: number
           created_at: string
           updated_at: string
@@ -154,10 +157,10 @@ export type Database = {
         }
         Insert: {
           id?: string
-          node_id: string
+          topic_id: string
           title: string
           description?: string | null
-          is_completed?: boolean
+          completed?: boolean
           sort_order?: number
           created_at?: string
           updated_at?: string
@@ -165,10 +168,10 @@ export type Database = {
         }
         Update: {
           id?: string
-          node_id?: string
+          topic_id?: string
           title?: string
           description?: string | null
-          is_completed?: boolean
+          completed?: boolean
           sort_order?: number
           created_at?: string
           updated_at?: string
@@ -176,18 +179,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "checklist_items_node_id_fkey"
-            columns: ["node_id"]
+            foreignKeyName: "tasks_topic_id_fkey"
+            columns: ["topic_id"]
             isOneToOne: false
-            referencedRelation: "roadmap_nodes"
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
       }
-      node_links: {
+      links: {
         Row: {
           id: string
-          node_id: string
+          role_id: string
+          topic_id: string | null
           label: string
           url: string
           created_at: string
@@ -195,7 +199,8 @@ export type Database = {
         }
         Insert: {
           id?: string
-          node_id: string
+          role_id: string
+          topic_id?: string | null
           label: string
           url: string
           created_at?: string
@@ -203,7 +208,8 @@ export type Database = {
         }
         Update: {
           id?: string
-          node_id?: string
+          role_id?: string
+          topic_id?: string | null
           label?: string
           url?: string
           created_at?: string
@@ -211,10 +217,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "node_links_node_id_fkey"
-            columns: ["node_id"]
+            foreignKeyName: "links_role_id_fkey"
+            columns: ["role_id"]
             isOneToOne: false
-            referencedRelation: "roadmap_nodes"
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "links_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]

@@ -1,8 +1,4 @@
-import type { NodeKind } from "@/domain/nodes/kind"
-
-export const ROADMAP_SCHEMA_ID = "skilltrack.roadmap.v1"
-
-export type NormalizedChecklistItem = {
+export type NormalizedTask = {
   id: string
   title: string
   description: string | null
@@ -15,22 +11,27 @@ export type NormalizedLink = {
   url: string
 }
 
-export type NormalizedRoadmapNode = {
+export type NormalizedTopic = {
   id: string
-  kind: NodeKind
   parentId: string | null
   title: string
   description: string | null
   notes: string | null
   icon: string
-  accentColor: string | null
-  checklist: NormalizedChecklistItem[]
+  color: string | null
+  tasks: NormalizedTask[]
   links: NormalizedLink[]
 }
 
 export type NormalizedRoadmapDocument = {
-  schema: typeof ROADMAP_SCHEMA_ID
   name: string
   description: string | null
-  nodes: NormalizedRoadmapNode[]
+  notes: string | null
+  links: NormalizedLink[]
+  topics: NormalizedTopic[]
 }
+
+/** @deprecated Use NormalizedTopic */
+export type NormalizedRoadmapNode = NormalizedTopic
+/** @deprecated Use NormalizedTask */
+export type NormalizedChecklistItem = NormalizedTask

@@ -26,7 +26,7 @@ export const CHANGELOG: ChangelogRelease[] = [
           "Ctrl/⌘ + ↑ / ↓ cycles the role list while keeping canvas, tree, or settings.",
           "React Flow skill roadmaps with topics, labels, hierarchy, and Lucide icons.",
           "Tasks, links, notes, and derived topic and roadmap progress.",
-          "Canonical skilltrack.roadmap.v1 JSON import and export, including file drop.",
+          "Canonical SkillTrack roadmap JSON import and export, including file drop.",
           "Connection styles for how topics nest, with progress-styled links.",
         ],
       },

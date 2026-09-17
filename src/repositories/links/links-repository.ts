@@ -2,17 +2,18 @@ import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
 import { displayLinkLabel, normalizeLinkUrl } from "@/domain/links/url"
-import type { NodeLink } from "@/domain/links/types"
+import type { Link } from "@/domain/links/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { logEvent } from "@/lib/observability/log"
 
-type LinkRow = Database["public"]["Tables"]["node_links"]["Row"]
+type LinkRow = Database["public"]["Tables"]["links"]["Row"]
 
-function toLink(row: LinkRow): NodeLink {
+function toLink(row: LinkRow): Link {
   return {
     id: row.id,
-    nodeId: row.node_id,
+    roleId: row.role_id,
+    topicId: row.topic_id,
     label: row.label,
     url: row.url,
     createdAt: row.created_at,
@@ -21,10 +22,10 @@ function toLink(row: LinkRow): NodeLink {
 }
 
 function throwFromSupabase(error: { code?: string; message?: string } | null): never {
-  logEvent("error", "database.node_links.failed", {
+  logEvent("error", "database.links.failed", {
     code: error?.code ?? null,
   })
-  throw new ApplicationError("database", "Could not update node links.", {
+  throw new ApplicationError("database", "Could not update links.", {
     cause: error,
   })
 }
@@ -32,30 +33,32 @@ function throwFromSupabase(error: { code?: string; message?: string } | null): n
 export async function listByRoleId(roleId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("node_links")
-    .select("*, roadmap_nodes!inner(role_id)")
-    .eq("roadmap_nodes.role_id", roleId)
+    .from("links")
+    .select()
+    .eq("role_id", roleId)
     .order("created_at", { ascending: true })
 
   if (error) {
     throwFromSupabase(error)
   }
 
-  return (data ?? []).map((row) => toLink(row))
+  return (data ?? []).map(toLink)
 }
 
 export async function insert(input: {
   id?: string
-  nodeId: string
+  roleId: string
+  topicId: string | null
   label: string
   url: string
 }) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("node_links")
+    .from("links")
     .insert({
       ...(input.id ? { id: input.id } : {}),
-      node_id: input.nodeId,
+      role_id: input.roleId,
+      topic_id: input.topicId,
       label: displayLinkLabel(input.label),
       url: normalizeLinkUrl(input.url),
     })
@@ -72,7 +75,8 @@ export async function insert(input: {
 export async function insertMany(
   rows: {
     id: string
-    nodeId: string
+    roleId: string
+    topicId: string | null
     label: string
     url: string
   }[]
@@ -83,11 +87,12 @@ export async function insertMany(
 
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("node_links")
+    .from("links")
     .insert(
       rows.map((row) => ({
         id: row.id,
-        node_id: row.nodeId,
+        role_id: row.roleId,
+        topic_id: row.topicId,
         label: displayLinkLabel(row.label),
         url: normalizeLinkUrl(row.url),
       }))
@@ -110,7 +115,7 @@ export async function listExistingIds(ids: string[]) {
   const supabase = getSupabaseServerClient()
   for (let index = 0; index < ids.length; index += 100) {
     const chunk = ids.slice(index, index + 100)
-    const { data, error } = await supabase.from("node_links").select("id").in("id", chunk)
+    const { data, error } = await supabase.from("links").select("id").in("id", chunk)
     if (error) {
       throwFromSupabase(error)
     }
@@ -123,7 +128,8 @@ export async function listExistingIds(ids: string[]) {
 }
 
 export async function update(
-  nodeId: string,
+  roleId: string,
+  topicId: string | null,
   linkId: string,
   input: {
     label: string
@@ -131,16 +137,18 @@ export async function update(
   }
 ) {
   const supabase = getSupabaseServerClient()
-  const { data, error } = await supabase
-    .from("node_links")
+  let query = supabase
+    .from("links")
     .update({
       label: displayLinkLabel(input.label),
       url: normalizeLinkUrl(input.url),
     })
-    .eq("node_id", nodeId)
+    .eq("role_id", roleId)
     .eq("id", linkId)
-    .select()
-    .maybeSingle()
+
+  query = topicId === null ? query.is("topic_id", null) : query.eq("topic_id", topicId)
+
+  const { data, error } = await query.select().maybeSingle()
 
   if (error) {
     throwFromSupabase(error)
@@ -153,12 +161,29 @@ export async function update(
   return toLink(data)
 }
 
+export async function deleteLink(roleId: string, topicId: string | null, linkId: string) {
+  const supabase = getSupabaseServerClient()
+  let query = supabase.from("links").delete().eq("role_id", roleId).eq("id", linkId)
+  query = topicId === null ? query.is("topic_id", null) : query.eq("topic_id", topicId)
+
+  const { data, error } = await query.select("id").maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+
+  if (!data) {
+    throw new ApplicationError("not_found", "That link no longer exists.")
+  }
+}
+
+/** @deprecated Use deleteLink */
 export async function deleteForNode(nodeId: string, linkId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
-    .from("node_links")
+    .from("links")
     .delete()
-    .eq("node_id", nodeId)
+    .eq("topic_id", nodeId)
     .eq("id", linkId)
     .select("id")
     .maybeSingle()

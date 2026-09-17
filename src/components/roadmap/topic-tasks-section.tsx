@@ -21,9 +21,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import type { ChecklistItem } from "@/domain/tasks/types"
 
-export type NodeChecklistCopy = {
+export type TopicTasksCopy = {
   emptyTitle?: string
   emptyDescription?: string
   emptyAddLabel?: string
@@ -33,14 +33,14 @@ export type NodeChecklistCopy = {
   addButtonLabel?: string
 }
 
-export function NodeChecklistSection({
+export function TopicTasksSection({
   onCreate,
   copy,
 }: {
   onCreate: (input: { title: string; description: string }) => {
     ok: true
   } | { ok: false; message: string }
-  copy?: NodeChecklistCopy
+  copy?: TopicTasksCopy
 }) {
   const {
     addedToast = "Task added",

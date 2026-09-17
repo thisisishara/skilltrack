@@ -1,7 +1,7 @@
-import type { NodeHandleKind } from "@/domain/nodes/handle"
-import type { NodeKind } from "@/domain/nodes/kind"
+import type { NodeHandleKind } from "@/domain/topics/handle"
+import type { NodeKind } from "@/domain/topics/kind"
 
-export type RoadmapNode = {
+export type Topic = {
   id: string
   roleId: string
   parentId: string | null
@@ -10,7 +10,7 @@ export type RoadmapNode = {
   description: string | null
   notes: string | null
   icon: string
-  accentColor: string | null
+  color: string | null
   handleKind: NodeHandleKind
   incomingEdgeAnimated: boolean
   positionX: number
@@ -19,3 +19,6 @@ export type RoadmapNode = {
   createdAt: string
   updatedAt: string
 }
+
+/** @deprecated Use Topic */
+export type RoadmapNode = Topic

@@ -11,7 +11,7 @@ import {
   reorderChecklistItemsAction,
   setChecklistItemCompletedAction,
   updateChecklistItemAction,
-} from "@/application/checklists/actions"
+} from "@/application/tasks/actions"
 import {
   createNodeLinkAction,
   deleteNodeLinkAction,
@@ -25,25 +25,34 @@ import {
   createNodeAction,
   deleteNodeAction,
   placeNodeAction,
+  placeNodeAtRootAction,
   updateNodeAction,
-} from "@/application/nodes/actions"
-import { DeleteNodeAlert } from "@/components/roadmap/delete-node-alert"
+} from "@/application/topics/actions"
+import {
+  updateRoleDescriptionAction,
+  updateRoleNotesAction,
+} from "@/application/roles/actions"
+import { DeleteTopicAlert } from "@/components/roadmap/delete-topic-alert"
 import {
   TaskDialog,
-  type NodeChecklistCopy,
-} from "@/components/roadmap/node-checklist-section"
-import { NotesDialog, NodeConfigSheet } from "@/components/roadmap/node-config-sheet"
-import { LinkDialog } from "@/components/roadmap/node-links-section"
+  type TopicTasksCopy,
+} from "@/components/roadmap/topic-tasks-section"
+import { NotesDialog, TopicConfigSheet } from "@/components/roadmap/topic-config-sheet"
+import { LinkDialog } from "@/components/roadmap/topic-links-section"
 import {
-  NodeDialog,
-  type NodeDialogCopy,
-  type NodeDialogMode,
-} from "@/components/roadmap/node-dialog"
+  TopicDialog,
+  type TopicDialogCopy,
+  type TopicDialogMode,
+} from "@/components/roadmap/topic-dialog"
 import {
-  RoadmapNodeRow,
+  TopicRow,
   type TopicAddKind,
-} from "@/components/roadmap/roadmap-node-row"
+} from "@/components/roadmap/topic-row"
 import { persistTreeLocation } from "@/components/roadmap/tree-location"
+import {
+  accentUpdatesForChange,
+  hasNestedTopics,
+} from "@/domain/topics/accent"
 import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useRolesUi } from "@/components/roles/roles-workspace"
@@ -71,25 +80,26 @@ import {
 } from "@/components/ui/empty"
 import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
-import { applyChecklistCompletion } from "@/domain/checklists/completion"
-import { displayChecklistTitle } from "@/domain/checklists/title"
-import type { ChecklistItem } from "@/domain/checklists/types"
+import { applyChecklistCompletion } from "@/domain/tasks/completion"
+import { displayChecklistTitle } from "@/domain/tasks/title"
+import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
 import {
   resolveLinkFields,
 } from "@/domain/links/url"
-import type { NodeHandleKind } from "@/domain/nodes/handle"
-import { nodeCanHaveChildren, nodeCanHaveParent } from "@/domain/nodes/handle"
-import { normalizeNodeIcon } from "@/domain/nodes/icon"
-import { isSkillNode } from "@/domain/nodes/kind"
-import { CHILD_OFFSET_Y, ROOT_OFFSET_X } from "@/domain/nodes/layout"
+import type { NodeHandleKind } from "@/domain/topics/handle"
+import { nodeCanHaveChildren, nodeCanHaveParent } from "@/domain/topics/handle"
+import { normalizeNodeIcon } from "@/domain/topics/icon"
+import { isSkillNode } from "@/domain/topics/kind"
+import { CHILD_OFFSET_Y, ROOT_OFFSET_X } from "@/domain/topics/layout"
 import {
   applyPlacements,
   placementUpdates,
+  rootPlacementUpdates,
   type TreeDropPosition,
-} from "@/domain/nodes/placement"
-import { displayNodeTitle } from "@/domain/nodes/title"
-import type { RoadmapNode } from "@/domain/nodes/types"
+} from "@/domain/topics/placement"
+import { displayNodeTitle } from "@/domain/topics/title"
+import type { RoadmapNode } from "@/domain/topics/types"
 import {
   nodeProgress,
   nodeStatusCounts,
@@ -106,7 +116,7 @@ import { readStoredEditMode, writeStoredEditMode } from "@/lib/roadmap/edit-mode
 import { readExpandedIds, writeExpandedIds } from "@/lib/roadmap/expanded-storage"
 import { cn } from "@/lib/utils"
 
-const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
+const TASK_CHECKLIST_COPY: TopicTasksCopy = {
   emptyTitle: "No tasks yet",
   emptyDescription: "Add tasks to track what you need to learn here.",
   emptyAddLabel: "Add a task",
@@ -116,17 +126,17 @@ const TASK_CHECKLIST_COPY: NodeChecklistCopy = {
   addButtonLabel: "Add task",
 }
 
-const TOPIC_DIALOG_COPY: NodeDialogCopy = {
-  createTitle: "Add topic group",
-  createDescription: "Add a top-level topic group to this roadmap.",
-  childTitle: "Add sub-topic",
-  childDescription: "Create a sub-topic nested under the selected topic.",
+const TOPIC_DIALOG_COPY: TopicDialogCopy = {
+  createTitle: "Add topic",
+  createDescription: "Add a top-level topic to this roadmap.",
+  childTitle: "Add subtopic",
+  childDescription: "Create a subtopic nested under the selected topic.",
   editTitle: "Edit topic",
   editDescription: "Update this topic without changing its progress.",
   titlePlaceholder: "System design",
   descriptionPlaceholder: "Optional notes about this topic",
-  submitCreateLabel: "Add topic group",
-  submitChildLabel: "Add sub-topic",
+  submitCreateLabel: "Add topic",
+  submitChildLabel: "Add subtopic",
 }
 
 function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
@@ -233,7 +243,7 @@ function createLocalNode(input: {
     description: input.description,
     notes: null,
     icon: input.icon,
-    accentColor: null,
+    color: null,
     handleKind: input.handleKind,
     incomingEdgeAnimated: false,
     positionX: input.positionX,
@@ -248,6 +258,8 @@ export function Roadmap({
   userId,
   roleId,
   roleName,
+  roleDescription,
+  roleNotes,
   nodes: serverNodes,
   checklistItems: serverItems,
   links: serverLinks,
@@ -256,6 +268,8 @@ export function Roadmap({
   userId: string
   roleId: string
   roleName: string
+  roleDescription: string | null
+  roleNotes: string | null
   nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
   links: NodeLink[]
@@ -264,10 +278,12 @@ export function Roadmap({
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
   const [links, setLinks] = useState<NodeLink[]>(serverLinks ?? [])
+  const [overviewDescription, setOverviewDescription] = useState(roleDescription ?? "")
+  const [overviewNotes, setOverviewNotes] = useState(roleNotes ?? "")
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
   const [expandedHydrated, setExpandedHydrated] = useState(false)
   const [configNodeId, setConfigNodeId] = useState<string | null>(null)
-  const [dialogMode, setDialogMode] = useState<NodeDialogMode | null>(null)
+  const [dialogMode, setDialogMode] = useState<TopicDialogMode | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteIds, setDeleteIds] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -281,6 +297,7 @@ export function Roadmap({
     nodeId: string
     position: TreeDropPosition
   } | null>(null)
+  const [headerDropActive, setHeaderDropActive] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importSeedJson, setImportSeedJson] = useState("")
   const [importSeedError, setImportSeedError] = useState<string | null>(null)
@@ -331,6 +348,7 @@ export function Roadmap({
     setDraggedId(nodeId)
     if (!nodeId) {
       setDropHint(null)
+      setHeaderDropActive(false)
     }
   }
 
@@ -453,18 +471,12 @@ export function Roadmap({
   }, [skillNodes])
 
   const roots = childrenByParent.get(null) ?? []
-  // When the whole roadmap hangs off a single top-level topic (the common
-  // case — that topic usually just restates the role name), showing it as
-  // its own collapsible row is redundant. Hoist its children up to the
-  // top level instead and surface the role name as the page heading; the
-  // hidden topic's own details/checklist stay reachable via the header.
-  const singleRoot = roots.length === 1 ? (roots[0] ?? null) : null
-  const visibleRoots = singleRoot ? childrenByParent.get(singleRoot.id) ?? [] : roots
-  const primaryParentId = singleRoot?.id ?? null
+  const visibleRoots = roots
+  const primaryParentId = null
 
   const overallProgress = useMemo(() => {
     const skillIds = new Set(skillNodes.map((node) => node.id))
-    return roadmapProgress(items.filter((item) => skillIds.has(item.nodeId)))
+    return roadmapProgress(items.filter((item) => skillIds.has(item.topicId)))
   }, [items, skillNodes])
   const statusCounts = useMemo(
     () => nodeStatusCounts(skillNodes, items),
@@ -526,26 +538,27 @@ export function Roadmap({
     [skillNodes, items]
   )
 
-  const isOverview =
-    !configNodeId || Boolean(singleRoot && configNodeId === singleRoot.id)
+  const isOverview = !configNodeId
   const configNode = useMemo(
     () => nodes.find((node) => node.id === configNodeId) ?? null,
     [nodes, configNodeId]
   )
-  const panelNode = isOverview ? singleRoot : configNode
-  const isPanelSubgroup = Boolean(
-    panelNode && visibleRoots.some((node) => node.id === panelNode.id)
-  )
+  const panelNode = isOverview ? null : configNode
   const selectedItems = useMemo(
     () =>
       !isOverview && configNodeId
-        ? items.filter((item) => item.nodeId === configNodeId)
+        ? items.filter((item) => item.topicId === configNodeId)
         : [],
     [configNodeId, isOverview, items]
   )
   const selectedLinks = useMemo(
-    () => (panelNode ? links.filter((link) => link.nodeId === panelNode.id) : []),
-    [links, panelNode]
+    () =>
+      isOverview
+        ? links.filter((link) => link.topicId === null)
+        : panelNode
+          ? links.filter((link) => link.topicId === panelNode.id)
+          : [],
+    [isOverview, links, panelNode]
   )
   const selectedNodeProgress = useMemo(
     () =>
@@ -613,7 +626,7 @@ export function Roadmap({
       skillNodes
         .filter((node) => {
           const hasChildren = (childrenByParent.get(node.id) ?? []).length > 0
-          const hasTasks = items.some((item) => item.nodeId === node.id)
+          const hasTasks = items.some((item) => item.topicId === node.id)
           return hasChildren || hasTasks || Boolean(node.description?.trim())
         })
         .map((node) => node.id)
@@ -710,6 +723,37 @@ export function Roadmap({
     })
   }
 
+  function handlePlaceAtRoot() {
+    const currentDraggedId = draggedIdRef.current
+    setHeaderDropActive(false)
+    if (!currentDraggedId || !editMode) {
+      setDragging(null)
+      return
+    }
+
+    const updates = rootPlacementUpdates(nodes, currentDraggedId)
+    setDragging(null)
+    if (!updates) {
+      return
+    }
+
+    const previous = nodes
+    setNodes((current) => applyPlacements(current, updates))
+    setConfigNodeId(currentDraggedId)
+
+    void placeNodeAtRootAction({
+      roleId,
+      nodeId: currentDraggedId,
+    }).then((result) => {
+      if (!result.ok) {
+        setNodes(previous)
+        toast.error(result.message)
+        return
+      }
+      toast.success("Topic moved")
+    })
+  }
+
   function expandNode(nodeId: string) {
     setExpandedIds((current) => {
       if (current.has(nodeId)) {
@@ -788,7 +832,7 @@ export function Roadmap({
         return next
       })
     }
-    toast.success(dialogMode.asGroup ? "Topic group added" : "Sub-topic added")
+    toast.success(dialogMode.asGroup ? "Topic added" : "Subtopic added")
 
     void createNodeAction({
       id,
@@ -818,7 +862,42 @@ export function Roadmap({
     icon: string
     notes: string
     accentColor: string | null
+    nestedAccents?: "keep" | "apply"
   }) {
+    if (isOverview) {
+      const nextDescription = input.description.trim() || null
+      const nextNotes = input.notes.trim() || null
+      const previousDescription = overviewDescription
+      const previousNotes = overviewNotes
+      setOverviewDescription(nextDescription ?? "")
+      setOverviewNotes(nextNotes ?? "")
+
+      void Promise.all([
+        updateRoleDescriptionAction(roleId, nextDescription),
+        updateRoleNotesAction(roleId, nextNotes),
+      ]).then((results) => {
+        const failed = results.find((result) => !result.ok)
+        if (failed && !failed.ok) {
+          setOverviewDescription(previousDescription)
+          setOverviewNotes(previousNotes)
+          toast.error(failed.message)
+        }
+      })
+
+      return { ok: true as const, node: createLocalNode({
+        id: roleId,
+        roleId,
+        parentId: null,
+        title: roleName,
+        description: nextDescription,
+        icon: "circle-dot",
+        handleKind: "regular",
+        positionX: 0,
+        positionY: 0,
+        sortOrder: 0,
+      }) }
+    }
+
     if (!panelNode) {
       return {
         ok: false as const,
@@ -836,16 +915,36 @@ export function Roadmap({
       }
     }
 
-    const previous = panelNode
     const next: RoadmapNode = {
       ...panelNode,
       title,
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
       notes: input.notes.trim() || null,
-      accentColor: input.accentColor,
+      color: input.accentColor,
     }
-    setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
+    const previous = nodes
+    const accentUpdates =
+      input.nestedAccents && input.accentColor !== panelNode.color
+        ? accentUpdatesForChange(
+            nodes,
+            panelNode.id,
+            input.accentColor,
+            input.nestedAccents
+          )
+        : [{ id: next.id, color: next.color }]
+    const accentsById = new Map(
+      accentUpdates.map((update) => [update.id, update.color])
+    )
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.id === next.id) {
+          return next
+        }
+        const accent = accentsById.get(node.id)
+        return accent !== undefined ? { ...node, color: accent } : node
+      })
+    )
 
     void updateNodeAction({
       roleId,
@@ -854,13 +953,12 @@ export function Roadmap({
       description: next.description,
       icon: next.icon,
       notes: next.notes,
-      accentColor: next.accentColor,
+      color: next.color,
+      nestedAccents: input.nestedAccents,
       handleKind: next.handleKind,
     }).then((result) => {
       if (!result.ok) {
-        setNodes((current) =>
-          current.map((node) => (node.id === previous.id ? previous : node))
-        )
+        setNodes(previous)
         toast.error(result.message)
       }
     })
@@ -888,7 +986,7 @@ export function Roadmap({
       description: next.description,
       icon: next.icon,
       notes: next.notes,
-      accentColor: next.accentColor,
+      color: next.color,
       handleKind: next.handleKind,
     }).then((result) => {
       if (!result.ok) {
@@ -922,8 +1020,10 @@ export function Roadmap({
     const previousItems = items
     const previousLinks = links
     setNodes((current) => current.filter((node) => !removing.has(node.id)))
-    setItems((current) => current.filter((item) => !removing.has(item.nodeId)))
-    setLinks((current) => current.filter((link) => !removing.has(link.nodeId)))
+    setItems((current) => current.filter((item) => !removing.has(item.topicId)))
+    setLinks((current) =>
+      current.filter((link) => !link.topicId || !removing.has(link.topicId))
+    )
     setDeleteOpen(false)
     if (configNodeId && removing.has(configNodeId)) {
       setConfigNodeId(null)
@@ -971,17 +1071,17 @@ export function Roadmap({
           return { ok: false as const, message: "Task title cannot be empty." }
         }
 
-        const siblings = items.filter((item) => item.nodeId === nodeId)
+        const siblings = items.filter((item) => item.topicId === nodeId)
         const id = crypto.randomUUID()
         const now = new Date().toISOString()
         const sortOrder =
           siblings.length === 0 ? 0 : Math.max(...siblings.map((item) => item.sortOrder)) + 1
         const item: ChecklistItem = {
           id,
-          nodeId,
+          topicId: nodeId,
           title,
           description: input.description.trim() || null,
-          isCompleted: false,
+          completed: false,
           sortOrder,
           createdAt: now,
           updatedAt: now,
@@ -1023,7 +1123,7 @@ export function Roadmap({
 
         void updateChecklistItemAction({
           roleId,
-          nodeId: item.nodeId,
+          nodeId: item.topicId,
           itemId: item.id,
           title: nextTitle,
           description: nextDescription,
@@ -1074,23 +1174,31 @@ export function Roadmap({
 
   function handleCreateLink(
     input: { label: string; url: string },
-    nodeId = panelNode?.id
+    topicId: string | null = isOverview ? null : panelNode?.id ?? null
   ) {
     const resolved = resolveLinkFields(input.label, input.url)
     if (!resolved.ok) {
       return resolved.message
     }
-    if (!nodeId) {
+    if (!isOverview && !topicId) {
       return "Select a topic first."
     }
 
     const { label, url } = resolved
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
-    const link: NodeLink = { id, nodeId, label, url, createdAt: now, updatedAt: now }
+    const link: NodeLink = {
+      id,
+      roleId,
+      topicId,
+      label,
+      url,
+      createdAt: now,
+      updatedAt: now,
+    }
     setLinks((current) => [...current, link])
 
-    void createNodeLinkAction({ id, roleId, nodeId, label, url }).then((result) => {
+    void createNodeLinkAction({ id, roleId, nodeId: topicId, label, url }).then((result) => {
       if (!result.ok) {
         setLinks((current) => current.filter((entry) => entry.id !== id))
         toast.error(result.message)
@@ -1117,7 +1225,7 @@ export function Roadmap({
 
     void updateNodeLinkAction({
       roleId,
-      nodeId: link.nodeId,
+      nodeId: link.topicId,
       linkId: link.id,
       label: resolved.label,
       url: resolved.url,
@@ -1137,7 +1245,7 @@ export function Roadmap({
     const previous = links
     setLinks((current) => current.filter((link) => link.id !== linkId))
 
-    void deleteNodeLinkAction({ roleId, nodeId: panelNode?.id ?? "", linkId }).then((result) => {
+    void deleteNodeLinkAction({ roleId, nodeId: panelNode?.id ?? null, linkId }).then((result) => {
       if (!result.ok) {
         setLinks(previous)
         toast.error(result.message)
@@ -1156,8 +1264,31 @@ export function Roadmap({
     >
       <div
         data-tree-toolbar
-        className="flex shrink-0 cursor-pointer items-center justify-between gap-2 border-b px-4 py-2.5"
+        className={cn(
+          "flex shrink-0 cursor-pointer items-center justify-between gap-2 border-b px-4 py-2.5",
+          headerDropActive && "bg-accent ring-2 ring-ring ring-inset"
+        )}
         onClick={showOverview}
+        onDragOver={(event) => {
+          if (!editMode || !draggedIdRef.current) {
+            return
+          }
+          event.preventDefault()
+          event.stopPropagation()
+          setHeaderDropActive(true)
+        }}
+        onDragLeave={(event) => {
+          const next = event.relatedTarget
+          if (next instanceof Node && event.currentTarget.contains(next)) {
+            return
+          }
+          setHeaderDropActive(false)
+        }}
+        onDrop={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          handlePlaceAtRoot()
+        }}
       >
         <p className="min-w-0 truncate text-left text-sm font-medium">
           {roleName}
@@ -1206,9 +1337,9 @@ export function Roadmap({
                   />
                 }
               >
-                Add Topic Group
+                Add topic
               </TooltipTrigger>
-              <TooltipContent>Add Topic Group</TooltipContent>
+              <TooltipContent>Add topic</TooltipContent>
             </Tooltip>
           ) : null}
           <Button
@@ -1268,17 +1399,15 @@ export function Roadmap({
                 <EmptyMedia variant="icon">
                   <ListTree />
                 </EmptyMedia>
-                <EmptyTitle>No topic groups yet</EmptyTitle>
+                <EmptyTitle>No topics yet</EmptyTitle>
                 <EmptyDescription>
                   {canImport
                     ? editMode
-                      ? "Add a topic group, import a roadmap, or drop a .json file here."
-                      : "Import a roadmap, or switch to Edit to add a topic group."
+                      ? "Add a topic, import a roadmap, or drop a .json file here."
+                      : "Import a roadmap, or switch to Edit to add a topic."
                     : editMode
-                      ? singleRoot
-                        ? "Add a topic group to start filling in this roadmap."
-                        : "Add your first topic group to start mapping this roadmap."
-                      : "Switch to Edit to add a topic group."}
+                      ? "Add your first topic to start mapping this roadmap."
+                      : "Switch to Edit to add a topic."}
                 </EmptyDescription>
               </EmptyHeader>
               {canImport || editMode ? (
@@ -1300,9 +1429,9 @@ export function Roadmap({
                         />
                       }
                     >
-                      Add Topic Group
+                      Add topic
                     </TooltipTrigger>
-                    <TooltipContent>Add Topic Group</TooltipContent>
+                    <TooltipContent>Add topic</TooltipContent>
                   </Tooltip>
                 ) : null}
               </EmptyContent>
@@ -1311,7 +1440,7 @@ export function Roadmap({
           ) : (
             <ul className="flex flex-col gap-1.5">
               {visibleRoots.map((node) => (
-                <RoadmapNodeRow
+                <TopicRow
                   key={node.id}
                   node={node}
                   depth={0}
@@ -1365,7 +1494,7 @@ export function Roadmap({
           maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
         >
           <div className="h-full min-h-0 overflow-hidden">
-            <NodeConfigSheet
+            <TopicConfigSheet
               open
               onOpenChange={() => {
                 setConfigNodeId(null)
@@ -1378,18 +1507,28 @@ export function Roadmap({
               mode={isOverview ? "overview" : "topic"}
               showClose={false}
               showChecklist={!isOverview}
-              showIcon={!isPanelSubgroup}
+              showIcon={Boolean(panelNode?.parentId)}
               showProgressBar
               editMode={editMode}
               fallbackTitle={roleName}
+              overviewDescription={overviewDescription}
+              overviewNotes={overviewNotes}
+              canInheritAccent={Boolean(panelNode?.parentId)}
               subtitle={
-                editMode
-                  ? "Configure details, tasks, and links for this topic."
-                  : "Progress, notes, and links for this topic."
+                isOverview
+                  ? editMode
+                    ? "Edit this roadmap’s description, notes, and links."
+                    : "Overview of this roadmap."
+                  : editMode
+                    ? "Configure details, tasks, and links for this topic."
+                    : "Progress, notes, and links for this topic."
               }
               checklistHeading="Tasks"
               checklistCopy={TASK_CHECKLIST_COPY}
-              deleteLabel={isPanelSubgroup ? "Delete topic group" : "Delete topic"}
+              deleteLabel="Delete topic"
+              hasNestedTopics={
+                Boolean(panelNode && hasNestedTopics(skillNodes, panelNode.id))
+              }
               onSaveDetails={async (input) => handleSaveDetails(input)}
               onToggleChecklist={configChecklistHandlers.onToggle}
               onCreateChecklist={configChecklistHandlers.onCreate}
@@ -1412,7 +1551,7 @@ export function Roadmap({
         </ResizablePanel>
       </ResizablePanelGroup>
       <RoadmapStatusBar roleName={roleName} progress={overallProgress} counts={statusCounts} />
-      <NodeDialog
+      <TopicDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
@@ -1478,17 +1617,13 @@ export function Roadmap({
           setCompose(null)
         }}
       />
-      <DeleteNodeAlert
+      <DeleteTopicAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         count={deleteIds.length}
         nodeTitle={deleteNodes[0]?.title ?? ""}
-        noun={
-          deleteNodes[0] && visibleRoots.some((node) => node.id === deleteNodes[0].id)
-            ? "topic group"
-            : "topic"
-        }
-        childNoun="sub-topics"
+        noun="topic"
+        childNoun="subtopics"
         childNames={deleteChildNames}
         onConfirm={async () => {
           handleDelete()

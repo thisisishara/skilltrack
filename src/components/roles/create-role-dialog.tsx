@@ -37,22 +37,28 @@ import {
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
+import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { Textarea } from "@/components/ui/textarea"
 
-type CreateMode = "empty" | "import"
+type CreateMode = "empty" | "import" | "track"
 
 export function CreateRoleDialog({
   open,
   onOpenChange,
   onCreateEmpty,
   onImport,
+  onCreateWithTrack,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreateEmpty: (name: string) => Promise<RoleActionResult>
   onImport: (json: string, nameOverride?: string) => Promise<RoleActionResult>
+  onCreateWithTrack?: (name: string, brief: string) => Promise<RoleActionResult>
 }) {
+  const { settings } = useTrackWorkspace()
   const [name, setName] = useState("")
   const [json, setJson] = useState("")
+  const [brief, setBrief] = useState("")
   const [mode, setMode] = useState<CreateMode>("empty")
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,6 +75,7 @@ export function CreateRoleDialog({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName("")
       setJson("")
+      setBrief("")
       setMode("empty")
       setError(null)
       setPending(false)
@@ -95,10 +102,18 @@ export function CreateRoleDialog({
       return
     }
 
+    if (mode === "track" && (!brief.trim() || !onCreateWithTrack)) {
+      setPending(false)
+      setError("Describe the role you want Track to build.")
+      return
+    }
+
     const result =
       mode === "empty"
         ? await onCreateEmpty(name)
-        : await onImport(json, name.trim() ? name : undefined)
+        : mode === "track" && onCreateWithTrack
+          ? await onCreateWithTrack(name, brief)
+          : await onImport(json, name.trim() ? name : undefined)
 
     setPending(false)
 
@@ -150,7 +165,7 @@ export function CreateRoleDialog({
                       value={[mode]}
                       onValueChange={(value) => {
                         const next = Array.isArray(value) ? value[0] : value
-                        if (next === "empty" || next === "import") {
+                        if (next === "empty" || next === "import" || next === "track") {
                           setMode(next)
                           setError(null)
                         }
@@ -165,6 +180,11 @@ export function CreateRoleDialog({
                       <ToggleGroupItem value="import" className="flex-1">
                         Import JSON
                       </ToggleGroupItem>
+                      {settings.trackEnabled ? (
+                        <ToggleGroupItem value="track" className="flex-1">
+                          Ask Track
+                        </ToggleGroupItem>
+                      ) : null}
                     </ToggleGroup>
                     <FieldDescription>
                       Import onto a new role, or later onto a role that still has no
@@ -194,6 +214,25 @@ export function CreateRoleDialog({
                       </FieldDescription>
                     )}
                 </Field>
+                {mode === "track" ? (
+                  <Field data-invalid={error && mode === "track" ? true : undefined}>
+                    <FieldLabel htmlFor="create-role-brief">What should Track build?</FieldLabel>
+                    <Textarea
+                      id="create-role-brief"
+                      value={brief}
+                      onChange={(event) => {
+                        setBrief(event.target.value)
+                        setError(null)
+                      }}
+                      placeholder="Senior AI Engineer focused on RAG, evals, and production LLM ops."
+                    />
+                    {error ? <FieldError>{error}</FieldError> : (
+                      <FieldDescription>
+                        Track will propose a full roadmap. You accept or reject each change.
+                      </FieldDescription>
+                    )}
+                  </Field>
+                ) : null}
                 {mode === "import" ? (
                   <ImportJsonFields
                     json={json}
@@ -221,10 +260,14 @@ export function CreateRoleDialog({
                 {pending
                   ? mode === "import"
                     ? "Importing…"
-                    : "Creating…"
+                    : mode === "track"
+                      ? "Creating…"
+                      : "Creating…"
                   : mode === "import"
                     ? "Import role"
-                    : "Create role"}
+                    : mode === "track"
+                      ? "Create with Track"
+                      : "Create role"}
               </Button>
             </DialogFooter>
           </form>

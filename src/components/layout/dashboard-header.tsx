@@ -3,8 +3,10 @@
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { CommandSearch } from "@/components/search/command-search"
+import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sheet,
@@ -15,8 +17,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { APP_VERSION, CHANGELOG } from "@/lib/app-release"
+import { Sparkles } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 export function DashboardHeader() {
+  const pathname = usePathname()
+  const { settings, trackPanelOpen, setTrackPanelOpen } = useTrackWorkspace()
+  const showTrack = settings.trackEnabled && !pathname.endsWith("/settings")
+
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b px-4">
       <div className="flex min-w-0 items-center gap-2">
@@ -24,6 +32,17 @@ export function DashboardHeader() {
         <CommandSearch />
       </div>
       <div className="flex items-center gap-1">
+        {showTrack ? (
+          <Button
+            type="button"
+            variant={trackPanelOpen ? "secondary" : "ghost"}
+            size="icon"
+            aria-label="Track"
+            onClick={() => setTrackPanelOpen(!trackPanelOpen)}
+          >
+            <Sparkles />
+          </Button>
+        ) : null}
         <NotificationsMenu />
         <ModeToggle />
         <Sheet>

@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown, LogOut, Map, Settings, Users } from "lucide-react"
+import { ChevronsUpDown, LogOut, Map, Settings } from "lucide-react"
 
 import { signOutAction } from "@/lib/auth/actions"
 import { RoleSwitcher } from "@/components/roles/role-switcher"
 import { useRolesUi } from "@/components/roles/roles-workspace"
+import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -34,16 +35,15 @@ type AppSidebarProps = {
   githubUsername: string
   displayName?: string | null
   avatarUrl?: string | null
-  isAdmin?: boolean
 }
 
 export function AppSidebar({
   githubUsername,
   displayName,
   avatarUrl,
-  isAdmin = false,
 }: AppSidebarProps) {
   const { activeRole, beginNavigation } = useRolesUi()
+  const { openSettings } = useTrackWorkspace()
   const pathname = usePathname()
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
@@ -61,29 +61,6 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {isAdmin ? (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={pathname.startsWith("/dashboard/users")}
-                    tooltip="Users"
-                    render={
-                      <Link
-                        href="/dashboard/users"
-                        onClick={() => beginNavigation("/dashboard/users")}
-                      />
-                    }
-                  >
-                    <Users />
-                    <span>Users</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
         {activeRole && roleHref && settingsHref ? (
           <SidebarGroup>
             <SidebarGroupContent>
@@ -108,7 +85,7 @@ export function AppSidebar({
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={settingsActive}
-                    tooltip="Settings"
+                    tooltip="Role settings"
                     render={
                       <Link
                         href={settingsHref}
@@ -119,7 +96,7 @@ export function AppSidebar({
                     }
                   >
                     <Settings />
-                    <span>Settings</span>
+                    <span>Role settings</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -184,6 +161,14 @@ export function AppSidebar({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      openSettings("general")
+                    }}
+                  >
+                    <Settings />
+                    User settings
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
                       void signOutAction()

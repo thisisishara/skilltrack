@@ -1,7 +1,7 @@
 {
   "project": "SkillTrack",
   "spec": "docs/spec/spec.md",
-  "updated": "2026-09-16",
+  "updated": "2026-09-19",
   "statusValues": [
     "pending",
     "done"
@@ -1589,7 +1589,7 @@
         {
           "id": "E13-P01",
           "title": "Isolate a future AI module",
-          "status": "pending",
+          "status": "done",
           "spec": [
             "§4",
             "§45"
@@ -1598,12 +1598,12 @@
             {
               "id": "E13-P01-S01",
               "title": "Keep domain modules free of LLM vendor coupling",
-              "status": "pending"
+              "status": "done"
             },
             {
               "id": "E13-P01-S02",
               "title": "Require human confirmation for any AI-generated roadmap change",
-              "status": "pending"
+              "status": "done"
             }
           ]
         },
@@ -1633,7 +1633,7 @@
             {
               "id": "E13-P02-S04",
               "title": "Multi-provider LLM abstraction",
-              "status": "pending"
+              "status": "done"
             }
           ]
         }
@@ -1720,6 +1720,62 @@
             {
               "id": "E14-P03-S02",
               "title": "Hide the node progress meter when a skill has no checklist items",
+              "status": "done"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "Track roadmap copilot and user settings",
+      "phase": 9,
+      "spec": [
+        "§3 Later Stages",
+        "§45"
+      ],
+      "status": "done",
+      "pbis": [
+        {
+          "id": "E15-P01",
+          "title": "Account-level user settings modal",
+          "status": "done",
+          "subtasks": [
+            {
+              "id": "E15-P01-S01",
+              "title": "Rename Role settings and add User settings modal",
+              "status": "done"
+            },
+            {
+              "id": "E15-P01-S02",
+              "title": "Move admin Users into the user settings modal",
+              "status": "done"
+            },
+            {
+              "id": "E15-P01-S03",
+              "title": "Persist notification preference and encrypted BYOK Track config",
+              "status": "done"
+            }
+          ]
+        },
+        {
+          "id": "E15-P02",
+          "title": "Track session, context budget, and staged proposals",
+          "status": "done",
+          "subtasks": [
+            {
+              "id": "E15-P02-S01",
+              "title": "User-controlled working-set context and history compaction",
+              "status": "done"
+            },
+            {
+              "id": "E15-P02-S02",
+              "title": "Role-scoped Track chat with restart and Ask Track entry points",
+              "status": "done"
+            },
+            {
+              "id": "E15-P02-S03",
+              "title": "Staged tree proposals with accept/reject and chat deep-links",
               "status": "done"
             }
           ]

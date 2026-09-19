@@ -42,6 +42,59 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          user_id: string
+          notifications_enabled: boolean
+          track_enabled: boolean
+          track_provider: "anthropic" | "openai" | "google" | "openrouter" | null
+          track_model: string | null
+          track_base_url: string | null
+          track_api_key_ciphertext: string | null
+          track_api_key_iv: string | null
+          track_api_key_last4: string | null
+          track_config: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          notifications_enabled?: boolean
+          track_enabled?: boolean
+          track_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
+          track_model?: string | null
+          track_base_url?: string | null
+          track_api_key_ciphertext?: string | null
+          track_api_key_iv?: string | null
+          track_api_key_last4?: string | null
+          track_config?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          notifications_enabled?: boolean
+          track_enabled?: boolean
+          track_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
+          track_model?: string | null
+          track_base_url?: string | null
+          track_api_key_ciphertext?: string | null
+          track_api_key_iv?: string | null
+          track_api_key_last4?: string | null
+          track_config?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           id: string

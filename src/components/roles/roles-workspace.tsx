@@ -21,6 +21,7 @@ import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
 import { CreateRoleDialog } from "@/components/roles/create-role-dialog"
+import { useTrackWorkspace } from "@/components/track/track-workspace"
 import type { RoadmapViewProps } from "@/components/roadmap/roadmap"
 
 export type TreeFocusRequest = {
@@ -61,6 +62,7 @@ export function RolesWorkspace({
   roles: Role[]
   children: ReactNode
 }) {
+  const { setSeedPrompt, setTrackPanelOpen } = useTrackWorkspace()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams<{ roleId?: string }>()
@@ -234,6 +236,24 @@ export function RolesWorkspace({
     return result
   }
 
+  async function handleCreateWithTrack(name: string, brief: string) {
+    const result = await createRoleAction(name)
+    if (!result.ok) {
+      return result
+    }
+    if ("role" in result) {
+      const href = `/dashboard/roles/${result.role.id}?track=1`
+      writeStoredActiveRoleId(result.role.id)
+      setSeedPrompt(brief)
+      setTrackPanelOpen(true)
+      toast.success("Role created")
+      setCreateOpen(false)
+      beginNavigation(href)
+      router.push(href)
+    }
+    return result
+  }
+
   const value = useMemo(
     () => ({
       roles,
@@ -269,6 +289,7 @@ export function RolesWorkspace({
         onOpenChange={setCreateOpen}
         onCreateEmpty={handleCreate}
         onImport={handleImport}
+        onCreateWithTrack={handleCreateWithTrack}
       />
     </RolesUiContext.Provider>
   )

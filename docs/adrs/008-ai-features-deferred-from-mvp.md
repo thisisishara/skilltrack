@@ -1,6 +1,7 @@
 # ADR-008: AI features deferred from MVP
 
-- **Status:** Accepted
+- **Status:** Superceded in part by [ADR-011](./011-track-roadmap-copilot.md) (Track copilot). Job extraction, gap analysis, and semantic matching remain deferred.
+
 - **Date:** 2026-09-13
 - **Spec:** §3 Later Stages, §26, §45–§47, §50 Phase 9+, §48.5
 

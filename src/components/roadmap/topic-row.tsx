@@ -35,6 +35,9 @@ import {
   DONE_CHECKBOX_CLASS,
   type ProgressSnapshot,
 } from "@/domain/progress/progress"
+import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
+import { proposalForTopic } from "@/domain/track/overlay"
+import { useRolesUi } from "@/components/roles/roles-workspace"
 
 export type ChecklistHandlers = {
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
@@ -414,6 +417,38 @@ export function TopicRow({
   const canExpand =
     Boolean(description) || ownItems.length > 0 || children.length > 0 || editMode
   const hasBody = expanded && canExpand
+  const track = useTrackWorkspaceOptional()
+  const { activeRole } = useRolesUi()
+  const proposal = proposalForTopic(track?.proposals ?? [], node.id)
+  const isGhost = proposal?.kind === "create"
+  const proposalActions =
+    proposal && track && activeRole ? (
+      <span data-no-drag className="flex shrink-0 items-center gap-1">
+        <Button
+          type="button"
+          size="sm"
+          className="h-6 px-2 text-[11px]"
+          onClick={(event) => {
+            event.stopPropagation()
+            void track.acceptProposal(activeRole.id, proposal.id)
+          }}
+        >
+          Accept
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[11px]"
+          onClick={(event) => {
+            event.stopPropagation()
+            track.rejectProposal(proposal.id)
+          }}
+        >
+          Reject
+        </Button>
+      </span>
+    ) : null
 
   function showTopic() {
     onSelect(node.id)
@@ -630,6 +665,7 @@ export function TopicRow({
           className={cn(
             "group relative flex cursor-pointer items-center gap-1.5 rounded-md py-1 pr-1",
             isDragging && "opacity-50",
+            isGhost && "border border-dashed border-primary/40 bg-primary/5",
             dropClasses
           )}
           onClick={activateTopic}
@@ -666,6 +702,7 @@ export function TopicRow({
               </span>
             </div>
           ) : null}
+          {proposalActions}
           {actions}
         </div>
       ) : (
@@ -678,6 +715,7 @@ export function TopicRow({
             selected
               ? "border-primary/40 bg-accent shadow-sm"
               : "border-border/60 bg-card hover:border-border hover:bg-accent/40",
+            isGhost && "border-dashed border-primary/50 bg-primary/5",
             isDragging && "opacity-50",
             dropClasses
           )}
@@ -726,6 +764,7 @@ export function TopicRow({
               </span>
             </div>
           ) : null}
+          {proposalActions}
           {actions}
         </div>
       )}

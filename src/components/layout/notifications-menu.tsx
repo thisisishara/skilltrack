@@ -7,6 +7,7 @@ import { Bell, CheckCheck, X } from "lucide-react"
 import { listStaleRoadmapNotificationsAction } from "@/application/notifications/actions"
 import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import { useRolesUi } from "@/components/roles/roles-workspace"
+import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { Button } from "@/components/ui/button"
 import {
   Empty,
@@ -29,12 +30,19 @@ import { Skeleton } from "@/components/ui/skeleton"
 export function NotificationsMenu() {
   const router = useRouter()
   const { beginNavigation } = useRolesUi()
+  const { settings } = useTrackWorkspace()
   const [items, setItems] = useState<StaleRoadmapNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
+    if (!settings.notificationsEnabled) {
+      setItems([])
+      setLoading(false)
+      setLoadFailed(false)
+      return
+    }
     let cancelled = false
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
@@ -64,7 +72,7 @@ export function NotificationsMenu() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [settings.notificationsEnabled])
   const visible = useMemo(
     () => items.filter((item) => !dismissedIds.has(item.id)),
     [dismissedIds, items]

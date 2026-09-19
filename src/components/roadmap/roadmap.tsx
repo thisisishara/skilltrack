@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronsDownUp, ChevronsUpDown, FileDown, FileUp, ListTree } from "lucide-react"
+import { ChevronsDownUp, ChevronsUpDown, FileDown, FileUp, ListTree, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -57,6 +57,12 @@ import {
 import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useRolesUi } from "@/components/roles/roles-workspace"
+import { TrackPanel } from "@/components/track/track-panel"
+import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
+import {
+  overlayGhostTasks,
+  overlayGhostTopics,
+} from "@/domain/track/overlay"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -320,6 +326,15 @@ export function Roadmap({
   const scrollPersistTimerRef = useRef(0)
   const listRef = useRef<HTMLDivElement>(null)
   const { treeFocusRequest } = useRolesUi()
+  const track = useTrackWorkspaceOptional()
+  const displayNodes = useMemo(
+    () => overlayGhostTopics(nodes, track?.proposals ?? [], roleId),
+    [nodes, roleId, track?.proposals]
+  )
+  const displayItems = useMemo(
+    () => overlayGhostTasks(items, track?.proposals ?? []),
+    [items, track?.proposals]
+  )
   const {
     groupKey,
     mainDefaultSize,
@@ -418,13 +433,13 @@ export function Roadmap({
       return
     }
 
-    const node = nodes.find((item) => item.id === nodeId)
+    const node = displayNodes.find((item) => item.id === nodeId)
     if (!node) {
       pendingRevealRef.current = null
       return
     }
 
-    const idsToExpand = ancestorIds(nodes, nodeId)
+    const idsToExpand = ancestorIds(displayNodes, nodeId)
     const missing = idsToExpand.filter((id) => !expandedIds.has(id))
     if (missing.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -462,9 +477,9 @@ export function Roadmap({
     pendingRevealRef.current = null
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfigNodeId(nodeId)
-  }, [expandedHydrated, expandedIds, nodes, roleId, treeFocusRequest])
+  }, [displayNodes, expandedHydrated, expandedIds, roleId, treeFocusRequest])
 
-  const skillNodes = useMemo(() => nodes.filter(isSkillNode), [nodes])
+  const skillNodes = useMemo(() => displayNodes.filter(isSkillNode), [displayNodes])
 
   const childrenByParent = useMemo(() => {
     const map = new Map<string | null, RoadmapNode[]>()
@@ -1454,8 +1469,18 @@ export function Roadmap({
                       : "Switch to Edit to add a topic."}
                 </EmptyDescription>
               </EmptyHeader>
-              {canImport || editMode ? (
+              {canImport || editMode || track?.settings.trackEnabled ? (
               <EmptyContent>
+                {track?.settings.trackEnabled ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => track.setTrackPanelOpen(true)}
+                  >
+                    <Sparkles data-icon="inline-start" />
+                    Ask Track
+                  </Button>
+                ) : null}
                 {canImport ? (
                   <Button type="button" size="sm" variant="outline" onClick={openImport}>
                     <FileUp data-icon="inline-start" />
@@ -1489,7 +1514,7 @@ export function Roadmap({
                   node={node}
                   depth={0}
                   childrenByParent={childrenByParent}
-                  items={items}
+                  items={displayItems}
                   nodes={skillNodes}
                   expandedIds={expandedIds}
                   onToggleExpand={toggleExpand}
@@ -1519,21 +1544,27 @@ export function Roadmap({
     </div>
   )
 
+  const trackOpen = Boolean(track?.settings.trackEnabled && track.trackPanelOpen)
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <ResizablePanelGroup
-        key={groupKey}
+        key={`${groupKey}-${trackOpen ? "track" : "details"}`}
         orientation="horizontal"
         className="min-h-0 flex-1"
         onLayoutChanged={onLayoutChanged}
       >
-        <ResizablePanel id="roadmap-list" defaultSize={mainDefaultSize} minSize="40%">
+        <ResizablePanel
+          id="roadmap-list"
+          defaultSize={trackOpen ? "44%" : mainDefaultSize}
+          minSize="30%"
+        >
           {list}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
           id="roadmap-details"
-          defaultSize={detailsDefaultSize}
+          defaultSize={trackOpen ? "28%" : detailsDefaultSize}
           minSize={`${DETAILS_PANEL_MIN_SIZE}%`}
           maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
         >
@@ -1602,6 +1633,17 @@ export function Roadmap({
             />
           </div>
         </ResizablePanel>
+        {trackOpen ? (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel id="track-chat" defaultSize="28%" minSize="18%">
+              <TrackPanel
+                roleId={roleId}
+                focusedTopicId={isOverview ? null : configNodeId}
+              />
+            </ResizablePanel>
+          </>
+        ) : null}
       </ResizablePanelGroup>
       <RoadmapStatusBar roleName={roleName} progress={overallProgress} counts={statusCounts} />
       <TopicDialog

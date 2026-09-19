@@ -40,6 +40,7 @@ describe("assembleWorkingSet", () => {
       roleName: "AI Engineer",
       nodes,
       focusedTopicId: "b",
+      pinned: [],
       pendingProposals: [
         {
           id: "p1",
@@ -57,6 +58,7 @@ describe("assembleWorkingSet", () => {
     expect(set).not.toHaveProperty("index")
     expect(set.topicCount).toBe(2)
     expect(set.focusedTopicId).toBe("b")
+    expect(set.pinned).toEqual([])
     expect(set.pendingProposals).toEqual([
       { id: "p1", kind: "update", entity: "topic", title: "Python" },
     ])

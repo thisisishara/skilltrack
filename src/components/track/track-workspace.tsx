@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -12,8 +13,23 @@ import {
 import type { PublicUserSettings } from "@/domain/user-settings/types"
 import type { TrackProposal } from "@/domain/track/proposals"
 import { isTrackProposal } from "@/domain/track/proposals"
+import {
+  isTrackDropRef,
+  trackRefKey,
+  upsertTrackRef,
+  type TrackDropRef,
+} from "@/domain/track/drop-ref"
 import { persistTrackProposal } from "@/application/track/persist-proposal"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import {
+  readStoredTrackPanelOpen,
+  writeStoredTrackPanelOpen,
+} from "@/lib/track/panel-storage"
+import {
+  readStoredDetailsPanelOpen,
+  writeStoredDetailsPanelOpen,
+} from "@/lib/layout/details-panel-storage"
 
 export type SettingsTab = "general" | "track" | "users"
 
@@ -28,6 +44,8 @@ type TrackWorkspaceValue = {
   setSettingsTab: (tab: SettingsTab) => void
   trackPanelOpen: boolean
   setTrackPanelOpen: (open: boolean) => void
+  detailsPanelOpen: boolean
+  setDetailsPanelOpen: (open: boolean) => void
   proposals: TrackProposal[]
   ingestProposals: (values: unknown[]) => void
   acceptProposal: (roleId: string, id: string) => Promise<void>
@@ -42,6 +60,9 @@ type TrackWorkspaceValue = {
   setScratchpad: (value: string) => void
   focusedRoleId: string | null
   setFocusedRoleId: (roleId: string | null) => void
+  pinnedRefs: TrackDropRef[]
+  pinTrackRef: (ref: TrackDropRef) => void
+  unpinTrackRef: (ref: TrackDropRef) => void
 }
 
 const TrackWorkspaceContext = createContext<TrackWorkspaceValue | null>(null)
@@ -59,23 +80,62 @@ export function useTrackWorkspace() {
 }
 
 export function TrackWorkspace({
+  userId,
   initialSettings,
   canManageUsers,
   children,
 }: {
+  userId: string
   initialSettings: PublicUserSettings
   canManageUsers: boolean
   children: ReactNode
 }) {
+  const router = useRouter()
   const [settings, setSettings] = useState(initialSettings)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("general")
-  const [trackPanelOpen, setTrackPanelOpen] = useState(false)
+  const [trackPanelOpen, setTrackPanelOpenState] = useState(false)
+  const [detailsPanelOpen, setDetailsPanelOpenState] = useState(true)
   const [proposals, setProposals] = useState<TrackProposal[]>([])
   const [sessionEpoch, setSessionEpoch] = useState(0)
   const [seedPrompt, setSeedPrompt] = useState<string | null>(null)
   const [scratchpad, setScratchpad] = useState("")
   const [focusedRoleId, setFocusedRoleId] = useState<string | null>(null)
+  const [pinnedRefs, setPinnedRefs] = useState<TrackDropRef[]>([])
+
+  useEffect(() => {
+    setTrackPanelOpenState(readStoredTrackPanelOpen(userId))
+    setDetailsPanelOpenState(readStoredDetailsPanelOpen(userId))
+  }, [userId])
+
+  const setTrackPanelOpen = useCallback(
+    (open: boolean) => {
+      setTrackPanelOpenState(open)
+      writeStoredTrackPanelOpen(userId, open)
+    },
+    [userId]
+  )
+
+  const setDetailsPanelOpen = useCallback(
+    (open: boolean) => {
+      setDetailsPanelOpenState(open)
+      writeStoredDetailsPanelOpen(userId, open)
+    },
+    [userId]
+  )
+
+  const pinTrackRef = useCallback((ref: TrackDropRef) => {
+    if (!isTrackDropRef(ref)) {
+      return
+    }
+    setPinnedRefs((current) => upsertTrackRef(current, ref))
+  }, [])
+
+  const unpinTrackRef = useCallback((ref: TrackDropRef) => {
+    setPinnedRefs((current) =>
+      current.filter((item) => trackRefKey(item) !== trackRefKey(ref))
+    )
+  }, [])
 
   const openSettings = useCallback((tab: SettingsTab = "general") => {
     setSettingsTab(tab)
@@ -148,7 +208,8 @@ export function TrackWorkspace({
         )
       )
     }
-  }, [proposals])
+    router.refresh()
+  }, [proposals, router])
 
   const acceptAll = useCallback(async (roleId: string) => {
     const pending = proposals.filter((item) => item.status === "pending")
@@ -171,7 +232,8 @@ export function TrackWorkspace({
         item.status === "pending" ? { ...item, status: "accepted" } : item
       )
     )
-  }, [proposals])
+    router.refresh()
+  }, [proposals, router])
 
   const rejectAll = useCallback(() => {
     setProposals((current) =>
@@ -185,6 +247,7 @@ export function TrackWorkspace({
     setProposals([])
     setScratchpad("")
     setSeedPrompt(null)
+    setPinnedRefs([])
     setSessionEpoch((value) => value + 1)
   }, [])
 
@@ -200,6 +263,8 @@ export function TrackWorkspace({
       setSettingsTab,
       trackPanelOpen,
       setTrackPanelOpen,
+      detailsPanelOpen,
+      setDetailsPanelOpen,
       proposals,
       ingestProposals,
       acceptProposal,
@@ -214,6 +279,9 @@ export function TrackWorkspace({
       setScratchpad,
       focusedRoleId,
       setFocusedRoleId,
+      pinnedRefs,
+      pinTrackRef,
+      unpinTrackRef,
     }),
     [
       settings,
@@ -222,6 +290,9 @@ export function TrackWorkspace({
       settingsTab,
       openSettings,
       trackPanelOpen,
+      setTrackPanelOpen,
+      detailsPanelOpen,
+      setDetailsPanelOpen,
       proposals,
       ingestProposals,
       acceptProposal,
@@ -233,6 +304,9 @@ export function TrackWorkspace({
       seedPrompt,
       scratchpad,
       focusedRoleId,
+      pinnedRefs,
+      pinTrackRef,
+      unpinTrackRef,
     ]
   )
 

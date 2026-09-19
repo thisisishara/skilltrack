@@ -1,9 +1,13 @@
 "use client"
 
+import { MessageSquare, PanelRight } from "lucide-react"
+import { usePathname } from "next/navigation"
+
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { CommandSearch } from "@/components/search/command-search"
 import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackRefDrop } from "@/components/track/use-track-ref-drop"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,14 +20,30 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { APP_VERSION, CHANGELOG } from "@/lib/app-release"
-import { Sparkles } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export function DashboardHeader() {
   const pathname = usePathname()
-  const { settings, trackPanelOpen, setTrackPanelOpen } = useTrackWorkspace()
+  const {
+    settings,
+    trackPanelOpen,
+    setTrackPanelOpen,
+    detailsPanelOpen,
+    setDetailsPanelOpen,
+    pinTrackRef,
+  } = useTrackWorkspace()
   const showTrack = settings.trackEnabled && !pathname.endsWith("/settings")
+  const showDetailsToggle = /^\/dashboard\/roles\/[^/]+\/?$/.test(pathname)
+  const { isOver, dropProps } = useTrackRefDrop((ref) => {
+    pinTrackRef(ref)
+    setTrackPanelOpen(true)
+  })
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b px-4">
@@ -32,16 +52,47 @@ export function DashboardHeader() {
         <CommandSearch />
       </div>
       <div className="flex items-center gap-1">
+        {showDetailsToggle ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant={detailsPanelOpen ? "secondary" : "ghost"}
+                  size="icon"
+                  aria-label={
+                    detailsPanelOpen ? "Hide details" : "Show details"
+                  }
+                  onClick={() => setDetailsPanelOpen(!detailsPanelOpen)}
+                />
+              }
+            >
+              <PanelRight />
+            </TooltipTrigger>
+            <TooltipContent>
+              {detailsPanelOpen ? "Hide details" : "Show details"}
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
         {showTrack ? (
-          <Button
-            type="button"
-            variant={trackPanelOpen ? "secondary" : "ghost"}
-            size="icon"
-            aria-label="Track"
-            onClick={() => setTrackPanelOpen(!trackPanelOpen)}
-          >
-            <Sparkles />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant={trackPanelOpen || isOver ? "secondary" : "ghost"}
+                  size="icon"
+                  aria-label="Track"
+                  className={cn(isOver && "ring-2 ring-primary/50")}
+                  onClick={() => setTrackPanelOpen(!trackPanelOpen)}
+                  {...dropProps}
+                />
+              }
+            >
+              <MessageSquare />
+            </TooltipTrigger>
+            <TooltipContent>Track</TooltipContent>
+          </Tooltip>
         ) : null}
         <NotificationsMenu />
         <ModeToggle />

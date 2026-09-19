@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type UIEvent } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronsDownUp, ChevronsUpDown, FileDown, FileUp, ListTree, Sparkles } from "lucide-react"
+import {
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Eye,
+  FileDown,
+  FileUp,
+  ListTree,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -60,6 +71,8 @@ import { useRolesUi } from "@/components/roles/roles-workspace"
 import { TrackPanel } from "@/components/track/track-panel"
 import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
 import {
+  applyAcceptedProposal,
+  overlayGhostLinks,
   overlayGhostTasks,
   overlayGhostTopics,
 } from "@/domain/track/overlay"
@@ -69,9 +82,17 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Switch } from "@/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -315,6 +336,9 @@ export function Roadmap({
   const importDropLock = useRef(false)
   const focusedRef = useRef<string | null>(null)
   const appliedFocusNonceRef = useRef(0)
+  const revealRetryRef = useRef(0)
+  const [revealTick, setRevealTick] = useState(0)
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null)
   const pendingRevealRef = useRef<string | null>(
     focusNodeIdFromServer ?? null
   )
@@ -327,6 +351,9 @@ export function Roadmap({
   const listRef = useRef<HTMLDivElement>(null)
   const { treeFocusRequest } = useRolesUi()
   const track = useTrackWorkspaceOptional()
+  const appliedAcceptedRef = useRef(new Set<string>())
+  const snapshotRef = useRef({ nodes, items, links })
+  snapshotRef.current = { nodes, items, links }
   const displayNodes = useMemo(
     () => overlayGhostTopics(nodes, track?.proposals ?? [], roleId),
     [nodes, roleId, track?.proposals]
@@ -334,6 +361,10 @@ export function Roadmap({
   const displayItems = useMemo(
     () => overlayGhostTasks(items, track?.proposals ?? []),
     [items, track?.proposals]
+  )
+  const displayLinks = useMemo(
+    () => overlayGhostLinks(links, track?.proposals ?? [], roleId),
+    [links, roleId, track?.proposals]
   )
   const {
     groupKey,
@@ -386,6 +417,28 @@ export function Roadmap({
   }, [serverLinks])
 
   useEffect(() => {
+    const accepted = (track?.proposals ?? []).filter(
+      (proposal) =>
+        proposal.status === "accepted" &&
+        !appliedAcceptedRef.current.has(proposal.id)
+    )
+    if (accepted.length === 0) {
+      return
+    }
+    for (const proposal of accepted) {
+      appliedAcceptedRef.current.add(proposal.id)
+    }
+    let next = { roleId, ...snapshotRef.current }
+    for (const proposal of accepted) {
+      next = applyAcceptedProposal(next, proposal)
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNodes(next.nodes)
+    setItems(next.items)
+    setLinks(next.links)
+  }, [roleId, track?.proposals])
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setOverviewDescription(roleDescription ?? "")
     setOverviewNotes(roleNotes ?? "")
@@ -400,6 +453,7 @@ export function Roadmap({
     setExpandedHydrated(true)
     focusedRef.current = null
     appliedFocusNonceRef.current = 0
+    appliedAcceptedRef.current = new Set()
     pendingRevealRef.current = focusNodeFromUrlRef.current ?? null
   }, [roleId])
 
@@ -426,6 +480,9 @@ export function Roadmap({
       appliedFocusNonceRef.current = treeFocusRequest.nonce
       pendingRevealRef.current = treeFocusRequest.nodeId
       focusedRef.current = null
+      revealRetryRef.current = 0
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFocusedTaskId(treeFocusRequest.taskId ?? null)
     }
 
     const nodeId = pendingRevealRef.current
@@ -439,7 +496,7 @@ export function Roadmap({
       return
     }
 
-    const idsToExpand = ancestorIds(displayNodes, nodeId)
+    const idsToExpand = [...ancestorIds(displayNodes, nodeId), nodeId]
     const missing = idsToExpand.filter((id) => !expandedIds.has(id))
     if (missing.length > 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -465,8 +522,14 @@ export function Roadmap({
       "[data-slot=scroll-area-viewport]"
     )
     if (!target || !viewport) {
-      pendingRevealRef.current = null
-      return
+      if (revealRetryRef.current >= 30) {
+        return
+      }
+      revealRetryRef.current += 1
+      const frame = window.requestAnimationFrame(() => {
+        setRevealTick((tick) => tick + 1)
+      })
+      return () => window.cancelAnimationFrame(frame)
     }
 
     lockTreeLayout()
@@ -475,11 +538,16 @@ export function Roadmap({
     scrollToReadingLine(viewport, target, readingLineY(toolbar, viewport))
     focusedRef.current = nodeId
     pendingRevealRef.current = null
+    revealRetryRef.current = 0
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfigNodeId(nodeId)
-  }, [displayNodes, expandedHydrated, expandedIds, roleId, treeFocusRequest])
+  }, [displayNodes, expandedHydrated, expandedIds, revealTick, roleId, treeFocusRequest])
 
   const skillNodes = useMemo(() => displayNodes.filter(isSkillNode), [displayNodes])
+  const topicTitles = useMemo(
+    () => Object.fromEntries(skillNodes.map((node) => [node.id, node.title])),
+    [skillNodes]
+  )
 
   const childrenByParent = useMemo(() => {
     const map = new Map<string | null, RoadmapNode[]>()
@@ -582,18 +650,18 @@ export function Roadmap({
   const selectedItems = useMemo(
     () =>
       !isOverview && configNodeId
-        ? items.filter((item) => item.topicId === configNodeId)
+        ? displayItems.filter((item) => item.topicId === configNodeId)
         : [],
-    [configNodeId, isOverview, items]
+    [configNodeId, displayItems, isOverview]
   )
   const selectedLinks = useMemo(
     () =>
       isOverview
-        ? links.filter((link) => link.topicId === null)
+        ? displayLinks.filter((link) => link.topicId === null)
         : panelNode
-          ? links.filter((link) => link.topicId === panelNode.id)
+          ? displayLinks.filter((link) => link.topicId === panelNode.id)
           : [],
-    [isOverview, links, panelNode]
+    [displayLinks, isOverview, panelNode]
   )
   const selectedNodeProgress = useMemo(
     () =>
@@ -1352,43 +1420,16 @@ export function Roadmap({
         <p className="min-w-0 truncate text-left text-sm font-medium">
           {roleName}
         </p>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {canImport ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={(event) => {
-                event.stopPropagation()
-                openImport()
-              }}
-            >
-              <FileUp data-icon="inline-start" />
-              Import JSON
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={exportPending}
-              onClick={(event) => {
-                event.stopPropagation()
-                void handleExport()
-              }}
-            >
-              <FileDown data-icon="inline-start" />
-              {exportPending ? "Exporting…" : "Export JSON"}
-            </Button>
-          )}
+        <div className="flex shrink-0 items-center gap-1">
           {editMode ? (
             <Tooltip>
               <TooltipTrigger
                 render={
                   <Button
                     type="button"
-                    size="sm"
+                    size="icon-sm"
                     variant="outline"
+                    aria-label="Add topic"
                     onClick={(event) => {
                       event.stopPropagation()
                       openCreate(primaryParentId, true)
@@ -1396,63 +1437,111 @@ export function Roadmap({
                   />
                 }
               >
-                Add topic
+                <Plus />
               </TooltipTrigger>
               <TooltipContent>Add topic</TooltipContent>
             </Tooltip>
           ) : null}
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={(event) => {
-              event.stopPropagation()
-              expandAll()
-            }}
-          >
-            <ChevronsUpDown data-icon="inline-start" />
-            Expand all
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={(event) => {
-              event.stopPropagation()
-              collapseAll()
-            }}
-          >
-            <ChevronsDownUp data-icon="inline-start" />
-            Collapse all
-          </Button>
-          <div
-            className="flex shrink-0 items-center gap-2"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Label
-              htmlFor="roadmap-edit-mode"
-              className={editMode ? "text-muted-foreground" : "text-foreground"}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="Expand all"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    expandAll()
+                  }}
+                />
+              }
             >
-              View
-            </Label>
-            <Switch
-              id="roadmap-edit-mode"
-              size="sm"
-              checked={editMode}
-              onCheckedChange={(checked) => {
-                const next = checked === true
-                setEditMode(next)
-                writeStoredEditMode(userId, next)
-              }}
-              aria-label="Edit mode"
-            />
-            <Label
-              htmlFor="roadmap-edit-mode"
-              className={editMode ? "text-foreground" : "text-muted-foreground"}
+              <ChevronsUpDown />
+            </TooltipTrigger>
+            <TooltipContent>Expand all</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="Collapse all"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    collapseAll()
+                  }}
+                />
+              }
             >
-              Edit
-            </Label>
-          </div>
+              <ChevronsDownUp />
+            </TooltipTrigger>
+            <TooltipContent>Collapse all</TooltipContent>
+          </Tooltip>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label="Roadmap options"
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    }
+                  />
+                }
+              >
+                <MoreHorizontal />
+              </TooltipTrigger>
+              <TooltipContent>More</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent
+              align="end"
+              className="min-w-44 w-auto"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <DropdownMenuRadioGroup
+                value={editMode ? "edit" : "view"}
+                onValueChange={(value) => {
+                  const next = value === "edit"
+                  setEditMode(next)
+                  writeStoredEditMode(userId, next)
+                }}
+              >
+                <DropdownMenuRadioItem value="view">
+                  <Eye />
+                  View
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="edit">
+                  <Pencil />
+                  Edit
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {canImport ? (
+                  <DropdownMenuItem onClick={openImport}>
+                    <FileUp />
+                    Import JSON
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    disabled={exportPending}
+                    onClick={() => void handleExport()}
+                  >
+                    <FileDown />
+                    {exportPending ? "Exporting…" : "Export JSON"}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <ScrollArea className="min-h-0 flex-1" onViewportScroll={handleTreeScroll}>
@@ -1482,7 +1571,7 @@ export function Roadmap({
                     size="sm"
                     onClick={() => track.setTrackPanelOpen(true)}
                   >
-                    <Sparkles data-icon="inline-start" />
+                    <MessageSquare data-icon="inline-start" />
                     Ask Track
                   </Button>
                 ) : null}
@@ -1528,7 +1617,7 @@ export function Roadmap({
                   onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
-                  focusedTaskId={null}
+                  focusedTaskId={focusedTaskId}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}
@@ -1550,29 +1639,39 @@ export function Roadmap({
   )
 
   const trackOpen = Boolean(track?.settings.trackEnabled && track.trackPanelOpen)
+  const detailsOpen = track?.detailsPanelOpen ?? true
+  const listDefaultSize = detailsOpen
+    ? trackOpen
+      ? "44%"
+      : mainDefaultSize
+    : trackOpen
+      ? "72%"
+      : "100%"
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <ResizablePanelGroup
-        key={`${groupKey}-${trackOpen ? "track" : "details"}`}
+        key={`${groupKey}-${detailsOpen ? "details" : "nodetails"}-${trackOpen ? "track" : "notrack"}`}
         orientation="horizontal"
         className="min-h-0 flex-1"
         onLayoutChanged={onLayoutChanged}
       >
         <ResizablePanel
           id="roadmap-list"
-          defaultSize={trackOpen ? "44%" : mainDefaultSize}
-          minSize="30%"
+          defaultSize={listDefaultSize}
+          minSize={detailsOpen || trackOpen ? "30%" : "100%"}
         >
           {list}
         </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel
-          id="roadmap-details"
-          defaultSize={trackOpen ? "28%" : detailsDefaultSize}
-          minSize={`${DETAILS_PANEL_MIN_SIZE}%`}
-          maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
-        >
+        {detailsOpen ? (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel
+              id="roadmap-details"
+              defaultSize={trackOpen ? "28%" : detailsDefaultSize}
+              minSize={`${DETAILS_PANEL_MIN_SIZE}%`}
+              maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
+            >
           <div className="h-full min-h-0 overflow-hidden">
             <TopicConfigSheet
               open
@@ -1637,7 +1736,9 @@ export function Roadmap({
               onClearRoadmap={handleClearRoadmap}
             />
           </div>
-        </ResizablePanel>
+            </ResizablePanel>
+          </>
+        ) : null}
         {trackOpen ? (
           <>
             <ResizableHandle withHandle />
@@ -1645,6 +1746,7 @@ export function Roadmap({
               <TrackPanel
                 roleId={roleId}
                 focusedTopicId={isOverview ? null : configNodeId}
+                topicTitles={topicTitles}
               />
             </ResizablePanel>
           </>

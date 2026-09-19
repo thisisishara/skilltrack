@@ -45,9 +45,11 @@ export default async function DashboardLayout({
   let databaseUnavailable = false
   let canManageUsers = false
   let settings = FALLBACK_SETTINGS
+  let userId = ""
 
   try {
     const { session, applicationUser } = await requireSession()
+    userId = applicationUser.id
     githubUsername = session.user.githubUsername
     displayName = session.user.name
     avatarUrl = session.user.image
@@ -83,6 +85,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider className="h-dvh overflow-hidden">
       <TrackWorkspace
+        userId={userId}
         initialSettings={settings}
         canManageUsers={canManageUsers}
       >

@@ -12,6 +12,7 @@ import {
 import { assembleWorkingSet } from "@/domain/track/context"
 import { compactMessages } from "@/domain/track/history"
 import type { TrackProposalIndex } from "@/domain/track/proposals"
+import type { TrackDropRef } from "@/domain/track/drop-ref"
 import { enabledToolIds } from "@/domain/user-settings/parse"
 import { TRACK_READ_STEP_BUDGET } from "@/domain/user-settings/defaults"
 import { ApplicationError } from "@/domain/errors"
@@ -22,6 +23,7 @@ export async function loadTrackRuntime(input: {
   userId: string
   roleId: string
   focusedTopicId: string | null
+  pinned: TrackDropRef[]
   pendingProposals: TrackProposalIndex[]
   scratchpad: string
 }) {
@@ -54,6 +56,7 @@ export async function loadTrackRuntime(input: {
     roleName: role.name,
     nodes,
     focusedTopicId: input.focusedTopicId,
+    pinned: input.pinned,
     pendingProposals: input.pendingProposals,
     scratchpad: input.scratchpad,
   })

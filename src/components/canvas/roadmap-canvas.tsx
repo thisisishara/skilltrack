@@ -100,6 +100,7 @@ import {
   subtreeProgress,
 } from "@/domain/progress/progress"
 import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
+import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
 import { readStoredViewport, writeStoredViewport } from "@/lib/canvas/viewport-storage"
 import {
   DETAILS_PANEL_MAX_SIZE,
@@ -339,6 +340,8 @@ function RoadmapCanvasInner({
     detailsDefaultSize,
     onLayoutChanged,
   } = useDetailsPanelLayout(userId)
+  const track = useTrackWorkspaceOptional()
+  const detailsOpen = track?.detailsPanelOpen ?? true
   const [themeReady, setThemeReady] = useState(false)
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
@@ -409,7 +412,7 @@ function RoadmapCanvasInner({
     }
     return node
   }, [nodes, configNodeId])
-  const sheetOpen = Boolean(configNode)
+  const sheetOpen = Boolean(configNode) && detailsOpen
 
   useEffect(() => {
     if (configNodeId && !configNode) {
@@ -1367,12 +1370,16 @@ function RoadmapCanvasInner({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <ResizablePanelGroup
-        key={groupKey}
+        key={`${groupKey}-${detailsOpen ? "details" : "nodetails"}`}
         orientation="horizontal"
         className="min-h-0 flex-1"
         onLayoutChanged={onLayoutChanged}
       >
-        <ResizablePanel id="roadmap-canvas" defaultSize={mainDefaultSize} minSize="40%">
+        <ResizablePanel
+          id="roadmap-canvas"
+          defaultSize={sheetOpen ? mainDefaultSize : "100%"}
+          minSize={sheetOpen ? "40%" : "100%"}
+        >
           {canvas}
         </ResizablePanel>
         {sheetOpen ? (

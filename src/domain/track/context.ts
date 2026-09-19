@@ -1,5 +1,7 @@
 import { TRACK_READ_STEP_BUDGET } from "@/domain/user-settings/defaults"
 import type { TrackProposalIndex } from "@/domain/track/proposals"
+import type { TrackDropRef } from "@/domain/track/drop-ref"
+import { MAX_TRACK_PINS } from "@/domain/track/drop-ref"
 import { skillTopics } from "@/domain/track/traverse"
 import type { RoadmapNode } from "@/domain/topics/types"
 
@@ -8,6 +10,7 @@ export type TrackWorkingSet = {
   roleName: string
   topicCount: number
   focusedTopicId: string | null
+  pinned: TrackDropRef[]
   pendingProposals: Pick<TrackProposalIndex, "id" | "kind" | "entity" | "title">[]
   scratchpad: string
   readBudget: {
@@ -21,6 +24,7 @@ export function assembleWorkingSet(input: {
   roleName: string
   nodes: RoadmapNode[]
   focusedTopicId: string | null
+  pinned: TrackDropRef[]
   pendingProposals: TrackProposalIndex[]
   scratchpad: string
 }): TrackWorkingSet {
@@ -29,6 +33,7 @@ export function assembleWorkingSet(input: {
     roleName: input.roleName,
     topicCount: skillTopics(input.nodes).length,
     focusedTopicId: input.focusedTopicId,
+    pinned: input.pinned.slice(0, MAX_TRACK_PINS),
     pendingProposals: input.pendingProposals
       .filter((item) => item.status === "pending")
       .map((item) => ({
@@ -41,7 +46,7 @@ export function assembleWorkingSet(input: {
     readBudget: {
       maxSteps: TRACK_READ_STEP_BUDGET,
       policy:
-        "One orientation (search_topics or list_roots), one zoom (list_children), then details. Prefer search path over walking the whole tree. Do not re-fetch ids from this turn.",
+        "Pinned items were dragged into chat — start with those ids (get_topic / get_tasks / get_path / get_notes). One orientation (search_topics or list_roots) only if nothing is pinned, one zoom (list_children), then details. Prefer search path over walking the whole tree. Do not re-fetch ids from this turn.",
     },
   }
 }

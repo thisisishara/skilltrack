@@ -28,6 +28,27 @@ function proposal(partial: Omit<TrackProposal, "id" | "status">): TrackProposal 
   }
 }
 
+function topicTitleFor(nodes: RoadmapNode[], topicId: string | null) {
+  if (!topicId) {
+    return "Roadmap"
+  }
+  return skillTopics(nodes).find((node) => node.id === topicId)?.title ?? "Topic"
+}
+
+function proposalWithTopic(
+  nodes: RoadmapNode[],
+  partial: Omit<TrackProposal, "id" | "status">,
+  topicId: string | null
+) {
+  return proposal({
+    ...partial,
+    payload: {
+      ...partial.payload,
+      topicTitle: topicTitleFor(nodes, topicId),
+    },
+  })
+}
+
 export function createTrackTools(input: {
   enabled: TrackToolId[]
   nodes: RoadmapNode[]
@@ -269,14 +290,24 @@ export function createTrackTools(input: {
         if (node.notes?.trim()) {
           return { error: "This topic already has notes. Use propose_update_notes." }
         }
-        return proposal({
-          kind: "update",
-          entity: "topic",
-          targetId: node.id,
-          parentId: node.parentId,
-          title: node.title,
-          payload: { topicId: node.id, title: node.title, notes },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "update",
+            entity: "topic",
+            targetId: node.id,
+            parentId: node.parentId,
+            title: node.title,
+            payload: {
+              topicId: node.id,
+              title: node.title,
+              notes,
+              facet: "notes",
+              notesAction: "create",
+            },
+          },
+          node.id
+        )
       },
     })
   }
@@ -297,14 +328,24 @@ export function createTrackTools(input: {
         if (!node.notes?.trim()) {
           return { error: "This topic has no notes. Use propose_create_notes." }
         }
-        return proposal({
-          kind: "update",
-          entity: "topic",
-          targetId: node.id,
-          parentId: node.parentId,
-          title: node.title,
-          payload: { topicId: node.id, title: node.title, notes },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "update",
+            entity: "topic",
+            targetId: node.id,
+            parentId: node.parentId,
+            title: node.title,
+            payload: {
+              topicId: node.id,
+              title: node.title,
+              notes,
+              facet: "notes",
+              notesAction: "update",
+            },
+          },
+          node.id
+        )
       },
     })
   }
@@ -322,14 +363,24 @@ export function createTrackTools(input: {
         if (!node.notes?.trim()) {
           return { error: "This topic has no notes to delete." }
         }
-        return proposal({
-          kind: "update",
-          entity: "topic",
-          targetId: node.id,
-          parentId: node.parentId,
-          title: node.title,
-          payload: { topicId: node.id, title: node.title, notes: null },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "update",
+            entity: "topic",
+            targetId: node.id,
+            parentId: node.parentId,
+            title: node.title,
+            payload: {
+              topicId: node.id,
+              title: node.title,
+              notes: null,
+              facet: "notes",
+              notesAction: "delete",
+            },
+          },
+          node.id
+        )
       },
     })
   }
@@ -344,14 +395,18 @@ export function createTrackTools(input: {
       }),
       execute: async (fields) => {
         const id = crypto.randomUUID()
-        return proposal({
-          kind: "create",
-          entity: "task",
-          targetId: id,
-          parentId: fields.topicId,
-          title: fields.title,
-          payload: { ...fields, id },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "create",
+            entity: "task",
+            targetId: id,
+            parentId: fields.topicId,
+            title: fields.title,
+            payload: { ...fields, id },
+          },
+          fields.topicId
+        )
       },
     })
   }
@@ -370,14 +425,18 @@ export function createTrackTools(input: {
         if (!task) {
           return { error: "Unknown task id." }
         }
-        return proposal({
-          kind: "update",
-          entity: "task",
-          targetId: task.id,
-          parentId: task.topicId,
-          title: fields.title ?? task.title,
-          payload: fields,
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "update",
+            entity: "task",
+            targetId: task.id,
+            parentId: task.topicId,
+            title: fields.title ?? task.title,
+            payload: fields,
+          },
+          task.topicId
+        )
       },
     })
   }
@@ -391,14 +450,18 @@ export function createTrackTools(input: {
         if (!task) {
           return { error: "Unknown task id." }
         }
-        return proposal({
-          kind: "delete",
-          entity: "task",
-          targetId: task.id,
-          parentId: task.topicId,
-          title: task.title,
-          payload: { taskId },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "delete",
+            entity: "task",
+            targetId: task.id,
+            parentId: task.topicId,
+            title: task.title,
+            payload: { taskId },
+          },
+          task.topicId
+        )
       },
     })
   }
@@ -413,14 +476,18 @@ export function createTrackTools(input: {
       }),
       execute: async (fields) => {
         const id = crypto.randomUUID()
-        return proposal({
-          kind: "create",
-          entity: "link",
-          targetId: id,
-          parentId: fields.topicId,
-          title: fields.label,
-          payload: { ...fields, id },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "create",
+            entity: "link",
+            targetId: id,
+            parentId: fields.topicId,
+            title: fields.label,
+            payload: { ...fields, id },
+          },
+          fields.topicId
+        )
       },
     })
   }
@@ -438,14 +505,18 @@ export function createTrackTools(input: {
         if (!link) {
           return { error: "Unknown link id." }
         }
-        return proposal({
-          kind: "update",
-          entity: "link",
-          targetId: link.id,
-          parentId: link.topicId,
-          title: fields.label ?? link.label,
-          payload: fields,
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "update",
+            entity: "link",
+            targetId: link.id,
+            parentId: link.topicId,
+            title: fields.label ?? link.label,
+            payload: fields,
+          },
+          link.topicId
+        )
       },
     })
   }
@@ -459,14 +530,18 @@ export function createTrackTools(input: {
         if (!link) {
           return { error: "Unknown link id." }
         }
-        return proposal({
-          kind: "delete",
-          entity: "link",
-          targetId: link.id,
-          parentId: link.topicId,
-          title: link.label,
-          payload: { linkId },
-        })
+        return proposalWithTopic(
+          input.nodes,
+          {
+            kind: "delete",
+            entity: "link",
+            targetId: link.id,
+            parentId: link.topicId,
+            title: link.label,
+            payload: { linkId },
+          },
+          link.topicId
+        )
       },
     })
   }

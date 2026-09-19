@@ -8,6 +8,7 @@ import {
 import { loadTrackRuntime } from "@/application/track/runtime"
 import type { TrackProposalIndex } from "@/domain/track/proposals"
 import { isApplicationError } from "@/domain/errors"
+import { isTrackDropRef, type TrackDropRef } from "@/domain/track/drop-ref"
 import { requireApprovedSession } from "@/lib/auth/session"
 
 export const maxDuration = 60
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     messages?: UIMessage[]
     roleId?: string
     focusedTopicId?: string | null
+    pinned?: unknown[]
     pendingProposals?: TrackProposalIndex[]
     scratchpad?: string
   }
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
       userId: applicationUser.id,
       roleId: body.roleId,
       focusedTopicId: body.focusedTopicId ?? null,
+      pinned: (body.pinned ?? []).filter(isTrackDropRef) as TrackDropRef[],
       pendingProposals: body.pendingProposals ?? [],
       scratchpad: body.scratchpad ?? "",
     })

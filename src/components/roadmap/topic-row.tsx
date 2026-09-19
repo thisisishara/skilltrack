@@ -37,6 +37,8 @@ import {
 } from "@/domain/progress/progress"
 import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
 import { proposalForTopic } from "@/domain/track/overlay"
+import { writeTrackDropRef } from "@/domain/track/drop-ref"
+import { topicPath } from "@/domain/track/traverse"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 
 export type ChecklistHandlers = {
@@ -100,6 +102,9 @@ function TaskTickList({
   items,
   editing,
   focusedTaskId,
+  topicId,
+  topicTitle,
+  topicPathTitles,
   onSelectTopic,
   onToggle,
   onCreate,
@@ -110,6 +115,9 @@ function TaskTickList({
   items: ChecklistItem[]
   editing: boolean
   focusedTaskId: string | null
+  topicId: string
+  topicTitle: string
+  topicPathTitles: string[]
   onSelectTopic: () => void
   onToggle: (itemId: string, isCompleted: boolean) => Promise<void>
   onCreate: (input: { title: string; description: string }) => {
@@ -225,8 +233,15 @@ function TaskTickList({
                   className="flex size-4 shrink-0 cursor-grab items-center justify-center text-muted-foreground hover:text-foreground active:cursor-grabbing"
                   onDragStart={(event) => {
                     event.stopPropagation()
-                    event.dataTransfer.setData("text/plain", item.id)
-                    event.dataTransfer.effectAllowed = "move"
+                    writeTrackDropRef(event.dataTransfer, {
+                      kind: "task",
+                      id: item.id,
+                      title: item.title,
+                      path: [...topicPathTitles, item.title],
+                      topicId,
+                      topicTitle,
+                    })
+                    event.dataTransfer.effectAllowed = "copyMove"
                     const row = event.currentTarget.closest("[data-task-row]")
                     if (row instanceof HTMLElement) {
                       event.dataTransfer.setDragImage(row, 16, 16)
@@ -250,10 +265,23 @@ function TaskTickList({
                   aria-label={`Mark ${item.title} complete`}
                 />
                 <span
+                  draggable
                   className={cn(
-                    "min-w-0 flex-1 truncate leading-5",
+                    "min-w-0 flex-1 cursor-grab truncate leading-5 active:cursor-grabbing",
                     item.completed && "text-muted-foreground line-through"
                   )}
+                  onDragStart={(event) => {
+                    event.stopPropagation()
+                    writeTrackDropRef(event.dataTransfer, {
+                      kind: "task",
+                      id: item.id,
+                      title: item.title,
+                      path: [...topicPathTitles, item.title],
+                      topicId,
+                      topicTitle,
+                    })
+                    event.dataTransfer.effectAllowed = "copy"
+                  }}
                 >
                   {item.title}
                 </span>
@@ -524,9 +552,18 @@ export function TopicRow({
       return
     }
 
-    event.dataTransfer.setData("text/plain", node.id)
-    event.dataTransfer.effectAllowed = "move"
-    onDragStartNode(node.id)
+    event.dataTransfer.effectAllowed = editMode ? "copyMove" : "copy"
+    writeTrackDropRef(event.dataTransfer, {
+      kind: isSubgroup ? "group" : "topic",
+      id: node.id,
+      title: node.title,
+      path: topicPath(nodes, node.id)?.map((entry) => entry.title) ?? [node.title],
+      topicId: node.id,
+      topicTitle: node.title,
+    })
+    if (editMode) {
+      onDragStartNode(node.id)
+    }
   }
 
   const grip = editMode ? (
@@ -546,16 +583,18 @@ export function TopicRow({
     hint === "inside" && "ring-2 ring-primary/50"
   )
 
-  const dragRowProps = editMode
-    ? {
-        draggable: true,
-        onDragStart: handleRowDragStart,
-        onDragEnd: () => onDragEndNode(),
-        onDragEnter: handleDragOver,
-        onDragOver: handleDragOver,
-        onDrop: handleDrop,
-      }
-    : {}
+  const dragRowProps = {
+    draggable: true as const,
+    onDragStart: handleRowDragStart,
+    ...(editMode
+      ? {
+          onDragEnd: () => onDragEndNode(),
+          onDragEnter: handleDragOver,
+          onDragOver: handleDragOver,
+          onDrop: handleDrop,
+        }
+      : {}),
+  }
 
   const actions = editMode ? (
     <div
@@ -788,6 +827,11 @@ export function TopicRow({
             items={ownItems}
             editing={editMode}
             focusedTaskId={focusedTaskId}
+            topicId={node.id}
+            topicTitle={node.title}
+            topicPathTitles={
+              topicPath(nodes, node.id)?.map((entry) => entry.title) ?? [node.title]
+            }
             onSelectTopic={showTopic}
             onToggle={getChecklistHandlers(node.id).onToggle}
             onCreate={getChecklistHandlers(node.id).onCreate}

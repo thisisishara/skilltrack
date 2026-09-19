@@ -41,7 +41,10 @@ export async function persistTrackProposal(
           proposal.payload.notes === undefined
             ? undefined
             : (proposal.payload.notes as string | null),
-        icon: asString(proposal.payload.icon) || null,
+        icon:
+          proposal.payload.icon === undefined
+            ? undefined
+            : asString(proposal.payload.icon) || null,
         color:
           proposal.payload.color === undefined
             ? undefined

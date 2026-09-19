@@ -25,27 +25,6 @@ function asPositiveInt(value: unknown, fallback: number, max: number) {
 function parseContext(value: unknown): TrackContextConfig {
   const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {}
   return {
-    includeTitleIndex: asBoolean(raw.includeTitleIndex, DEFAULT_TRACK_CONTEXT.includeTitleIndex),
-    maxIndexTopics: asPositiveInt(
-      raw.maxIndexTopics,
-      DEFAULT_TRACK_CONTEXT.maxIndexTopics,
-      400
-    ),
-    includeFocusedTopicDetails: asBoolean(
-      raw.includeFocusedTopicDetails,
-      DEFAULT_TRACK_CONTEXT.includeFocusedTopicDetails
-    ),
-    includeDescriptions: asBoolean(
-      raw.includeDescriptions,
-      DEFAULT_TRACK_CONTEXT.includeDescriptions
-    ),
-    includeNotes: asBoolean(raw.includeNotes, DEFAULT_TRACK_CONTEXT.includeNotes),
-    includeTasks: asBoolean(raw.includeTasks, DEFAULT_TRACK_CONTEXT.includeTasks),
-    includeLinks: asBoolean(raw.includeLinks, DEFAULT_TRACK_CONTEXT.includeLinks),
-    includePendingProposals: asBoolean(
-      raw.includePendingProposals,
-      DEFAULT_TRACK_CONTEXT.includePendingProposals
-    ),
     maxChatTurns: asPositiveInt(
       raw.maxChatTurns,
       DEFAULT_TRACK_CONTEXT.maxChatTurns,
@@ -55,10 +34,6 @@ function parseContext(value: unknown): TrackContextConfig {
       raw.maxToolResultChars,
       DEFAULT_TRACK_CONTEXT.maxToolResultChars,
       20000
-    ),
-    attachFocusedTopic: asBoolean(
-      raw.attachFocusedTopic,
-      DEFAULT_TRACK_CONTEXT.attachFocusedTopic
     ),
   }
 }

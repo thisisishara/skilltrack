@@ -14,7 +14,7 @@ Ship **Track** as an account-level, **opt-in, BYOK** copilot:
 
 - Keys and provider config live in `user_settings`, encrypted with `TRACK_ENCRYPTION_KEY`.
 - Domain modules stay vendor-free. Providers sit in `src/lib/ai`; orchestration in `src/application/track`.
-- Context is a **working set** (capped title index, focused topic, proposal index, scratchpad). The model pulls details with tools. Users control those flags in User settings.
+- Context is a **stub working set** (role, topic count, focused topic id, pending proposals, scratchpad). Track **decides what to fetch** with read tools (`list_roots`, `list_children`, `search_topics`, `get_path`, `get_topic`, `get_notes`, `get_tasks`, `get_links`). Users control cost caps and which tools are on, not which fields are preloaded.
 - Session memory is in-browser, per active role. Switching roles or Restart clears messages and pending proposals.
 - Tools **propose** creates/updates/deletes. The tree shows ghosts; the user accepts or rejects each change. Writes go through existing topic/task/link services.
 - Role Settings keep the copy-paste generation prompt for external models.

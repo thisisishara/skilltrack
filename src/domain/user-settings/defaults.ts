@@ -7,18 +7,11 @@ import {
 } from "@/domain/user-settings/types"
 
 export const DEFAULT_TRACK_CONTEXT: TrackContextConfig = {
-  includeTitleIndex: true,
-  maxIndexTopics: 80,
-  includeFocusedTopicDetails: true,
-  includeDescriptions: false,
-  includeNotes: false,
-  includeTasks: false,
-  includeLinks: false,
-  includePendingProposals: true,
   maxChatTurns: 8,
   maxToolResultChars: 4000,
-  attachFocusedTopic: true,
 }
+
+export const TRACK_READ_STEP_BUDGET = 12
 
 export function defaultTrackTools(): TrackToolsConfig {
   return Object.fromEntries(TRACK_TOOL_IDS.map((id) => [id, true])) as TrackToolsConfig

@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import { assembleWorkingSet } from "@/domain/track/context"
-import { DEFAULT_TRACK_CONTEXT } from "@/domain/user-settings/defaults"
 import type { RoadmapNode } from "@/domain/topics/types"
 
-function node(id: string, parentId: string | null, title: string): RoadmapNode {
+function node(
+  id: string,
+  parentId: string | null,
+  title: string,
+  extra?: Partial<RoadmapNode>
+): RoadmapNode {
   const now = "2026-09-19T00:00:00.000Z"
   return {
     id,
@@ -13,7 +17,7 @@ function node(id: string, parentId: string | null, title: string): RoadmapNode {
     kind: "skill",
     title,
     description: "desc",
-    notes: "notes",
+    notes: extra?.notes ?? "notes",
     icon: "circle-dot",
     color: null,
     handleKind: "regular",
@@ -23,55 +27,40 @@ function node(id: string, parentId: string | null, title: string): RoadmapNode {
     sortOrder: 0,
     createdAt: now,
     updatedAt: now,
+    ...extra,
   }
 }
 
 describe("assembleWorkingSet", () => {
-  const nodes = [
-    node("a", null, "Fundamentals"),
-    node("b", "a", "Python"),
-  ]
+  const nodes = [node("a", null, "Fundamentals"), node("b", "a", "Python")]
 
-  it("omits descriptions by default and caps to a title index", () => {
+  it("injects a stub without a title index", () => {
     const set = assembleWorkingSet({
       roleId: "role-1",
       roleName: "AI Engineer",
       nodes,
-      tasks: [],
-      links: [],
-      context: DEFAULT_TRACK_CONTEXT,
       focusedTopicId: "b",
-      pendingProposals: [],
-      scratchpad: "",
+      pendingProposals: [
+        {
+          id: "p1",
+          kind: "update",
+          entity: "topic",
+          targetId: "b",
+          parentId: "a",
+          title: "Python",
+          status: "pending",
+        },
+      ],
+      scratchpad: "  remember evals  ",
     })
 
-    expect(set.indexMode).toBe("full")
-    expect(set.index[0]).toEqual({
-      id: "a",
-      parentId: null,
-      title: "Fundamentals",
-    })
-    expect(set.focusedTopic).toMatchObject({ id: "b", title: "Python" })
-    expect(set.focusedTopic).not.toHaveProperty("description")
-  })
-
-  it("uses a focused branch when the index cap is exceeded", () => {
-    const many = Array.from({ length: 5 }, (_, index) =>
-      node(`n${index}`, null, `Topic ${index}`)
-    )
-    const set = assembleWorkingSet({
-      roleId: "role-1",
-      roleName: "AI Engineer",
-      nodes: many,
-      tasks: [],
-      links: [],
-      context: { ...DEFAULT_TRACK_CONTEXT, maxIndexTopics: 2 },
-      focusedTopicId: "n0",
-      pendingProposals: [],
-      scratchpad: "",
-    })
-
-    expect(set.indexMode).toBe("focused-branch")
-    expect(set.index.length).toBeLessThanOrEqual(many.length)
+    expect(set).not.toHaveProperty("index")
+    expect(set.topicCount).toBe(2)
+    expect(set.focusedTopicId).toBe("b")
+    expect(set.pendingProposals).toEqual([
+      { id: "p1", kind: "update", entity: "topic", title: "Python" },
+    ])
+    expect(set.scratchpad).toBe("remember evals")
+    expect(set.readBudget.maxSteps).toBe(12)
   })
 })

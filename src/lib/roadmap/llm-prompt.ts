@@ -3,6 +3,8 @@ export type RoadmapLlmPromptInput = {
   extraGuidance?: string
 }
 
+export const SKILLTRACK_PRODUCT_BRIEF = `SkillTrack is an app for building a skill roadmap per career role. Each role is one nested topic tree. Topics group related skills; tasks under a topic are evidence the user checks off, and progress rolls up from those tasks. Topics can have notes, links, an icon, and a color.`
+
 const SCHEMA_BLOCK = `{
   "roadmap": {
     "title": "Senior AI Engineer",
@@ -37,7 +39,9 @@ export function buildRoadmapImportPrompt(input: RoadmapLlmPromptInput) {
     ? `Additional authoring guidance from the user:\n${extra}`
     : "No extra guidance. Infer a practical, interview-and-on-the-job skill roadmap for this role."
 
-  return `You are generating a SkillTrack roadmap JSON document for import.
+  return `${SKILLTRACK_PRODUCT_BRIEF}
+
+You are generating a SkillTrack roadmap JSON document for import.
 
 Target role / roadmap title: ${roleTitle}
 

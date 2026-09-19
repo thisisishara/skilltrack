@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       system: runtime.system,
       messages: await convertToModelMessages(compacted),
       tools: runtime.tools,
-      stopWhen: stepCountIs(8),
+      stopWhen: stepCountIs(runtime.maxSteps),
     })
 
     return result.toUIMessageStreamResponse()

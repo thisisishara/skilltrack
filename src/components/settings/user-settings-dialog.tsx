@@ -1,15 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import {
+  getPublicUserSettingsAction,
   resetTrackConfigAction,
   saveTrackSettingsAction,
   setNotificationsEnabledAction,
 } from "@/application/user-settings/actions"
 import { DEFAULT_TRACK_MODELS, defaultTrackConfig } from "@/domain/user-settings/defaults"
-import { TRACK_TOOL_IDS, type TrackConfig, type TrackProvider } from "@/domain/user-settings/types"
+import { TRACK_TOOL_IDS, type TrackConfig, type TrackProvider, type TrackToolId } from "@/domain/user-settings/types"
 import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,12 +25,23 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UsersSettingsPanel } from "@/components/settings/users-settings-panel"
+import { ResetTrackDefaultsAlert } from "@/components/settings/reset-track-defaults-alert"
 import { DEFAULT_TRACK_SYSTEM_PROMPT, defaultGenerationPrompt } from "@/application/track/prompts"
 
 const PROVIDERS: { id: TrackProvider; label: string }[] = [
@@ -39,10 +51,93 @@ const PROVIDERS: { id: TrackProvider; label: string }[] = [
   { id: "openrouter", label: "OpenRouter" },
 ]
 
+const TOOL_GROUPS: {
+  id: string
+  title: string
+  description: string
+  tools: { id: TrackToolId; label: string }[]
+}[] = [
+  {
+    id: "browse",
+    title: "Browse",
+    description: "How Track walks the active roadmap.",
+    tools: [
+      { id: "list_roots", label: "Top-level topics" },
+      { id: "list_children", label: "Nested topics" },
+      { id: "search_topics", label: "Search by title" },
+      { id: "get_path", label: "Path from root" },
+      { id: "get_topic", label: "Topic details" },
+      { id: "get_notes", label: "Notes" },
+      { id: "get_tasks", label: "Tasks" },
+      { id: "get_links", label: "Links" },
+    ],
+  },
+  {
+    id: "topics",
+    title: "Topics",
+    description: "Propose topic changes. Nothing is saved until you accept.",
+    tools: [
+      { id: "propose_create_topic", label: "Create" },
+      { id: "propose_update_topic", label: "Update" },
+      { id: "propose_delete_topic", label: "Delete" },
+    ],
+  },
+  {
+    id: "notes",
+    title: "Notes",
+    description: "One notes field per topic.",
+    tools: [
+      { id: "propose_create_notes", label: "Add" },
+      { id: "propose_update_notes", label: "Edit" },
+      { id: "propose_delete_notes", label: "Clear" },
+    ],
+  },
+  {
+    id: "tasks",
+    title: "Tasks",
+    description: "Evidence checklist items under a topic.",
+    tools: [
+      { id: "propose_create_task", label: "Create" },
+      { id: "propose_update_task", label: "Update" },
+      { id: "propose_delete_task", label: "Delete" },
+    ],
+  },
+  {
+    id: "links",
+    title: "Links",
+    description: "Links on a topic or the roadmap.",
+    tools: [
+      { id: "propose_create_link", label: "Create" },
+      { id: "propose_update_link", label: "Update" },
+      { id: "propose_delete_link", label: "Delete" },
+    ],
+  },
+  {
+    id: "generate",
+    title: "Generate",
+    description: "Only when the active roadmap is empty.",
+    tools: [{ id: "propose_full_roadmap", label: "Full roadmap" }],
+  },
+]
+
+const GROUPED_TOOL_IDS = new Set(TOOL_GROUPS.flatMap((group) => group.tools.map((tool) => tool.id)))
+const UNGROUPED_TOOLS = TRACK_TOOL_IDS.filter((id) => !GROUPED_TOOL_IDS.has(id))
+
+const TEXT_SAVE_DELAY_MS = 350
+const API_KEY_SAVE_DELAY_MS = 600
+
+type TrackDraft = {
+  enabled: boolean
+  provider: TrackProvider | ""
+  model: string
+  baseUrl: string
+  apiKey: string
+  clearApiKey: boolean
+  config: TrackConfig
+}
+
 export function UserSettingsDialog() {
   const {
-    settings,
-    setSettings,
     settingsOpen,
     setSettingsOpen,
     settingsTab,
@@ -53,10 +148,10 @@ export function UserSettingsDialog() {
   return (
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
       <DialogContent
-        className="flex max-h-[min(90dvh,52rem)] w-full flex-col gap-4 sm:max-w-4xl"
+        className="flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl"
         showCloseButton
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle>User settings</DialogTitle>
           <DialogDescription>
             Account preferences that apply across every role.
@@ -70,15 +165,16 @@ export function UserSettingsDialog() {
             }
           }}
           orientation="vertical"
-          className="min-h-0 flex-1 gap-6 data-vertical:flex-row"
+          className="min-h-0 flex-1 gap-6 overflow-hidden data-vertical:flex-row"
         >
-          <TabsList variant="line" className="w-40 shrink-0">
+          <TabsList variant="line" className="w-40 shrink-0 self-start">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="track">Track</TabsTrigger>
             {canManageUsers ? <TabsTrigger value="users">Users</TabsTrigger> : null}
           </TabsList>
-          <TabsContent value="general" className="min-h-0 overflow-y-auto pr-1">
-            <FieldGroup>
+          <TabsContent value="general" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
+            <FieldSet>
+              <FieldLegend>Notifications</FieldLegend>
               <Field>
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -89,35 +185,62 @@ export function UserSettingsDialog() {
                       Stale-roadmap reminders in the header bell.
                     </FieldDescription>
                   </div>
-                  <Switch
-                    id="notifications-enabled"
-                    checked={settings.notificationsEnabled}
-                    onCheckedChange={(checked) => {
-                      const enabled = checked === true
-                      void setNotificationsEnabledAction(enabled).then((result) => {
-                        if (!result.ok) {
-                          toast.error(result.message)
-                          return
-                        }
-                        setSettings(result.settings)
-                      })
-                    }}
-                  />
+                  <RoadmapNotificationsSwitch />
                 </div>
               </Field>
-            </FieldGroup>
+            </FieldSet>
           </TabsContent>
-          <TabsContent value="track" className="min-h-0 overflow-y-auto pr-1">
+          <TabsContent value="track" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
             <TrackSettingsForm />
           </TabsContent>
           {canManageUsers ? (
-            <TabsContent value="users" className="min-h-0 overflow-y-auto pr-1">
+            <TabsContent value="users" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
               <UsersSettingsPanel />
             </TabsContent>
           ) : null}
         </Tabs>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function RoadmapNotificationsSwitch() {
+  const { settings, setSettings } = useTrackWorkspace()
+  const requestIdRef = useRef(0)
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
+
+  return (
+    <Switch
+      id="notifications-enabled"
+      checked={settings.notificationsEnabled}
+      onCheckedChange={(checked) => {
+        const enabled = checked === true
+        const requestId = ++requestIdRef.current
+        const next = { ...settingsRef.current, notificationsEnabled: enabled }
+        settingsRef.current = next
+        setSettings(next)
+        void setNotificationsEnabledAction(enabled).then(async (result) => {
+          if (requestId !== requestIdRef.current) {
+            return
+          }
+          if (result.ok) {
+            settingsRef.current = result.settings
+            setSettings(result.settings)
+            return
+          }
+          toast.error(result.message)
+          const latest = await getPublicUserSettingsAction()
+          if (requestId !== requestIdRef.current) {
+            return
+          }
+          if (latest.ok) {
+            settingsRef.current = latest.settings
+            setSettings(latest.settings)
+          }
+        })
+      }}
+    />
   )
 }
 
@@ -132,232 +255,321 @@ function TrackSettingsForm() {
   const [apiKey, setApiKey] = useState("")
   const [clearApiKey, setClearApiKey] = useState(false)
   const [config, setConfig] = useState<TrackConfig>(settings.trackConfig)
-  const [pending, setPending] = useState(false)
-
-  useEffect(() => {
-    setEnabled(settings.trackEnabled)
-    setProvider(settings.trackProvider ?? "")
-    setModel(settings.trackModel ?? "")
-    setBaseUrl(settings.trackBaseUrl ?? "")
-    setConfig(settings.trackConfig)
-    setApiKey("")
-    setClearApiKey(false)
-  }, [settings])
-
-  function patchContext(patch: Partial<TrackConfig["context"]>) {
-    setConfig((current) => ({
-      ...current,
-      context: { ...current.context, ...patch },
-    }))
+  const [resetOpen, setResetOpen] = useState(false)
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveGeneration = useRef(0)
+  const saveChain = useRef(Promise.resolve())
+  const mountedRef = useRef(true)
+  const dirtyRef = useRef(false)
+  const persistDraftRef = useRef<() => void>(() => undefined)
+  const draftRef = useRef<TrackDraft>({
+    enabled,
+    provider,
+    model,
+    baseUrl,
+    apiKey,
+    clearApiKey,
+    config,
+  })
+  draftRef.current = {
+    enabled,
+    provider,
+    model,
+    baseUrl,
+    apiKey,
+    clearApiKey,
+    config,
   }
 
-  async function save() {
-    setPending(true)
-    const result = await saveTrackSettingsAction({
-      enabled,
-      provider: provider || null,
-      model: model.trim() || (provider ? DEFAULT_TRACK_MODELS[provider] : null),
-      baseUrl: baseUrl.trim() || null,
-      apiKey: apiKey.trim() || null,
-      clearApiKey,
-      trackConfig: config,
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      const hadTimer = Boolean(persistTimer.current)
+      if (persistTimer.current) {
+        clearTimeout(persistTimer.current)
+        persistTimer.current = null
+      }
+      if (hadTimer || dirtyRef.current) {
+        persistDraftRef.current()
+      }
+    }
+  }, [])
+
+  function applyDraft(patch: Partial<TrackDraft>) {
+    const next = { ...draftRef.current, ...patch }
+    draftRef.current = next
+    dirtyRef.current = true
+    if (patch.enabled !== undefined) {
+      setEnabled(patch.enabled)
+    }
+    if (patch.provider !== undefined) {
+      setProvider(patch.provider)
+    }
+    if (patch.model !== undefined) {
+      setModel(patch.model)
+    }
+    if (patch.baseUrl !== undefined) {
+      setBaseUrl(patch.baseUrl)
+    }
+    if (patch.apiKey !== undefined) {
+      setApiKey(patch.apiKey)
+    }
+    if (patch.clearApiKey !== undefined) {
+      setClearApiKey(patch.clearApiKey)
+    }
+    if (patch.config !== undefined) {
+      setConfig(patch.config)
+    }
+  }
+
+  function persistDraft() {
+    const generation = ++saveGeneration.current
+    saveChain.current = saveChain.current.catch(() => undefined).then(async () => {
+      if (generation !== saveGeneration.current) {
+        return
+      }
+      const draft = draftRef.current
+      const wantedEnabled = draft.enabled
+      const result = await saveTrackSettingsAction({
+        enabled: draft.enabled,
+        provider: draft.provider || null,
+        model:
+          draft.model.trim() ||
+          (draft.provider ? DEFAULT_TRACK_MODELS[draft.provider] : null),
+        baseUrl: draft.baseUrl.trim() || null,
+        apiKey: draft.apiKey.trim() || null,
+        clearApiKey: draft.clearApiKey,
+        trackConfig: draft.config,
+      })
+      if (!mountedRef.current || generation !== saveGeneration.current) {
+        return
+      }
+      if (!result.ok) {
+        toast.error(result.message)
+        const latest = await getPublicUserSettingsAction()
+        if (!mountedRef.current || generation !== saveGeneration.current) {
+          return
+        }
+        if (latest.ok) {
+          setSettings(latest.settings)
+          applyDraft({ enabled: latest.settings.trackEnabled })
+        }
+        return
+      }
+      setSettings(result.settings)
+      dirtyRef.current = false
+      applyDraft({
+        enabled: result.settings.trackEnabled,
+        ...(draft.apiKey.trim() || draft.clearApiKey
+          ? { apiKey: "", clearApiKey: false }
+          : {}),
+      })
+      dirtyRef.current = generation !== saveGeneration.current
+      if (wantedEnabled && !result.settings.trackEnabled) {
+        toast.error("Track stayed off. Add a valid provider, model, and API key.")
+      }
     })
-    setPending(false)
-    if (!result.ok) {
-      toast.error(result.message)
-      setEnabled(false)
+  }
+  persistDraftRef.current = persistDraft
+
+  function persistNow(patch?: Partial<TrackDraft>) {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+    if (patch) {
+      applyDraft(patch)
+    }
+    persistDraft()
+  }
+
+  function schedulePersist(patch: Partial<TrackDraft>, delay = TEXT_SAVE_DELAY_MS) {
+    applyDraft(patch)
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+    }
+    persistTimer.current = setTimeout(() => {
+      persistTimer.current = null
+      persistDraft()
+    }, delay)
+  }
+
+  function patchTools(ids: TrackToolId[], enabled: boolean) {
+    persistNow({
+      config: {
+        ...draftRef.current.config,
+        tools: {
+          ...draftRef.current.config.tools,
+          ...Object.fromEntries(ids.map((id) => [id, enabled])),
+        },
+      },
+    })
+  }
+
+  function patchContext(
+    patch: Partial<TrackConfig["context"]>,
+    persist: "now" | "soon" = "now"
+  ) {
+    const nextConfig = {
+      ...draftRef.current.config,
+      context: { ...draftRef.current.config.context, ...patch },
+    }
+    if (persist === "soon") {
+      schedulePersist({ config: nextConfig })
       return
     }
-    setSettings(result.settings)
-    setEnabled(result.settings.trackEnabled)
-    if (enabled && !result.settings.trackEnabled) {
-      toast.error("Track stayed off. Add a valid provider, model, and API key.")
-      return
-    }
-    toast.success("Track settings saved")
+    persistNow({ config: nextConfig })
   }
 
   async function reset() {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current)
+      persistTimer.current = null
+    }
+    saveGeneration.current += 1
     const result = await resetTrackConfigAction()
     if (!result.ok) {
       toast.error(result.message)
-      return
+      throw new Error(result.message)
     }
     setSettings(result.settings)
-    setConfig(defaultTrackConfig())
+    applyDraft({ config: result.settings.trackConfig ?? defaultTrackConfig() })
     toast.success("Track defaults restored")
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {!settings.encryptionConfigured ? (
         <p className="text-sm text-muted-foreground">
           Track cannot store API keys until TRACK_ENCRYPTION_KEY is set on the server.
         </p>
       ) : null}
-      <Field>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <FieldLabel htmlFor="track-enabled">Enable Track</FieldLabel>
-            <FieldDescription>
-              Roadmap copilot for the active role. Requires a verified API key.
-            </FieldDescription>
+
+      <FieldSet>
+        <FieldLegend>Connection</FieldLegend>
+        <Field>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <FieldLabel htmlFor="track-enabled">Enable Track</FieldLabel>
+              <FieldDescription>
+                Roadmap copilot for the active role. Needs a verified API key.
+              </FieldDescription>
+            </div>
+            <Switch
+              id="track-enabled"
+              checked={enabled}
+              onCheckedChange={(checked) => persistNow({ enabled: checked === true })}
+            />
           </div>
-          <Switch
-            id="track-enabled"
-            checked={enabled}
-            onCheckedChange={(checked) => setEnabled(checked === true)}
-          />
-        </div>
-      </Field>
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="track-provider">Provider</FieldLabel>
-          <select
-            id="track-provider"
-            className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
-            value={provider}
-            onChange={(event) => {
-              const next = event.target.value as TrackProvider | ""
-              setProvider(next)
-              if (next && !model) {
-                setModel(DEFAULT_TRACK_MODELS[next])
-              }
-            }}
-          >
-            <option value="">Choose one</option>
-            {PROVIDERS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
         </Field>
-        <Field>
-          <FieldLabel htmlFor="track-model">Model</FieldLabel>
-          <Input
-            id="track-model"
-            value={model}
-            onChange={(event) => setModel(event.target.value)}
-            placeholder={provider ? DEFAULT_TRACK_MODELS[provider] : "model id"}
-          />
-        </Field>
-        {provider === "openrouter" ? (
+        <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="track-base-url">OpenRouter base URL</FieldLabel>
+            <FieldLabel htmlFor="track-provider">Provider</FieldLabel>
+            <Select
+              value={provider || null}
+              itemToStringLabel={(value) =>
+                PROVIDERS.find((item) => item.id === value)?.label ?? ""
+              }
+              onValueChange={(value) => {
+                if (
+                  value === "anthropic" ||
+                  value === "openai" ||
+                  value === "google" ||
+                  value === "openrouter"
+                ) {
+                  persistNow({
+                    provider: value,
+                    model: draftRef.current.model || DEFAULT_TRACK_MODELS[value],
+                  })
+                }
+              }}
+            >
+              <SelectTrigger id="track-provider" className="w-full">
+                <SelectValue placeholder="Choose one" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {PROVIDERS.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="track-model">Model</FieldLabel>
             <Input
-              id="track-base-url"
-              value={baseUrl}
-              onChange={(event) => setBaseUrl(event.target.value)}
-              placeholder="https://openrouter.ai/api/v1"
+              id="track-model"
+              value={model}
+              onChange={(event) => schedulePersist({ model: event.target.value })}
+              onBlur={() => persistNow()}
+              placeholder={provider ? DEFAULT_TRACK_MODELS[provider] : "model id"}
             />
           </Field>
-        ) : null}
-        <Field>
-          <FieldLabel htmlFor="track-api-key">API key</FieldLabel>
-          <Input
-            id="track-api-key"
-            type="password"
-            value={apiKey}
-            onChange={(event) => {
-              setApiKey(event.target.value)
-              setClearApiKey(false)
-            }}
-            placeholder={
-              settings.hasApiKey && settings.trackApiKeyLast4
-                ? `Saved …${settings.trackApiKeyLast4}`
-                : "Paste a key"
-            }
-            autoComplete="off"
-          />
-          {settings.hasApiKey ? (
-            <FieldDescription>
-              Leave blank to keep the saved key.{" "}
-              <button
-                type="button"
-                className="underline"
-                onClick={() => {
-                  setClearApiKey(true)
-                  setApiKey("")
-                  setEnabled(false)
-                }}
-              >
-                Remove key
-              </button>
-            </FieldDescription>
-          ) : (
-            <FieldDescription>
-              Keys are encrypted on the server and never shown again.
-            </FieldDescription>
-          )}
-        </Field>
-      </FieldGroup>
+          {provider === "openrouter" ? (
+            <Field>
+              <FieldLabel htmlFor="track-base-url">OpenRouter base URL</FieldLabel>
+              <Input
+                id="track-base-url"
+                value={baseUrl}
+                onChange={(event) => schedulePersist({ baseUrl: event.target.value })}
+                onBlur={() => persistNow()}
+                placeholder="https://openrouter.ai/api/v1"
+              />
+            </Field>
+          ) : null}
+          <Field>
+            <FieldLabel htmlFor="track-api-key">API key</FieldLabel>
+            <Input
+              id="track-api-key"
+              type="password"
+              value={apiKey}
+              onChange={(event) => {
+                schedulePersist(
+                  { apiKey: event.target.value, clearApiKey: false },
+                  API_KEY_SAVE_DELAY_MS
+                )
+              }}
+              onBlur={() => persistNow()}
+              placeholder={
+                settings.hasApiKey && settings.trackApiKeyLast4
+                  ? `Saved …${settings.trackApiKeyLast4}`
+                  : "Paste a key"
+              }
+              autoComplete="off"
+            />
+            {settings.hasApiKey ? (
+              <FieldDescription>
+                Saved keys are encrypted and never shown again.{" "}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    persistNow({ clearApiKey: true, apiKey: "", enabled: false })
+                  }}
+                >
+                  Remove key
+                </button>
+              </FieldDescription>
+            ) : (
+              <FieldDescription>
+                Keys are encrypted on the server and never shown again.
+              </FieldDescription>
+            )}
+          </Field>
+        </FieldGroup>
+      </FieldSet>
 
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium">What Track can see</h3>
-        <ContextToggle
-          id="ctx-index"
-          label="Include title index"
-          checked={config.context.includeTitleIndex}
-          onChange={(value) => patchContext({ includeTitleIndex: value })}
-        />
+      <FieldSet>
+        <FieldLegend>Cost</FieldLegend>
         <Field>
-          <FieldLabel htmlFor="max-index">Max topics in index</FieldLabel>
-          <Input
-            id="max-index"
-            type="number"
-            min={1}
-            max={400}
-            value={config.context.maxIndexTopics}
-            onChange={(event) =>
-              patchContext({ maxIndexTopics: Number(event.target.value) || 80 })
-            }
-          />
-        </Field>
-        <ContextToggle
-          id="ctx-focus"
-          label="Include focused topic details"
-          checked={config.context.includeFocusedTopicDetails}
-          onChange={(value) => patchContext({ includeFocusedTopicDetails: value })}
-        />
-        <ContextToggle
-          id="ctx-attach"
-          label="Attach focused topic automatically"
-          checked={config.context.attachFocusedTopic}
-          onChange={(value) => patchContext({ attachFocusedTopic: value })}
-        />
-        <ContextToggle
-          id="ctx-desc"
-          label="Include descriptions"
-          checked={config.context.includeDescriptions}
-          onChange={(value) => patchContext({ includeDescriptions: value })}
-        />
-        <ContextToggle
-          id="ctx-notes"
-          label="Include notes"
-          checked={config.context.includeNotes}
-          onChange={(value) => patchContext({ includeNotes: value })}
-        />
-        <ContextToggle
-          id="ctx-tasks"
-          label="Include tasks"
-          checked={config.context.includeTasks}
-          onChange={(value) => patchContext({ includeTasks: value })}
-        />
-        <ContextToggle
-          id="ctx-links"
-          label="Include links"
-          checked={config.context.includeLinks}
-          onChange={(value) => patchContext({ includeLinks: value })}
-        />
-        <ContextToggle
-          id="ctx-pending"
-          label="Include pending proposals"
-          checked={config.context.includePendingProposals}
-          onChange={(value) => patchContext({ includePendingProposals: value })}
-        />
-        <Field>
-          <FieldLabel htmlFor="max-turns">Max chat turns kept verbatim</FieldLabel>
+          <FieldLabel htmlFor="max-turns">Chat history</FieldLabel>
+          <FieldDescription>
+            Recent user turns kept in full. Older turns are compacted.
+          </FieldDescription>
           <Input
             id="max-turns"
             type="number"
@@ -365,12 +577,16 @@ function TrackSettingsForm() {
             max={40}
             value={config.context.maxChatTurns}
             onChange={(event) =>
-              patchContext({ maxChatTurns: Number(event.target.value) || 8 })
+              patchContext({ maxChatTurns: Number(event.target.value) || 8 }, "soon")
             }
+            onBlur={() => persistNow()}
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="max-tool">Max tool-result characters</FieldLabel>
+          <FieldLabel htmlFor="max-tool">Tool result size</FieldLabel>
+          <FieldDescription>
+            Maximum characters from one tool call.
+          </FieldDescription>
           <Input
             id="max-tool"
             type="number"
@@ -378,74 +594,162 @@ function TrackSettingsForm() {
             max={20000}
             value={config.context.maxToolResultChars}
             onChange={(event) =>
-              patchContext({
-                maxToolResultChars: Number(event.target.value) || 4000,
-              })
+              patchContext(
+                { maxToolResultChars: Number(event.target.value) || 4000 },
+                "soon"
+              )
             }
+            onBlur={() => persistNow()}
           />
         </Field>
-      </div>
+      </FieldSet>
 
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium">Tools</h3>
-        {TRACK_TOOL_IDS.map((id) => (
-          <ContextToggle
-            key={id}
-            id={`tool-${id}`}
-            label={id.replaceAll("_", " ")}
-            checked={config.tools[id]}
-            onChange={(value) =>
-              setConfig((current) => ({
-                ...current,
-                tools: { ...current.tools, [id]: value },
-              }))
-            }
-          />
-        ))}
-      </div>
-
-      <Field>
-        <FieldLabel htmlFor="system-prompt">System prompt</FieldLabel>
-        <Textarea
-          id="system-prompt"
-          className="min-h-32 font-mono text-xs"
-          value={config.systemPrompt ?? DEFAULT_TRACK_SYSTEM_PROMPT}
-          onChange={(event) =>
-            setConfig((current) => ({
-              ...current,
-              systemPrompt: event.target.value,
-            }))
-          }
-        />
-      </Field>
-      <Field>
-        <FieldLabel htmlFor="generation-prompt">Generation prompt</FieldLabel>
-        <Textarea
-          id="generation-prompt"
-          className="min-h-32 font-mono text-xs"
-          value={
-            config.generationPrompt ?? defaultGenerationPrompt("the target role")
-          }
-          onChange={(event) =>
-            setConfig((current) => ({
-              ...current,
-              generationPrompt: event.target.value,
-            }))
-          }
-        />
+      <FieldSet>
+        <FieldLegend>Tools</FieldLegend>
         <FieldDescription>
-          Used only when the active roadmap is empty and generate is enabled.
+          Turn off a group or a single action. Track only sees tools that are on.
         </FieldDescription>
-      </Field>
+        <div className="flex flex-col gap-3">
+          {TOOL_GROUPS.map((group) => {
+            const ids = group.tools.map((tool) => tool.id)
+            const allOn = ids.every((id) => config.tools[id])
+            return (
+              <div
+                key={group.id}
+                className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{group.title}</p>
+                    <p className="text-xs text-muted-foreground">{group.description}</p>
+                  </div>
+                  <Switch
+                    id={`tool-group-${group.id}`}
+                    checked={allOn}
+                    onCheckedChange={(checked) => patchTools(ids, checked === true)}
+                    aria-label={`${allOn ? "Disable" : "Enable"} ${group.title} tools`}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 border-t pt-2">
+                  {group.tools.map((tool) => (
+                    <ContextToggle
+                      key={tool.id}
+                      id={`tool-${tool.id}`}
+                      label={tool.label}
+                      checked={config.tools[tool.id]}
+                      onChange={(value) => patchTools([tool.id], value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+          {UNGROUPED_TOOLS.map((id) => (
+            <ContextToggle
+              key={id}
+              id={`tool-${id}`}
+              label={id.replaceAll("_", " ")}
+              checked={config.tools[id]}
+              onChange={(value) => patchTools([id], value)}
+            />
+          ))}
+        </div>
+      </FieldSet>
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => void save()} disabled={pending}>
-          {pending ? "Saving…" : "Save Track"}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => void reset()}>
-          Reset to defaults
-        </Button>
-      </div>
+      <FieldSet>
+        <FieldLegend>Prompts</FieldLegend>
+        <Field>
+          <div className="flex items-center justify-between gap-4">
+            <FieldLabel htmlFor="system-prompt">System prompt</FieldLabel>
+            <button
+              type="button"
+              className="shrink-0 text-sm underline disabled:pointer-events-none disabled:opacity-50"
+              disabled={config.systemPrompt === null}
+              onClick={() =>
+                persistNow({
+                  config: { ...draftRef.current.config, systemPrompt: null },
+                })
+              }
+            >
+              Reset to default
+            </button>
+          </div>
+          <FieldDescription>
+            Standing instructions for every Track session.
+          </FieldDescription>
+          <Textarea
+            id="system-prompt"
+            className="min-h-32 font-mono text-xs"
+            value={config.systemPrompt ?? DEFAULT_TRACK_SYSTEM_PROMPT}
+            onChange={(event) =>
+              schedulePersist({
+                config: {
+                  ...draftRef.current.config,
+                  systemPrompt: event.target.value,
+                },
+              })
+            }
+            onBlur={() => persistNow()}
+          />
+        </Field>
+        <Field>
+          <div className="flex items-center justify-between gap-4">
+            <FieldLabel htmlFor="generation-prompt">Generation prompt</FieldLabel>
+            <button
+              type="button"
+              className="shrink-0 text-sm underline disabled:pointer-events-none disabled:opacity-50"
+              disabled={config.generationPrompt === null}
+              onClick={() =>
+                persistNow({
+                  config: { ...draftRef.current.config, generationPrompt: null },
+                })
+              }
+            >
+              Reset to default
+            </button>
+          </div>
+          <FieldDescription>
+            Used only when the active roadmap is empty and generate is enabled.
+          </FieldDescription>
+          <Textarea
+            id="generation-prompt"
+            className="min-h-32 font-mono text-xs"
+            value={
+              config.generationPrompt ?? defaultGenerationPrompt("the target role")
+            }
+            onChange={(event) =>
+              schedulePersist({
+                config: {
+                  ...draftRef.current.config,
+                  generationPrompt: event.target.value,
+                },
+              })
+            }
+            onBlur={() => persistNow()}
+          />
+        </Field>
+      </FieldSet>
+
+      <FieldSet>
+        <FieldLegend>Reset</FieldLegend>
+        <FieldDescription>
+          Restores tools, cost caps, and both prompts. Provider and API key are kept.
+        </FieldDescription>
+        <div>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setResetOpen(true)}
+          >
+            Reset Track defaults
+          </Button>
+        </div>
+      </FieldSet>
+      <ResetTrackDefaultsAlert
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        onConfirm={reset}
+      />
     </div>
   )
 }

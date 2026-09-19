@@ -237,8 +237,12 @@ export async function updateNodeDetails(
 
   const updated = await topicsRepository.updateDetails(roleId, nodeId, {
     title: requireTitle(input.title),
-    description: optionalDescription(input.description),
-    icon: normalizeNodeIcon(input.icon),
+    description:
+      input.description !== undefined
+        ? optionalDescription(input.description)
+        : node.description,
+    icon:
+      input.icon !== undefined ? normalizeNodeIcon(input.icon) : node.icon,
     ...(input.notes !== undefined
       ? { notes: optionalDescription(input.notes) }
       : {}),

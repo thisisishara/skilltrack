@@ -5,17 +5,32 @@ import { parseTrackConfig } from "@/domain/user-settings/parse"
 describe("parseTrackConfig", () => {
   it("fills defaults for missing fields", () => {
     const config = parseTrackConfig({})
-    expect(config.context.includeTitleIndex).toBe(true)
-    expect(config.context.includeDescriptions).toBe(false)
+    expect(config.context.maxChatTurns).toBe(8)
+    expect(config.context.maxToolResultChars).toBe(4000)
     expect(config.tools.search_topics).toBe(true)
+    expect(config.tools.list_roots).toBe(true)
+    expect(config.tools.get_notes).toBe(true)
+    expect(config.tools.propose_create_notes).toBe(true)
+    expect(config.tools.propose_update_notes).toBe(true)
+    expect(config.tools.propose_delete_notes).toBe(true)
     expect(config.systemPrompt).toBeNull()
   })
 
-  it("clamps numeric context values", () => {
+  it("clamps numeric context values and ignores leftover include flags", () => {
     const config = parseTrackConfig({
-      context: { maxIndexTopics: 9999, maxChatTurns: 0 },
+      context: {
+        maxIndexTopics: 9999,
+        maxChatTurns: 0,
+        maxToolResultChars: 50,
+        includeNotes: true,
+        includeTitleIndex: false,
+      },
     })
-    expect(config.context.maxIndexTopics).toBe(400)
-    expect(config.context.maxChatTurns).toBe(1)
+    expect(config.context).toEqual({
+      maxChatTurns: 1,
+      maxToolResultChars: 50,
+    })
+    expect(config.context).not.toHaveProperty("includeNotes")
+    expect(config.context).not.toHaveProperty("maxIndexTopics")
   })
 })

@@ -11,6 +11,7 @@ describe("buildRoadmapImportPrompt", () => {
 
     expect(prompt).toContain("Staff Platform Engineer")
     expect(prompt).toContain("Focus on Kubernetes and observability.")
+    expect(prompt).toContain("SkillTrack is an app for building a skill roadmap")
     expect(prompt).toContain("Return ONLY a single JSON object")
     expect(prompt).toContain("parent_id")
     expect(prompt).toContain('"roadmap"')

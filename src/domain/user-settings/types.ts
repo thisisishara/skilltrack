@@ -8,12 +8,20 @@ export const TRACK_PROVIDERS = [
 export type TrackProvider = (typeof TRACK_PROVIDERS)[number]
 
 export const TRACK_TOOL_IDS = [
+  "list_roots",
+  "list_children",
   "search_topics",
   "get_topic",
+  "get_path",
+  "get_notes",
+  "get_tasks",
   "get_links",
   "propose_create_topic",
   "propose_update_topic",
   "propose_delete_topic",
+  "propose_create_notes",
+  "propose_update_notes",
+  "propose_delete_notes",
   "propose_create_task",
   "propose_update_task",
   "propose_delete_task",
@@ -26,17 +34,8 @@ export const TRACK_TOOL_IDS = [
 export type TrackToolId = (typeof TRACK_TOOL_IDS)[number]
 
 export type TrackContextConfig = {
-  includeTitleIndex: boolean
-  maxIndexTopics: number
-  includeFocusedTopicDetails: boolean
-  includeDescriptions: boolean
-  includeNotes: boolean
-  includeTasks: boolean
-  includeLinks: boolean
-  includePendingProposals: boolean
   maxChatTurns: number
   maxToolResultChars: number
-  attachFocusedTopic: boolean
 }
 
 export type TrackToolsConfig = Record<TrackToolId, boolean>

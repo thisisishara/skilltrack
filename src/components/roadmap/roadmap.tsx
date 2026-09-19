@@ -1431,7 +1431,7 @@ export function Roadmap({
           >
             <Label
               htmlFor="roadmap-edit-mode"
-              className="text-muted-foreground"
+              className={editMode ? "text-muted-foreground" : "text-foreground"}
             >
               View
             </Label>
@@ -1446,7 +1446,12 @@ export function Roadmap({
               }}
               aria-label="Edit mode"
             />
-            <Label htmlFor="roadmap-edit-mode">Edit</Label>
+            <Label
+              htmlFor="roadmap-edit-mode"
+              className={editMode ? "text-foreground" : "text-muted-foreground"}
+            >
+              Edit
+            </Label>
           </div>
         </div>
       </div>

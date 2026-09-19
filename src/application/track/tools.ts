@@ -6,6 +6,13 @@ import { z } from "zod"
 import { explodeRoadmapDocument } from "@/domain/track/explode"
 import type { TrackProposal } from "@/domain/track/proposals"
 import { truncateJson } from "@/domain/track/context"
+import {
+  listChildSummaries,
+  listRootSummaries,
+  searchTopicSummaries,
+  skillTopics,
+  topicPath,
+} from "@/domain/track/traverse"
 import type { NodeLink } from "@/domain/links/types"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { RoadmapNode } from "@/domain/topics/types"
@@ -28,93 +35,138 @@ export function createTrackTools(input: {
   links: NodeLink[]
   treeIsEmpty: boolean
   maxToolResultChars: number
-  includeDescriptions: boolean
-  includeNotes: boolean
-  includeTasks: boolean
-  includeLinks: boolean
 }) {
   const enabled = new Set(input.enabled)
   const tools: ToolSet = {}
 
   const clip = (value: unknown) => truncateJson(value, input.maxToolResultChars)
 
+  if (enabled.has("list_roots")) {
+    tools.list_roots = tool({
+      description:
+        "List top-level topics only (id, title, childCount, hasNotes, taskCount, linkCount). Do not call this on every turn if search_topics already found the node. Never follow with list_children on every root.",
+      inputSchema: z.object({}),
+      execute: async () =>
+        clip(listRootSummaries(input.nodes, input.tasks, input.links)),
+    })
+  }
+
+  if (enabled.has("list_children")) {
+    tools.list_children = tool({
+      description:
+        "List direct children of one topic. Not recursive. Call once on the matching node after search_topics or list_roots. Do not walk the whole tree.",
+      inputSchema: z.object({ topicId: uuid }),
+      execute: async ({ topicId }) =>
+        clip(listChildSummaries(input.nodes, input.tasks, input.links, topicId)),
+    })
+  }
+
   if (enabled.has("search_topics")) {
     tools.search_topics = tool({
       description:
-        "Search topics in the active roadmap by title. Returns id, title, parentId only.",
+        "Search topics by title. Returns summaries plus ancestor path. Prefer this over listing the whole tree when the user named a skill.",
       inputSchema: z.object({
         query: z.string().min(1).max(120),
       }),
-      execute: async ({ query }) => {
-        const needle = query.trim().toLowerCase()
-        const matches = input.nodes
-          .filter(
-            (node) =>
-              node.kind !== "label" && node.title.toLowerCase().includes(needle)
-          )
-          .slice(0, 20)
-          .map((node) => ({
-            id: node.id,
-            title: node.title,
-            parentId: node.parentId,
-          }))
-        return clip({ matches })
-      },
+      execute: async ({ query }) =>
+        clip(searchTopicSummaries(input.nodes, input.tasks, input.links, query)),
     })
   }
 
   if (enabled.has("get_topic")) {
     tools.get_topic = tool({
-      description: "Load one topic by id. Children are titles only.",
+      description:
+        "Load one topic card: id, parentId, title, description, icon, color. No notes, tasks, links, or children. Use list_children / get_notes / get_tasks / get_links for those.",
       inputSchema: z.object({ topicId: uuid }),
       execute: async ({ topicId }) => {
-        const node = input.nodes.find((item) => item.id === topicId)
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
         if (!node) {
           return { error: "Topic not found in this role." }
         }
-        const payload: Record<string, unknown> = {
+        return clip({
           id: node.id,
           parentId: node.parentId,
           title: node.title,
-          children: input.nodes
-            .filter((child) => child.parentId === node.id)
-            .map((child) => ({ id: child.id, title: child.title })),
+          description: node.description,
+          icon: node.icon,
+          color: node.color,
+        })
+      },
+    })
+  }
+
+  if (enabled.has("get_path")) {
+    tools.get_path = tool({
+      description:
+        "Return ancestors from the root to this topic (id and title). Use instead of walking list_children upward.",
+      inputSchema: z.object({ topicId: uuid }),
+      execute: async ({ topicId }) => {
+        const path = topicPath(input.nodes, topicId)
+        if (!path) {
+          return { error: "Topic not found in this role." }
         }
-        if (input.includeDescriptions) payload.description = node.description
-        if (input.includeNotes) payload.notes = node.notes
-        if (input.includeTasks) {
-          payload.tasks = input.tasks
+        return clip({ path })
+      },
+    })
+  }
+
+  if (enabled.has("get_notes")) {
+    tools.get_notes = tool({
+      description:
+        "Load notes for one topic. Call only when hasNotes is true and you will quote or edit them.",
+      inputSchema: z.object({ topicId: uuid }),
+      execute: async ({ topicId }) => {
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+        if (!node) {
+          return { error: "Topic not found in this role." }
+        }
+        return clip({ topicId: node.id, notes: node.notes })
+      },
+    })
+  }
+
+  if (enabled.has("get_tasks")) {
+    tools.get_tasks = tool({
+      description:
+        "Load tasks for one topic. Call only when taskCount > 0 and you will quote or edit them.",
+      inputSchema: z.object({ topicId: uuid }),
+      execute: async ({ topicId }) => {
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+        if (!node) {
+          return { error: "Topic not found in this role." }
+        }
+        return clip({
+          topicId: node.id,
+          tasks: input.tasks
             .filter((task) => task.topicId === node.id)
             .map((task) => ({
               id: task.id,
               title: task.title,
               completed: task.completed,
-            }))
-        }
-        if (input.includeLinks) {
-          payload.links = input.links
-            .filter((link) => link.topicId === node.id)
-            .map((link) => ({ id: link.id, label: link.label, url: link.url }))
-        }
-        return clip(payload)
+              description: task.description,
+            })),
+        })
       },
     })
   }
 
   if (enabled.has("get_links")) {
     tools.get_links = tool({
-      description: "List links on the roadmap or a topic.",
+      description:
+        "Load links for one topic, or pass topicId null for roadmap-level links. Does not dump every link in the role.",
       inputSchema: z.object({
-        topicId: uuid.nullable().optional(),
+        topicId: uuid.nullable(),
       }),
       execute: async ({ topicId }) => {
+        if (topicId !== null) {
+          const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+          if (!node) {
+            return { error: "Topic not found in this role." }
+          }
+        }
         const rows = input.links
           .filter((link) =>
-            topicId === undefined
-              ? true
-              : topicId === null
-                ? link.topicId === null
-                : link.topicId === topicId
+            topicId === null ? link.topicId === null : link.topicId === topicId
           )
           .map((link) => ({
             id: link.id,
@@ -122,7 +174,7 @@ export function createTrackTools(input: {
             label: link.label,
             url: link.url,
           }))
-        return clip({ links: rows })
+        return clip({ topicId, links: rows })
       },
     })
   }
@@ -196,6 +248,87 @@ export function createTrackTools(input: {
           parentId: node.parentId,
           title: node.title,
           payload: { topicId },
+        })
+      },
+    })
+  }
+
+  if (enabled.has("propose_create_notes")) {
+    tools.propose_create_notes = tool({
+      description:
+        "Propose adding notes on a topic that has none. Notes are a single text field on the topic, not a list. Use propose_update_notes if notes already exist.",
+      inputSchema: z.object({
+        topicId: uuid,
+        notes: z.string().min(1).max(4000),
+      }),
+      execute: async ({ topicId, notes }) => {
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+        if (!node) {
+          return { error: "Unknown topic id. Use search_topics or list_children." }
+        }
+        if (node.notes?.trim()) {
+          return { error: "This topic already has notes. Use propose_update_notes." }
+        }
+        return proposal({
+          kind: "update",
+          entity: "topic",
+          targetId: node.id,
+          parentId: node.parentId,
+          title: node.title,
+          payload: { topicId: node.id, title: node.title, notes },
+        })
+      },
+    })
+  }
+
+  if (enabled.has("propose_update_notes")) {
+    tools.propose_update_notes = tool({
+      description:
+        "Propose replacing notes on a topic. Call get_notes first. Use propose_create_notes if the topic has no notes yet.",
+      inputSchema: z.object({
+        topicId: uuid,
+        notes: z.string().min(1).max(4000),
+      }),
+      execute: async ({ topicId, notes }) => {
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+        if (!node) {
+          return { error: "Unknown topic id. Use search_topics or get_notes." }
+        }
+        if (!node.notes?.trim()) {
+          return { error: "This topic has no notes. Use propose_create_notes." }
+        }
+        return proposal({
+          kind: "update",
+          entity: "topic",
+          targetId: node.id,
+          parentId: node.parentId,
+          title: node.title,
+          payload: { topicId: node.id, title: node.title, notes },
+        })
+      },
+    })
+  }
+
+  if (enabled.has("propose_delete_notes")) {
+    tools.propose_delete_notes = tool({
+      description:
+        "Propose clearing notes on a topic. Does not delete the topic.",
+      inputSchema: z.object({ topicId: uuid }),
+      execute: async ({ topicId }) => {
+        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+        if (!node) {
+          return { error: "Unknown topic id." }
+        }
+        if (!node.notes?.trim()) {
+          return { error: "This topic has no notes to delete." }
+        }
+        return proposal({
+          kind: "update",
+          entity: "topic",
+          targetId: node.id,
+          parentId: node.parentId,
+          title: node.title,
+          payload: { topicId: node.id, title: node.title, notes: null },
         })
       },
     })

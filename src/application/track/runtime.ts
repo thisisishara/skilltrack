@@ -13,8 +13,10 @@ import { assembleWorkingSet } from "@/domain/track/context"
 import { compactMessages } from "@/domain/track/history"
 import type { TrackProposalIndex } from "@/domain/track/proposals"
 import { enabledToolIds } from "@/domain/user-settings/parse"
+import { TRACK_READ_STEP_BUDGET } from "@/domain/user-settings/defaults"
 import { ApplicationError } from "@/domain/errors"
 import { createTrackModel } from "@/lib/ai/providers"
+import { skillTopics } from "@/domain/track/traverse"
 
 export async function loadTrackRuntime(input: {
   userId: string
@@ -45,15 +47,12 @@ export async function loadTrackRuntime(input: {
     listLinksForRole(input.userId, role.id),
   ])
 
-  const treeIsEmpty = nodes.filter((node) => node.kind !== "label").length === 0
+  const treeIsEmpty = skillTopics(nodes).length === 0
   const toolsEnabled = enabledToolIds(settings.trackConfig)
   const workingSet = assembleWorkingSet({
     roleId: role.id,
     roleName: role.name,
     nodes,
-    tasks,
-    links,
-    context: settings.trackConfig.context,
     focusedTopicId: input.focusedTopicId,
     pendingProposals: input.pendingProposals,
     scratchpad: input.scratchpad,
@@ -85,12 +84,9 @@ ${JSON.stringify(workingSet)}`
       links,
       treeIsEmpty,
       maxToolResultChars: settings.trackConfig.context.maxToolResultChars,
-      includeDescriptions: settings.trackConfig.context.includeDescriptions,
-      includeNotes: settings.trackConfig.context.includeNotes,
-      includeTasks: settings.trackConfig.context.includeTasks,
-      includeLinks: settings.trackConfig.context.includeLinks,
     }),
     maxChatTurns: settings.trackConfig.context.maxChatTurns,
+    maxSteps: TRACK_READ_STEP_BUDGET,
     compactMessages,
   }
 }

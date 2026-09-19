@@ -127,4 +127,17 @@ describe("applyAcceptedProposal", () => {
     expect(next.links).toHaveLength(1)
     expect(next.links[0]?.url).toBe("https://guide.test")
   })
+
+  it("updates roadmap notes", () => {
+    const next = applyAcceptedProposal(
+      snapshot({ roleNotes: "Every topic below is required." }),
+      proposal({
+        entity: "roadmap",
+        kind: "update",
+        title: "Roadmap notes",
+        payload: { facet: "role", notes: "Required topics are listed below." },
+      })
+    )
+    expect(next.roleNotes).toBe("Required topics are listed below.")
+  })
 })

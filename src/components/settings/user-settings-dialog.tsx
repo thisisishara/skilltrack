@@ -65,6 +65,7 @@ const TOOL_GROUPS: {
       { id: "get_notes", label: "Notes" },
       { id: "get_tasks", label: "Tasks" },
       { id: "get_links", label: "Links" },
+      { id: "get_role", label: "Role overview" },
     ],
   },
   {
@@ -80,11 +81,12 @@ const TOOL_GROUPS: {
   {
     id: "notes",
     title: "Notes",
-    description: "One notes field per topic.",
+    description: "Topic notes, plus the roadmap overview note.",
     tools: [
       { id: "propose_create_notes", label: "Add" },
       { id: "propose_update_notes", label: "Edit" },
       { id: "propose_delete_notes", label: "Clear" },
+      { id: "propose_update_role", label: "Roadmap" },
     ],
   },
   {

@@ -63,6 +63,8 @@ describe("assembleWorkingSet", () => {
       { id: "p1", kind: "update", entity: "topic", title: "Python" },
     ])
     expect(set.scratchpad).toBe("remember evals")
+    expect(set.roleNotes).toBeNull()
+    expect(set.roleNotesTruncated).toBe(false)
     expect(set.readBudget.maxSteps).toBe(12)
   })
 })

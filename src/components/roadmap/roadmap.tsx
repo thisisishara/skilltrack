@@ -172,6 +172,19 @@ function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
   return [...server, ...local.filter((item) => !serverIds.has(item.id))]
 }
 
+function sameById<T extends { id: string; updatedAt?: string }>(
+  left: T[],
+  right: T[]
+) {
+  return (
+    left.length === right.length &&
+    left.every(
+      (item, index) =>
+        item.id === right[index]?.id && item.updatedAt === right[index]?.updatedAt
+    )
+  )
+}
+
 const TREE_READING_GAP = 8
 
 function readingLineY(toolbar: HTMLElement | null, viewport: HTMLElement) {
@@ -357,8 +370,20 @@ export function Roadmap({
   const { treeFocusRequest } = useRolesUi()
   const track = useTrackWorkspaceOptional()
   const appliedAcceptedRef = useRef(new Set<string>())
-  const snapshotRef = useRef({ nodes, items, links })
-  snapshotRef.current = { nodes, items, links }
+  const snapshotRef = useRef({
+    nodes,
+    items,
+    links,
+    roleDescription: overviewDescription,
+    roleNotes: overviewNotes,
+  })
+  snapshotRef.current = {
+    nodes,
+    items,
+    links,
+    roleDescription: overviewDescription,
+    roleNotes: overviewNotes,
+  }
   const displayNodes = useMemo(
     () => overlayGhostTopics(nodes, track?.proposals ?? [], roleId),
     [nodes, roleId, track?.proposals]
@@ -407,18 +432,24 @@ export function Roadmap({
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNodes((current) => mergeById(serverNodes, current))
+    setNodes((current) => {
+      const next = mergeById(serverNodes, current)
+      return sameById(next, current) ? current : next
+    })
   }, [serverNodes])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems((current) => mergeById(serverItems, current))
+    setItems((current) => {
+      const next = mergeById(serverItems, current)
+      return sameById(next, current) ? current : next
+    })
   }, [serverItems])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLinks((current) => mergeById(serverLinks, current))
+    setLinks((current) => {
+      const next = mergeById(serverLinks, current)
+      return sameById(next, current) ? current : next
+    })
   }, [serverLinks])
 
   useEffect(() => {
@@ -441,6 +472,12 @@ export function Roadmap({
     setNodes(next.nodes)
     setItems(next.items)
     setLinks(next.links)
+    if (next.roleDescription !== undefined) {
+      setOverviewDescription(next.roleDescription ?? "")
+    }
+    if (next.roleNotes !== undefined) {
+      setOverviewNotes(next.roleNotes ?? "")
+    }
   }, [roleId, track?.proposals])
 
   useEffect(() => {

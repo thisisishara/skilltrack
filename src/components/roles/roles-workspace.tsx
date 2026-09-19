@@ -110,10 +110,15 @@ export function RolesWorkspace({
   )
 
   const rememberRoadmap = useCallback((payload: RoadmapViewProps) => {
-    setCachedRoadmaps((current) => ({
-      ...current,
-      [payload.roleId]: payload,
-    }))
+    setCachedRoadmaps((current) => {
+      if (current[payload.roleId] === payload) {
+        return current
+      }
+      return {
+        ...current,
+        [payload.roleId]: payload,
+      }
+    })
   }, [])
 
   const focusTree = useCallback(

@@ -52,6 +52,16 @@ export function proposalHeadline(
   const withTopic = (line: string) =>
     topicTitle ? `${line} · ${topicTitle}` : line
 
+  if (proposal.payload.facet === "role") {
+    if (proposal.payload.notes !== undefined) {
+      return "Edit roadmap notes"
+    }
+    if (proposal.payload.description !== undefined) {
+      return "Edit roadmap description"
+    }
+    return "Edit roadmap overview"
+  }
+
   if (proposal.payload.facet === "notes") {
     const action =
       proposal.payload.notesAction === "delete"

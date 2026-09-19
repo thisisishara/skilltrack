@@ -16,6 +16,7 @@ import {
 import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import { TrackMarkdown } from "@/components/track/track-markdown"
+import { TrackActivityTrail } from "@/components/track/track-activity-trail"
 import { useTrackRefDrop } from "@/components/track/use-track-ref-drop"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import { dropRefLabel, type TrackDropRef } from "@/domain/track/drop-ref"
 import { pendingProposals } from "@/domain/track/overlay"
+import { toolActivitiesFromParts } from "@/domain/track/activity-trail"
 import {
   proposalFocusNodeId,
   proposalFocusTaskId,
@@ -143,10 +145,43 @@ export function TrackPanel({
     id: `${roleId}:${sessionEpoch}`,
     transport,
   })
+  const turnStartedAtRef = useRef<number | null>(null)
+  const elapsedByMessageRef = useRef<Record<string, number>>({})
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     setMessageContext({})
+    turnStartedAtRef.current = null
+    elapsedByMessageRef.current = {}
   }, [sessionEpoch, roleId])
+
+  useEffect(() => {
+    if (status !== "submitted" && status !== "streaming") {
+      return
+    }
+    if (turnStartedAtRef.current === null) {
+      turnStartedAtRef.current = Date.now()
+    }
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [status])
+
+  useEffect(() => {
+    if (status === "submitted" || status === "streaming") {
+      return
+    }
+    const started = turnStartedAtRef.current
+    if (started === null) {
+      return
+    }
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((message) => message.role === "assistant")
+    if (lastAssistant) {
+      elapsedByMessageRef.current[lastAssistant.id] = Date.now() - started
+    }
+    turnStartedAtRef.current = null
+  }, [messages, status])
 
   useEffect(() => {
     if (composerFocusNonce === 0) {
@@ -224,17 +259,16 @@ export function TrackPanel({
       .slice(0, 8)
       .map((item) => `${item.kind}:${item.title}`)
       .join(", ")
-    setScratchpad(
-      [
-        goal && `Goal: ${goal}`,
-        ids && `Pending: ${ids}`,
-        pins && `Pinned: ${pins}`,
-        focusedTopicId && `Focus: ${focusedTopicId}`,
-      ]
-        .filter(Boolean)
-        .join("\n")
-        .slice(0, 3000)
-    )
+    const next = [
+      goal && `Goal: ${goal}`,
+      ids && `Pending: ${ids}`,
+      pins && `Pinned: ${pins}`,
+      focusedTopicId && `Focus: ${focusedTopicId}`,
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 3000)
+    setScratchpad((current) => (current === next ? current : next))
   }, [focusedTopicId, messages, pending, pinnedRefs, setScratchpad])
 
   const busy = status === "submitted" || status === "streaming"
@@ -301,19 +335,28 @@ export function TrackPanel({
       ) : (
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-3 py-2">
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const text = textFromParts(message.parts)
-            if (!text.trim() && message.role === "assistant" && busy) {
-              return (
-                <div key={message.id} className="px-1 text-sm text-muted-foreground">
-                  <Spinner />
-                </div>
-              )
-            }
-            if (!text.trim()) {
+            const activities = toolActivitiesFromParts(
+              message.parts as Array<Record<string, unknown>> | undefined
+            )
+            const isLive =
+              busy &&
+              message.role === "assistant" &&
+              (index === messages.length - 1 ||
+                messages.slice(index + 1).every((item) => item.role !== "assistant"))
+            const elapsedMs = isLive
+              ? turnStartedAtRef.current
+                ? now - turnStartedAtRef.current
+                : 0
+              : (elapsedByMessageRef.current[message.id] ?? null)
+            if (message.role === "assistant" && !text.trim() && activities.length === 0 && !isLive) {
               return null
             }
             if (message.role === "user") {
+              if (!text.trim()) {
+                return null
+              }
               const attached = messageContext[message.id] ?? []
               return (
                 <div key={message.id} className="flex justify-end">
@@ -345,13 +388,22 @@ export function TrackPanel({
             }
             return (
               <div key={message.id} className="px-1 text-sm leading-relaxed">
-                <TrackMarkdown
-                  isAnimating={
-                    busy && message.id === messages[messages.length - 1]?.id
-                  }
-                >
-                  {text}
-                </TrackMarkdown>
+                <TrackActivityTrail
+                  activities={activities}
+                  busy={isLive}
+                  elapsedMs={elapsedMs}
+                />
+                {text.trim() ? (
+                  <TrackMarkdown
+                    isAnimating={
+                      busy && message.id === messages[messages.length - 1]?.id
+                    }
+                  >
+                    {text}
+                  </TrackMarkdown>
+                ) : isLive && activities.length === 0 ? (
+                  <Spinner />
+                ) : null}
               </div>
             )
           })}

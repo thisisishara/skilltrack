@@ -9,6 +9,8 @@ export type RoadmapSnapshot = {
   nodes: RoadmapNode[]
   items: ChecklistItem[]
   links: NodeLink[]
+  roleDescription?: string | null
+  roleNotes?: string | null
 }
 
 export function pendingProposals(proposals: TrackProposal[]) {
@@ -74,7 +76,7 @@ export function overlayGhostTopics(
     existing.add(id)
   }
 
-  return [...nodes, ...extras]
+  return extras.length === 0 ? nodes : [...nodes, ...extras]
 }
 
 export function overlayGhostTasks(
@@ -115,7 +117,7 @@ export function overlayGhostTasks(
     existing.add(id)
   }
 
-  return [...items, ...extras]
+  return extras.length === 0 ? items : [...items, ...extras]
 }
 
 export function overlayGhostLinks(
@@ -152,7 +154,7 @@ export function overlayGhostLinks(
     existing.add(id)
   }
 
-  return [...links, ...extras]
+  return extras.length === 0 ? links : [...links, ...extras]
 }
 
 function payloadString(payload: Record<string, unknown>, key: string) {
@@ -340,6 +342,20 @@ export function applyAcceptedProposal(
         ...snapshot,
         links: snapshot.links.filter((link) => link.id !== proposal.targetId),
       }
+    }
+  }
+
+  if (proposal.entity === "roadmap" && proposal.kind === "update") {
+    return {
+      ...snapshot,
+      roleDescription:
+        proposal.payload.description === undefined
+          ? snapshot.roleDescription
+          : (proposal.payload.description as string | null),
+      roleNotes:
+        proposal.payload.notes === undefined
+          ? snapshot.roleNotes
+          : (proposal.payload.notes as string | null),
     }
   }
 

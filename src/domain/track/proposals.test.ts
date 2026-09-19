@@ -102,16 +102,12 @@ describe("proposalHeadline", () => {
     expect(
       proposalHeadline(
         proposal({
-          entity: "topic",
+          entity: "roadmap",
           kind: "update",
-          title: "Python",
-          payload: {
-            facet: "notes",
-            notesAction: "delete",
-            topicTitle: "Python",
-          },
+          title: "Roadmap notes",
+          payload: { facet: "role", notes: "Shorter." },
         })
       )
-    ).toBe("Clear notes · Python")
+    ).toBe("Edit roadmap notes")
   })
 })

@@ -54,6 +54,8 @@ export async function loadTrackRuntime(input: {
   const workingSet = assembleWorkingSet({
     roleId: role.id,
     roleName: role.name,
+    roleDescription: role.description,
+    roleNotes: role.notes,
     nodes,
     focusedTopicId: input.focusedTopicId,
     pinned: input.pinned,
@@ -82,6 +84,11 @@ ${JSON.stringify(workingSet)}`
     system,
     tools: createTrackTools({
       enabled: toolsEnabled,
+      role: {
+        id: role.id,
+        description: role.description,
+        notes: role.notes,
+      },
       nodes,
       tasks,
       links,

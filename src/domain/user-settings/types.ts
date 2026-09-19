@@ -16,6 +16,7 @@ export const TRACK_TOOL_IDS = [
   "get_notes",
   "get_tasks",
   "get_links",
+  "get_role",
   "propose_create_topic",
   "propose_update_topic",
   "propose_delete_topic",
@@ -29,6 +30,7 @@ export const TRACK_TOOL_IDS = [
   "propose_update_link",
   "propose_delete_link",
   "propose_full_roadmap",
+  "propose_update_role",
 ] as const
 
 export type TrackToolId = (typeof TRACK_TOOL_IDS)[number]

@@ -1,4 +1,4 @@
-import { createNodeLinkAction, deleteNodeLinkAction, updateNodeLinkAction } from "@/application/links/actions"
+import { updateRoleDescriptionAction, updateRoleNotesAction } from "@/application/roles/actions"
 import { createNodeAction, deleteNodeAction, updateNodeAction } from "@/application/topics/actions"
 import {
   createChecklistItemAction,
@@ -141,6 +141,30 @@ export async function persistTrackProposal(
       })
       return result.ok ? { ok: true } : { ok: false, message: result.message }
     }
+  }
+
+  if (proposal.entity === "roadmap" && proposal.kind === "update") {
+    if (proposal.payload.notes !== undefined) {
+      const notes =
+        proposal.payload.notes === null
+          ? null
+          : asString(proposal.payload.notes) || null
+      const result = await updateRoleNotesAction(roleId, notes)
+      if (!result.ok) {
+        return { ok: false, message: result.message }
+      }
+    }
+    if (proposal.payload.description !== undefined) {
+      const description =
+        proposal.payload.description === null
+          ? null
+          : asString(proposal.payload.description) || null
+      const result = await updateRoleDescriptionAction(roleId, description)
+      if (!result.ok) {
+        return { ok: false, message: result.message }
+      }
+    }
+    return { ok: true }
   }
 
   return { ok: false, message: "That proposal cannot be applied." }

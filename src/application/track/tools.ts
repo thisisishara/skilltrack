@@ -51,6 +51,7 @@ function proposalWithTopic(
 
 export function createTrackTools(input: {
   enabled: TrackToolId[]
+  role: { id: string; description: string | null; notes: string | null }
   nodes: RoadmapNode[]
   tasks: ChecklistItem[]
   links: NodeLink[]
@@ -197,6 +198,20 @@ export function createTrackTools(input: {
           }))
         return clip({ topicId, links: rows })
       },
+    })
+  }
+
+  if (enabled.has("get_role")) {
+    tools.get_role = tool({
+      description:
+        "Load this role's description and notes (roadmap overview, not a topic). Use when the user talks about the roadmap note or description, or when those working-set fields are truncated.",
+      inputSchema: z.object({}),
+      execute: async () =>
+        clip({
+          roleId: input.role.id,
+          description: input.role.description,
+          notes: input.role.notes,
+        }),
     })
   }
 
@@ -542,6 +557,39 @@ export function createTrackTools(input: {
           },
           link.topicId
         )
+      },
+    })
+  }
+
+  if (enabled.has("propose_update_role")) {
+    tools.propose_update_role = tool({
+      description:
+        "Propose an edit to this role's description and/or notes (roadmap overview). Use for 'the note on this roadmap'. Does not save until the user accepts.",
+      inputSchema: z.object({
+        description: z.string().max(2000).nullable().optional(),
+        notes: z.string().max(4000).nullable().optional(),
+      }),
+      execute: async (fields) => {
+        if (fields.description === undefined && fields.notes === undefined) {
+          return { error: "Set description, notes, or both." }
+        }
+        const title =
+          fields.notes !== undefined && fields.description === undefined
+            ? "Roadmap notes"
+            : fields.description !== undefined && fields.notes === undefined
+              ? "Roadmap description"
+              : "Roadmap overview"
+        return proposal({
+          kind: "update",
+          entity: "roadmap",
+          targetId: null,
+          parentId: null,
+          title,
+          payload: {
+            ...fields,
+            facet: "role",
+          },
+        })
       },
     })
   }

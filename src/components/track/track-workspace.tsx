@@ -156,25 +156,28 @@ export function TrackWorkspace({
 
   const ingestProposals = useCallback((values: unknown[]) => {
     setProposals((current) => {
-      const next = [...current]
+      let next: TrackProposal[] | null = null
       const ids = new Set(current.map((item) => item.id))
+      function pushProposal(item: unknown) {
+        if (!isTrackProposal(item) || ids.has(item.id)) {
+          return
+        }
+        if (!next) {
+          next = [...current]
+        }
+        next.push({ ...item, status: "pending" })
+        ids.add(item.id)
+      }
       for (const value of values) {
         if (value && typeof value === "object" && "proposals" in value) {
-          const batch = (value as { proposals: unknown[] }).proposals
-          for (const item of batch) {
-            if (isTrackProposal(item) && !ids.has(item.id)) {
-              next.push({ ...item, status: "pending" })
-              ids.add(item.id)
-            }
+          for (const item of (value as { proposals: unknown[] }).proposals) {
+            pushProposal(item)
           }
           continue
         }
-        if (isTrackProposal(value) && !ids.has(value.id)) {
-          next.push({ ...value, status: "pending" })
-          ids.add(value.id)
-        }
+        pushProposal(value)
       }
-      return next
+      return next ?? current
     })
   }, [])
 

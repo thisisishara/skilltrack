@@ -12,7 +12,8 @@ describe("parseTrackConfig", () => {
     expect(config.tools.get_notes).toBe(true)
     expect(config.tools.propose_create_notes).toBe(true)
     expect(config.tools.propose_update_notes).toBe(true)
-    expect(config.tools.propose_delete_notes).toBe(true)
+    expect(config.tools.get_role).toBe(true)
+    expect(config.tools.propose_update_role).toBe(true)
     expect(config.systemPrompt).toBeNull()
   })
 

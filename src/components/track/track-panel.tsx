@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { DefaultChatTransport } from "ai"
 import { useChat } from "@ai-sdk/react"
 import {
@@ -28,7 +28,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { StickToBottom, useStickToBottomContext, type StickToBottomContext } from "use-stick-to-bottom"
 import { Spinner } from "@/components/ui/spinner"
 import {
   Tooltip,
@@ -84,6 +84,28 @@ function collectToolOutputs(parts: Array<Record<string, unknown>> | undefined) {
     }
   }
   return outputs
+}
+
+function TrackNearTopLoader({
+  onNearTop,
+}: {
+  onNearTop: (viewport: HTMLElement) => void
+}) {
+  const { scrollRef } = useStickToBottomContext()
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) {
+      return
+    }
+    const onScroll = () => {
+      if (el.scrollTop < 64) {
+        onNearTop(el)
+      }
+    }
+    el.addEventListener("scroll", onScroll, { passive: true })
+    return () => el.removeEventListener("scroll", onScroll)
+  }, [onNearTop, scrollRef])
+  return null
 }
 
 export function TrackPanel({
@@ -171,6 +193,7 @@ export function TrackPanel({
   const elapsedByMessageRef = useRef<Record<string, number>>({})
   const skipPersistRef = useRef(true)
   const loadingOlderRef = useRef(false)
+  const stickContextRef = useRef<StickToBottomContext>(null)
   const [olderCount, setOlderCount] = useState(0)
   const [now, setNow] = useState(() => Date.now())
 
@@ -280,6 +303,7 @@ export function TrackPanel({
     setSeedPrompt(null)
     takeComposerContext(text)
     void sendMessage({ text })
+    void stickContextRef.current?.scrollToBottom()
   }, [seedPrompt, sendMessage, setSeedPrompt])
 
   useEffect(() => {
@@ -352,33 +376,38 @@ export function TrackPanel({
     setInput("")
     takeComposerContext(text)
     void sendMessage({ text })
+    void stickContextRef.current?.scrollToBottom()
   }
 
-  function revealOlder(viewport?: HTMLDivElement | null, depth = 0) {
-    if (loadingOlderRef.current || olderMessagesRef.current.length === 0) {
-      return
-    }
-    loadingOlderRef.current = true
-    const previousHeight = viewport?.scrollHeight ?? 0
-    const { older, batch } = takeOlderTrackMessages(olderMessagesRef.current)
-    olderMessagesRef.current = older
-    setOlderCount(older.length)
-    setMessages((current) => [...(batch as typeof current), ...current])
-    window.requestAnimationFrame(() => {
-      if (viewport) {
-        viewport.scrollTop += viewport.scrollHeight - previousHeight
+  const revealOlder = useCallback(
+    (viewport?: HTMLElement | null, depth = 0) => {
+      if (loadingOlderRef.current || olderMessagesRef.current.length === 0) {
+        return
       }
-      loadingOlderRef.current = false
-      if (
-        depth < 3 &&
-        viewport &&
-        viewport.scrollTop < 64 &&
-        olderMessagesRef.current.length > 0
-      ) {
-        revealOlder(viewport, depth + 1)
-      }
-    })
-  }
+      loadingOlderRef.current = true
+      const scroller = viewport ?? stickContextRef.current?.scrollRef.current
+      const previousHeight = scroller?.scrollHeight ?? 0
+      const { older, batch } = takeOlderTrackMessages(olderMessagesRef.current)
+      olderMessagesRef.current = older
+      setOlderCount(older.length)
+      setMessages((current) => [...(batch as typeof current), ...current])
+      window.requestAnimationFrame(() => {
+        if (scroller) {
+          scroller.scrollTop += scroller.scrollHeight - previousHeight
+        }
+        loadingOlderRef.current = false
+        if (
+          depth < 3 &&
+          scroller &&
+          scroller.scrollTop < 64 &&
+          olderMessagesRef.current.length > 0
+        ) {
+          revealOlder(scroller, depth + 1)
+        }
+      })
+    },
+    [setMessages]
+  )
 
   return (
     <div
@@ -431,15 +460,17 @@ export function TrackPanel({
           ) : null}
         </div>
       ) : (
-      <ScrollArea
-        className="min-h-0 flex-1"
-        onViewportScroll={(event) => {
-          if (event.currentTarget.scrollTop < 64) {
-            revealOlder(event.currentTarget)
-          }
-        }}
+      <StickToBottom
+        className="relative min-h-0 flex-1 overflow-hidden"
+        resize="smooth"
+        initial="instant"
+        contextRef={stickContextRef}
       >
-        <div className="flex flex-col gap-4 px-3 py-2">
+        <TrackNearTopLoader onNearTop={revealOlder} />
+        <StickToBottom.Content
+          className="flex flex-col gap-4 px-3 py-2"
+          scrollClassName="h-full"
+        >
           {olderCount > 0 ? (
             <button
               type="button"
@@ -524,8 +555,8 @@ export function TrackPanel({
           {error ? (
             <p className="px-1 text-sm text-destructive">{error.message}</p>
           ) : null}
-        </div>
-      </ScrollArea>
+        </StickToBottom.Content>
+      </StickToBottom>
       )}
       {pending.length > 0 ? (
         <div className="flex flex-col gap-1.5 px-2 pb-1">

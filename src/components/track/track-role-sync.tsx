@@ -10,9 +10,7 @@ export function TrackRoleSync() {
   const searchParams = useSearchParams()
   const { activeRole } = useRolesUi()
   const {
-    focusedRoleId,
     setFocusedRoleId,
-    restartSession,
     openSettings,
     setTrackPanelOpen,
     settings,
@@ -40,11 +38,8 @@ export function TrackRoleSync() {
     if (!activeRole) {
       return
     }
-    if (focusedRoleId && focusedRoleId !== activeRole.id) {
-      restartSession()
-    }
     setFocusedRoleId(activeRole.id)
-  }, [activeRole, focusedRoleId, restartSession, setFocusedRoleId])
+  }, [activeRole, setFocusedRoleId])
 
   return null
 }

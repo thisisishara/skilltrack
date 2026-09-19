@@ -42,11 +42,21 @@ import { toolActivitiesFromParts } from "@/domain/track/activity-trail"
 import {
   proposalFocusNodeId,
   proposalFocusTaskId,
+  proposalFocusFacet,
   proposalHeadline,
   proposalTopicId,
   toProposalIndex,
 } from "@/domain/track/proposals"
 import { cn } from "@/lib/utils"
+import {
+  buildStoredTrackSession,
+  flushStoredTrackSession,
+  mergeTrackTranscript,
+  readStoredTrackSession,
+  scheduleStoredTrackSession,
+  splitTrackTranscript,
+  takeOlderTrackMessages,
+} from "@/lib/track/session-storage"
 
 function textFromParts(parts: Array<{ type: string; text?: string }> | undefined) {
   return (parts ?? [])
@@ -63,6 +73,13 @@ function collectToolOutputs(parts: Array<Record<string, unknown>> | undefined) {
       continue
     }
     if (part.state === "output-available" && part.output !== undefined) {
+      if (
+        part.output &&
+        typeof part.output === "object" &&
+        "restored" in (part.output as object)
+      ) {
+        continue
+      }
       outputs.push(part.output)
     }
   }
@@ -79,6 +96,7 @@ export function TrackPanel({
   topicTitles: Record<string, string>
 }) {
   const {
+    userId,
     settings,
     sessionEpoch,
     proposals,
@@ -92,6 +110,7 @@ export function TrackPanel({
     setSeedPrompt,
     scratchpad,
     setScratchpad,
+    focusedRoleId,
     pinnedRefs,
     pinTrackRef,
     unpinTrackRef,
@@ -125,6 +144,9 @@ export function TrackPanel({
     pendingProposals: pending.map(toProposalIndex),
     scratchpad,
   }
+  const olderMessagesRef = useRef<Array<{ id: string; role: string; parts: unknown[] }>>(
+    []
+  )
 
   const transport = useMemo(
     () =>
@@ -132,7 +154,7 @@ export function TrackPanel({
         api: "/api/track/chat",
         prepareSendMessagesRequest: ({ messages }) => ({
           body: {
-            messages,
+            messages: mergeTrackTranscript(olderMessagesRef.current, messages),
             ...bodyRef.current,
             pinned: pinnedForSendRef.current,
           },
@@ -147,13 +169,22 @@ export function TrackPanel({
   })
   const turnStartedAtRef = useRef<number | null>(null)
   const elapsedByMessageRef = useRef<Record<string, number>>({})
+  const skipPersistRef = useRef(true)
+  const loadingOlderRef = useRef(false)
+  const [olderCount, setOlderCount] = useState(0)
   const [now, setNow] = useState(() => Date.now())
 
-  useEffect(() => {
-    setMessageContext({})
+  useLayoutEffect(() => {
+    skipPersistRef.current = true
+    const snapshot = readStoredTrackSession(userId, roleId)
+    const { older, visible } = splitTrackTranscript(snapshot?.messages ?? [])
+    olderMessagesRef.current = older
+    setOlderCount(older.length)
+    setMessages((visible as typeof messages | undefined) ?? [])
+    setMessageContext(snapshot?.messageContext ?? {})
     turnStartedAtRef.current = null
-    elapsedByMessageRef.current = {}
-  }, [sessionEpoch, roleId])
+    elapsedByMessageRef.current = snapshot?.elapsedByMessage ?? {}
+  }, [roleId, sessionEpoch, setMessages, userId])
 
   useEffect(() => {
     if (status !== "submitted" && status !== "streaming") {
@@ -230,13 +261,16 @@ export function TrackPanel({
   }
 
   useEffect(() => {
+    if (focusedRoleId !== roleId) {
+      return
+    }
     const outputs = messages.flatMap((message) =>
       collectToolOutputs(message.parts as Array<Record<string, unknown>> | undefined)
     )
     if (outputs.length > 0) {
       ingestProposals(outputs)
     }
-  }, [ingestProposals, messages])
+  }, [focusedRoleId, ingestProposals, messages, roleId])
 
   useEffect(() => {
     if (!seedPrompt) {
@@ -249,6 +283,9 @@ export function TrackPanel({
   }, [seedPrompt, sendMessage, setSeedPrompt])
 
   useEffect(() => {
+    if (focusedRoleId !== roleId) {
+      return
+    }
     const lastUser = [...messages].reverse().find((message) => message.role === "user")
     const goal = textFromParts(lastUser?.parts).slice(0, 400)
     const ids = pending
@@ -271,7 +308,38 @@ export function TrackPanel({
     if (scratchpad !== next) {
       setScratchpad(next)
     }
-  }, [focusedTopicId, messages, pending, pinnedRefs, scratchpad, setScratchpad])
+  }, [focusedRoleId, focusedTopicId, messages, pending, pinnedRefs, roleId, scratchpad, setScratchpad])
+
+  useEffect(() => {
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false
+      return
+    }
+    if (focusedRoleId !== roleId) {
+      return
+    }
+    const session = buildStoredTrackSession({
+      messages: mergeTrackTranscript(olderMessagesRef.current, messages),
+      messageContext,
+      proposals,
+      scratchpad,
+      pinnedRefs,
+      elapsedByMessage: elapsedByMessageRef.current,
+    })
+    scheduleStoredTrackSession(userId, roleId, session)
+    return () => {
+      flushStoredTrackSession(userId, roleId, session)
+    }
+  }, [
+    focusedRoleId,
+    messageContext,
+    messages,
+    pinnedRefs,
+    proposals,
+    roleId,
+    scratchpad,
+    userId,
+  ])
 
   const busy = status === "submitted" || status === "streaming"
   const canSend = Boolean(input.trim()) && !busy && settings.trackEnabled
@@ -284,6 +352,32 @@ export function TrackPanel({
     setInput("")
     takeComposerContext(text)
     void sendMessage({ text })
+  }
+
+  function revealOlder(viewport?: HTMLDivElement | null, depth = 0) {
+    if (loadingOlderRef.current || olderMessagesRef.current.length === 0) {
+      return
+    }
+    loadingOlderRef.current = true
+    const previousHeight = viewport?.scrollHeight ?? 0
+    const { older, batch } = takeOlderTrackMessages(olderMessagesRef.current)
+    olderMessagesRef.current = older
+    setOlderCount(older.length)
+    setMessages((current) => [...(batch as typeof current), ...current])
+    window.requestAnimationFrame(() => {
+      if (viewport) {
+        viewport.scrollTop += viewport.scrollHeight - previousHeight
+      }
+      loadingOlderRef.current = false
+      if (
+        depth < 3 &&
+        viewport &&
+        viewport.scrollTop < 64 &&
+        olderMessagesRef.current.length > 0
+      ) {
+        revealOlder(viewport, depth + 1)
+      }
+    })
   }
 
   return (
@@ -302,6 +396,8 @@ export function TrackPanel({
                 variant="ghost"
                 aria-label="Restart"
                 onClick={() => {
+                  olderMessagesRef.current = []
+                  setOlderCount(0)
                   setMessages([])
                   restartSession()
                 }}
@@ -335,8 +431,24 @@ export function TrackPanel({
           ) : null}
         </div>
       ) : (
-      <ScrollArea className="min-h-0 flex-1">
+      <ScrollArea
+        className="min-h-0 flex-1"
+        onViewportScroll={(event) => {
+          if (event.currentTarget.scrollTop < 64) {
+            revealOlder(event.currentTarget)
+          }
+        }}
+      >
         <div className="flex flex-col gap-4 px-3 py-2">
+          {olderCount > 0 ? (
+            <button
+              type="button"
+              className="self-center text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => revealOlder()}
+            >
+              Earlier messages
+            </button>
+          ) : null}
           {messages.map((message, index) => {
             const text = textFromParts(message.parts)
             const activities = toolActivitiesFromParts(
@@ -446,11 +558,13 @@ export function TrackPanel({
                   className="min-w-0 flex-1 truncate text-left text-xs hover:underline"
                   onClick={() => {
                     const nodeId = proposalFocusNodeId(proposal)
-                    if (nodeId) {
+                    const facet = proposalFocusFacet(proposal)
+                    if (proposal.entity === "roadmap" || nodeId) {
                       focusTree({
                         roleId,
                         nodeId,
                         taskId: proposalFocusTaskId(proposal),
+                        facet,
                       })
                     }
                   }}

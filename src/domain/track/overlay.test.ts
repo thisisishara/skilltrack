@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { applyAcceptedProposal, type RoadmapSnapshot } from "@/domain/track/overlay"
+import { applyAcceptedProposal, overlayGhostLinks, overlayGhostTopics, overlayRoleNotes, type RoadmapSnapshot } from "@/domain/track/overlay"
 import type { TrackProposal } from "@/domain/track/proposals"
 
 function snapshot(partial?: Partial<RoadmapSnapshot>): RoadmapSnapshot {
@@ -139,5 +139,59 @@ describe("applyAcceptedProposal", () => {
       })
     )
     expect(next.roleNotes).toBe("Required topics are listed below.")
+  })
+})
+
+describe("pending overlays", () => {
+  it("shows topic note edits on the existing node", () => {
+    const nodes = overlayGhostTopics(
+      snapshot().nodes,
+      [
+        proposal({
+          status: "pending",
+          entity: "topic",
+          kind: "update",
+          title: "Python",
+          targetId: "topic-1",
+          payload: { notes: "Shorter notes.", facet: "notes" },
+        }),
+      ],
+      "role-1"
+    )
+    expect(nodes[0]?.notes).toBe("Shorter notes.")
+  })
+
+  it("shows link edits and hides deleted links", () => {
+    const links = overlayGhostLinks(
+      snapshot().links,
+      [
+        proposal({
+          status: "pending",
+          entity: "link",
+          kind: "update",
+          title: "Docs v2",
+          targetId: "link-1",
+          parentId: "topic-1",
+          payload: { label: "Docs v2", url: "https://new.example" },
+        }),
+      ],
+      "role-1"
+    )
+    expect(links[0]?.label).toBe("Docs v2")
+    expect(links[0]?.url).toBe("https://new.example")
+  })
+
+  it("overlays roadmap notes", () => {
+    expect(
+      overlayRoleNotes("Long note", [
+        proposal({
+          status: "pending",
+          entity: "roadmap",
+          kind: "update",
+          title: "Roadmap notes",
+          payload: { facet: "role", notes: "Short note" },
+        }),
+      ])
+    ).toBe("Short note")
   })
 })

@@ -28,16 +28,58 @@ export function proposalForTopic(
   )
 }
 
+export function overlayRoleNotes(notes: string, proposals: TrackProposal[]) {
+  const pending = pendingProposals(proposals).find(
+    (item) =>
+      item.entity === "roadmap" &&
+      item.kind === "update" &&
+      item.payload.notes !== undefined
+  )
+  if (!pending) {
+    return notes
+  }
+  return typeof pending.payload.notes === "string" ? pending.payload.notes : ""
+}
+
 export function overlayGhostTopics(
   nodes: RoadmapNode[],
   proposals: TrackProposal[],
   roleId: string
 ): RoadmapNode[] {
+  const pending = pendingProposals(proposals)
   const extras: RoadmapNode[] = []
   const existing = new Set(nodes.map((node) => node.id))
   const now = new Date().toISOString()
+  const patched = nodes.map((node) => {
+    const update = pending.find(
+      (item) =>
+        item.entity === "topic" &&
+        item.kind === "update" &&
+        item.targetId === node.id
+    )
+    if (!update) {
+      return node
+    }
+    return {
+      ...node,
+      title: payloadString(update.payload, "title") || node.title,
+      description:
+        update.payload.description === undefined
+          ? node.description
+          : (update.payload.description as string | null),
+      notes:
+        update.payload.notes === undefined
+          ? node.notes
+          : (update.payload.notes as string | null),
+      icon: payloadString(update.payload, "icon") || node.icon,
+      color:
+        update.payload.color === undefined
+          ? node.color
+          : (update.payload.color as string | null),
+    }
+  })
 
-  for (const proposal of pendingProposals(proposals)) {
+  for (const proposal of pending) {
     if (proposal.entity !== "topic" || proposal.kind !== "create") {
       continue
     }
@@ -76,7 +118,7 @@ export function overlayGhostTopics(
     existing.add(id)
   }
 
-  return extras.length === 0 ? nodes : [...nodes, ...extras]
+  return extras.length === 0 ? patched : [...patched, ...extras]
 }
 
 export function overlayGhostTasks(
@@ -125,11 +167,36 @@ export function overlayGhostLinks(
   proposals: TrackProposal[],
   roleId: string
 ): NodeLink[] {
-  const extras: NodeLink[] = []
-  const existing = new Set(links.map((link) => link.id))
+  const pending = pendingProposals(proposals)
+  const deleted = new Set(
+    pending
+      .filter((item) => item.entity === "link" && item.kind === "delete")
+      .map((item) => item.targetId)
+      .filter((id): id is string => Boolean(id))
+  )
   const now = new Date().toISOString()
+  const patched = links
+    .filter((link) => !deleted.has(link.id))
+    .map((link) => {
+      const update = pending.find(
+        (item) =>
+          item.entity === "link" &&
+          item.kind === "update" &&
+          item.targetId === link.id
+      )
+      if (!update) {
+        return link
+      }
+      return {
+        ...link,
+        label: payloadString(update.payload, "label") || update.title || link.label,
+        url: payloadString(update.payload, "url") || link.url,
+      }
+    })
+  const extras: NodeLink[] = []
+  const existing = new Set(patched.map((link) => link.id))
 
-  for (const proposal of pendingProposals(proposals)) {
+  for (const proposal of pending) {
     if (proposal.entity !== "link" || proposal.kind !== "create") {
       continue
     }
@@ -142,7 +209,10 @@ export function overlayGhostLinks(
     extras.push({
       id,
       roleId,
-      topicId: proposal.parentId,
+      topicId:
+        proposal.payload.topicId === undefined
+          ? proposal.parentId
+          : (proposal.payload.topicId as string | null),
       label: proposal.title,
       url:
         typeof proposal.payload.url === "string"
@@ -154,7 +224,7 @@ export function overlayGhostLinks(
     existing.add(id)
   }
 
-  return extras.length === 0 ? links : [...links, ...extras]
+  return extras.length === 0 ? patched : [...patched, ...extras]
 }
 
 function payloadString(payload: Record<string, unknown>, key: string) {

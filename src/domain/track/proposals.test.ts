@@ -56,6 +56,19 @@ describe("proposalFocusNodeId", () => {
       )
     ).toBe("topic-9")
   })
+
+  it("treats roadmap notes as the overview, not a topic", () => {
+    expect(
+      proposalFocusNodeId(
+        proposal({
+          entity: "roadmap",
+          kind: "update",
+          title: "Roadmap notes",
+          payload: { facet: "role", notes: "Shorter." },
+        })
+      )
+    ).toBeNull()
+  })
 })
 
 describe("proposalHeadline", () => {
@@ -105,9 +118,13 @@ describe("proposalHeadline", () => {
           entity: "roadmap",
           kind: "update",
           title: "Roadmap notes",
-          payload: { facet: "role", notes: "Shorter." },
+          payload: {
+            facet: "role",
+            notes: "Shorter.",
+            preview: "Every topic below seems unnecessarily long",
+          },
         })
       )
-    ).toBe("Edit roadmap notes")
+    ).toBe("Edit roadmap notes · Every topic below seems unnecessarily long")
   })
 })

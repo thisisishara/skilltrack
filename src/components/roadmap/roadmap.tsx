@@ -75,6 +75,7 @@ import {
   overlayGhostLinks,
   overlayGhostTasks,
   overlayGhostTopics,
+  overlayRoleNotes,
   type RoadmapSnapshot,
 } from "@/domain/track/overlay"
 import {
@@ -168,9 +169,23 @@ const TOPIC_DIALOG_COPY: TopicDialogCopy = {
   submitChildLabel: "Add subtopic",
 }
 
-function mergeById<T extends { id: string }>(server: T[], local: T[]): T[] {
+function mergeById<T extends { id: string; updatedAt?: string }>(
+  server: T[],
+  local: T[]
+): T[] {
+  const localById = new Map(local.map((item) => [item.id, item]))
+  const merged = server.map((item) => {
+    const ours = localById.get(item.id)
+    if (!ours?.updatedAt) {
+      return item
+    }
+    if (!item.updatedAt || ours.updatedAt > item.updatedAt) {
+      return ours
+    }
+    return item
+  })
   const serverIds = new Set(server.map((item) => item.id))
-  return [...server, ...local.filter((item) => !serverIds.has(item.id))]
+  return [...merged, ...local.filter((item) => !serverIds.has(item.id))]
 }
 
 function sameById<T extends { id: string; updatedAt?: string }>(
@@ -198,9 +213,17 @@ function readingLineY(toolbar: HTMLElement | null, viewport: HTMLElement) {
 function scrollToReadingLine(
   viewport: HTMLElement,
   target: HTMLElement,
-  line: number
+  line: number,
+  smooth = false
 ) {
-  viewport.scrollTop += target.getBoundingClientRect().top - line
+  const nextTop = viewport.scrollTop + (target.getBoundingClientRect().top - line)
+  const max = Math.max(0, viewport.scrollHeight - viewport.clientHeight)
+  const top = Math.max(0, Math.min(nextTop, max))
+  if (!smooth || Math.abs(viewport.scrollTop - top) < 2) {
+    viewport.scrollTop = top
+    return
+  }
+  viewport.scrollTo({ top, behavior: "smooth" })
 }
 
 function locationFromViewport(
@@ -358,6 +381,11 @@ export function Roadmap({
   const flashFadeTimerRef = useRef(0)
   const flashClearTimerRef = useRef(0)
   const pendingFlashTaskRef = useRef<string | null>(null)
+  const pendingFlashFacetRef = useRef<"notes" | "description" | null>(null)
+  const [detailsHighlight, setDetailsHighlight] = useState<
+    "notes" | "description" | null
+  >(null)
+  const detailsHighlightTimerRef = useRef(0)
   const pendingRevealRef = useRef<string | null>(
     focusNodeIdFromServer ?? null
   )
@@ -404,7 +432,7 @@ export function Roadmap({
     onLayoutChanged,
   } = useDetailsPanelLayout(userId)
 
-  function lockTreeLayout() {
+  function lockTreeLayout(holdMs = 400) {
     programmaticScrollRef.current = true
     window.clearTimeout(programmaticScrollTimerRef.current)
     programmaticScrollTimerRef.current = window.setTimeout(() => {
@@ -420,7 +448,7 @@ export function Roadmap({
       persistTreeLocation(
         locationFromViewport(viewport, readingLineY(toolbar, viewport))
       )
-    }, 400)
+    }, holdMs)
   }
 
   function setDragging(nodeId: string | null) {
@@ -518,6 +546,7 @@ export function Roadmap({
       window.clearTimeout(scrollPersistTimerRef.current)
       window.clearTimeout(flashFadeTimerRef.current)
       window.clearTimeout(flashClearTimerRef.current)
+      window.clearTimeout(detailsHighlightTimerRef.current)
     }
   }, [])
 
@@ -532,9 +561,25 @@ export function Roadmap({
       focusedRef.current = null
       revealRetryRef.current = 0
       pendingFlashTaskRef.current = treeFocusRequest.taskId ?? null
+      pendingFlashFacetRef.current = treeFocusRequest.facet ?? null
     }
 
     const nodeId = pendingRevealRef.current
+    const highlightFacet = pendingFlashFacetRef.current
+    if (treeFocusRequest?.roleId === roleId && nodeId === null && highlightFacet) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConfigNodeId(null)
+      setDetailsHighlight(highlightFacet)
+      window.clearTimeout(detailsHighlightTimerRef.current)
+      detailsHighlightTimerRef.current = window.setTimeout(() => {
+        setDetailsHighlight(null)
+      }, 1600)
+      if (track && !track.detailsPanelOpen) {
+        track.setDetailsPanelOpen(true)
+      }
+      pendingFlashFacetRef.current = null
+      return
+    }
     if (!nodeId || !expandedHydrated) {
       return
     }
@@ -581,10 +626,22 @@ export function Roadmap({
       return () => window.cancelAnimationFrame(frame)
     }
 
-    lockTreeLayout()
+    const fromTrackFocus =
+      treeFocusRequest?.roleId === roleId &&
+      treeFocusRequest.nodeId === nodeId &&
+      treeFocusRequest.nonce === appliedFocusNonceRef.current
+    lockTreeLayout(fromTrackFocus ? 700 : 400)
     const toolbar =
       listRef.current?.querySelector<HTMLElement>("[data-tree-toolbar]") ?? null
-    scrollToReadingLine(viewport, target, readingLineY(toolbar, viewport))
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    scrollToReadingLine(
+      viewport,
+      target,
+      readingLineY(toolbar, viewport),
+      fromTrackFocus && !reduceMotion
+    )
     focusedRef.current = nodeId
     pendingRevealRef.current = null
     revealRetryRef.current = 0
@@ -602,15 +659,23 @@ export function Roadmap({
       setFlashTaskId(null)
       setFlashFading(false)
     }, 1200)
-    const fromTrackFocus =
-      treeFocusRequest?.roleId === roleId &&
-      treeFocusRequest.nodeId === nodeId &&
-      treeFocusRequest.nonce === appliedFocusNonceRef.current
-    if (!fromTrackFocus) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setConfigNodeId(nodeId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConfigNodeId(nodeId)
+    const facet = pendingFlashFacetRef.current
+    pendingFlashFacetRef.current = null
+    if (facet) {
+      setDetailsHighlight(facet)
+      window.clearTimeout(detailsHighlightTimerRef.current)
+      detailsHighlightTimerRef.current = window.setTimeout(() => {
+        setDetailsHighlight(null)
+      }, 1600)
+      if (track && !track.detailsPanelOpen) {
+        track.setDetailsPanelOpen(true)
+      }
+    } else if (!fromTrackFocus) {
+      setDetailsHighlight(null)
     }
-  }, [displayNodes, expandedHydrated, expandedIds, revealTick, roleId, treeFocusRequest])
+  }, [displayNodes, expandedHydrated, expandedIds, revealTick, roleId, track, treeFocusRequest])
 
   const skillNodes = useMemo(() => displayNodes.filter(isSkillNode), [displayNodes])
   const topicTitles = useMemo(
@@ -710,10 +775,14 @@ export function Roadmap({
     [skillNodes, items]
   )
 
+  const displayOverviewNotes = overlayRoleNotes(
+    overviewNotes,
+    track?.proposals ?? []
+  )
   const isOverview = !configNodeId
   const configNode = useMemo(
-    () => nodes.find((node) => node.id === configNodeId) ?? null,
-    [nodes, configNodeId]
+    () => displayNodes.find((node) => node.id === configNodeId) ?? null,
+    [configNodeId, displayNodes]
   )
   const panelNode = isOverview ? null : configNode
   const selectedItems = useMemo(
@@ -1762,7 +1831,8 @@ export function Roadmap({
               editMode={editMode}
               fallbackTitle={roleName}
               overviewDescription={overviewDescription}
-              overviewNotes={overviewNotes}
+              overviewNotes={displayOverviewNotes}
+              highlightFacet={detailsHighlight}
               canInheritAccent={Boolean(panelNode?.parentId)}
               subtitle={
                 isOverview

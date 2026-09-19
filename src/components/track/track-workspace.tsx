@@ -27,6 +27,10 @@ import {
   writeStoredTrackPanelOpen,
 } from "@/lib/track/panel-storage"
 import {
+  clearStoredTrackSession,
+  readStoredTrackSession,
+} from "@/lib/track/session-storage"
+import {
   readStoredDetailsPanelOpen,
   writeStoredDetailsPanelOpen,
 } from "@/lib/layout/details-panel-storage"
@@ -34,6 +38,7 @@ import {
 export type SettingsTab = "general" | "track" | "models" | "users"
 
 type TrackWorkspaceValue = {
+  userId: string
   settings: PublicUserSettings
   setSettings: (settings: PublicUserSettings) => void
   canManageUsers: boolean
@@ -110,6 +115,16 @@ export function TrackWorkspace({
     setTrackPanelOpenState(readStoredTrackPanelOpen(userId))
     setDetailsPanelOpenState(readStoredDetailsPanelOpen(userId))
   }, [userId])
+
+  useEffect(() => {
+    if (!focusedRoleId) {
+      return
+    }
+    const snapshot = readStoredTrackSession(userId, focusedRoleId)
+    setProposals(snapshot?.proposals ?? [])
+    setScratchpad(snapshot?.scratchpad ?? "")
+    setPinnedRefs(snapshot?.pinnedRefs ?? [])
+  }, [focusedRoleId, sessionEpoch, userId])
 
   const setTrackPanelOpen = useCallback(
     (open: boolean) => {
@@ -259,15 +274,19 @@ export function TrackWorkspace({
   }, [])
 
   const restartSession = useCallback(() => {
+    if (focusedRoleId) {
+      clearStoredTrackSession(userId, focusedRoleId)
+    }
     setProposals([])
     setScratchpad("")
     setSeedPrompt(null)
     setPinnedRefs([])
     setSessionEpoch((value) => value + 1)
-  }, [])
+  }, [focusedRoleId, userId])
 
   const value = useMemo(
     () => ({
+      userId,
       settings,
       setSettings,
       canManageUsers,
@@ -301,6 +320,7 @@ export function TrackWorkspace({
       composerFocusNonce,
     }),
     [
+      userId,
       settings,
       canManageUsers,
       settingsOpen,

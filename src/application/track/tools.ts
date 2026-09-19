@@ -4,7 +4,7 @@ import { tool, type ToolSet } from "ai"
 import { z } from "zod"
 
 import { explodeRoadmapDocument } from "@/domain/track/explode"
-import type { TrackProposal } from "@/domain/track/proposals"
+import { notePreview, type TrackProposal } from "@/domain/track/proposals"
 import { truncateJson } from "@/domain/track/context"
 import {
   listChildSummaries,
@@ -319,6 +319,7 @@ export function createTrackTools(input: {
               notes,
               facet: "notes",
               notesAction: "create",
+              preview: notePreview(notes),
             },
           },
           node.id
@@ -357,6 +358,7 @@ export function createTrackTools(input: {
               notes,
               facet: "notes",
               notesAction: "update",
+              preview: notePreview(node.notes),
             },
           },
           node.id
@@ -392,6 +394,7 @@ export function createTrackTools(input: {
               notes: null,
               facet: "notes",
               notesAction: "delete",
+              preview: notePreview(node.notes),
             },
           },
           node.id
@@ -588,6 +591,10 @@ export function createTrackTools(input: {
           payload: {
             ...fields,
             facet: "role",
+            preview:
+              notePreview(
+                fields.notes !== undefined ? input.role.notes : input.role.description
+              ) ?? notePreview(fields.notes) ?? notePreview(fields.description),
           },
         })
       },

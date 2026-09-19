@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
+import { cn } from "@/lib/utils"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
 import type { RoadmapNode } from "@/domain/topics/types"
@@ -89,6 +90,7 @@ export function TopicConfigSheet({
   canInheritAccent = true,
   overviewDescription = "",
   overviewNotes = "",
+  highlightFacet = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -133,6 +135,7 @@ export function TopicConfigSheet({
   canInheritAccent?: boolean
   overviewDescription?: string | null
   overviewNotes?: string | null
+  highlightFacet?: "notes" | "description" | null
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -148,6 +151,32 @@ export function TopicConfigSheet({
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const accentChoiceRef = useRef<"keep" | "apply" | null>(null)
   const selectedNodeId = node?.id ?? null
+  const incomingNotes = mode === "overview" ? (overviewNotes ?? "") : (node?.notes ?? "")
+
+  useEffect(() => {
+    if (!highlightFacet) {
+      return
+    }
+    const id =
+      highlightFacet === "description"
+        ? mode === "overview"
+          ? "roadmap-description"
+          : "topic-description"
+        : mode === "overview"
+          ? "roadmap-notes"
+          : "topic-notes"
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        block: "nearest",
+        behavior:
+          typeof window !== "undefined" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth",
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [highlightFacet, mode, selectedNodeId])
 
   useEffect(() => {
     return () => {
@@ -171,7 +200,6 @@ export function TopicConfigSheet({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(fallbackTitle ?? "Roadmap")
       setDescription(overviewDescription ?? "")
-      setNotes(overviewNotes ?? "")
       setNotesOpen(false)
       setError(null)
       return
@@ -188,13 +216,18 @@ export function TopicConfigSheet({
     setDescription(node.description ?? "")
     setIcon(node.icon)
     setAccentColor(node.color)
-    setNotes(node.notes ?? "")
     setNotesOpen(false)
     setError(null)
-    // selectedNodeId/open are enough; including `node` would reset the form
-    // on every optimistic autosave of the same node.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedNodeId, open, mode, fallbackTitle, overviewDescription, overviewNotes])
+  }, [selectedNodeId, open, mode, fallbackTitle, overviewDescription])
+
+  useEffect(() => {
+    if (!open || notesOpen) {
+      return
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNotes(incomingNotes)
+  }, [incomingNotes, notesOpen, open])
 
   type DetailSnapshot = {
     title: string
@@ -342,7 +375,13 @@ export function TopicConfigSheet({
               </ProgressValue>
             </Progress>
             <Separator />
-            <section className="flex flex-col gap-3">
+            <section
+              id="roadmap-notes"
+              className={cn(
+                "flex flex-col gap-3 rounded-lg",
+                highlightFacet === "notes" && "ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
+              )}
+            >
               <h3 className="text-sm font-medium">Notes</h3>
               <NotesSection
                 notes={notes}
@@ -536,7 +575,13 @@ export function TopicConfigSheet({
                 </FieldGroup>
           ) : null}
                 <Separator />
-                <section className="flex flex-col gap-3">
+                <section
+                  id="topic-notes"
+                  className={cn(
+                    "flex flex-col gap-3 rounded-lg",
+                    highlightFacet === "notes" && "ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
+                  )}
+                >
                   <h3 className="text-sm font-medium">Notes</h3>
                 <NotesSection
                   notes={notes}

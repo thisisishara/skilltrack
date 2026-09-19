@@ -27,8 +27,9 @@ import type { RoadmapViewProps } from "@/components/roadmap/roadmap"
 export type TreeFocusRequest = {
   nonce: number
   roleId: string
-  nodeId: string
+  nodeId: string | null
   taskId?: string | null
+  facet?: "notes" | "description" | null
 }
 
 type RolesUiContextValue = {
@@ -39,8 +40,9 @@ type RolesUiContextValue = {
   treeFocusRequest: TreeFocusRequest | null
   focusTree: (target: {
     roleId: string
-    nodeId: string
+    nodeId: string | null
     taskId?: string | null
+    facet?: "notes" | "description" | null
   }) => void
   cachedRoadmap: RoadmapViewProps | null
   rememberRoadmap: (payload: RoadmapViewProps) => void
@@ -122,13 +124,19 @@ export function RolesWorkspace({
   }, [])
 
   const focusTree = useCallback(
-    (target: { roleId: string; nodeId: string; taskId?: string | null }) => {
+    (target: {
+      roleId: string
+      nodeId: string | null
+      taskId?: string | null
+      facet?: "notes" | "description" | null
+    }) => {
       treeFocusNonceRef.current += 1
       setTreeFocusRequest({
         nonce: treeFocusNonceRef.current,
         roleId: target.roleId,
         nodeId: target.nodeId,
         taskId: target.taskId ?? null,
+        facet: target.facet ?? null,
       })
     },
     []

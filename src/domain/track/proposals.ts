@@ -18,6 +18,9 @@ export type TrackProposalIndex = Pick<
 >
 
 export function proposalFocusNodeId(proposal: TrackProposal): string | null {
+  if (proposal.entity === "roadmap") {
+    return null
+  }
   if (proposal.entity === "task" || proposal.entity === "link") {
     return proposal.parentId
   }
@@ -34,9 +37,40 @@ export function proposalFocusTaskId(proposal: TrackProposal): string | null {
   return proposal.targetId
 }
 
+export function proposalFocusFacet(
+  proposal: TrackProposal
+): "notes" | "description" | null {
+  if (proposal.payload.facet === "notes") {
+    return "notes"
+  }
+  if (proposal.payload.facet === "role") {
+    if (proposal.payload.notes !== undefined) {
+      return "notes"
+    }
+    if (proposal.payload.description !== undefined) {
+      return "description"
+    }
+  }
+  return null
+}
+
+export function notePreview(value: unknown, max = 42) {
+  if (typeof value !== "string") {
+    return null
+  }
+  const text = value.replace(/\s+/g, " ").trim()
+  if (!text) {
+    return null
+  }
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text
+}
+
 export function proposalTopicId(proposal: TrackProposal): string | null {
   if (proposal.entity === "task" || proposal.entity === "link") {
     return proposal.parentId
+  }
+  if (proposal.entity === "roadmap") {
+    return null
   }
   return proposal.targetId ?? proposal.parentId
 }
@@ -53,11 +87,17 @@ export function proposalHeadline(
     topicTitle ? `${line} · ${topicTitle}` : line
 
   if (proposal.payload.facet === "role") {
+    const preview =
+      notePreview(proposal.payload.preview) ??
+      notePreview(proposal.payload.notes) ??
+      notePreview(proposal.payload.description)
     if (proposal.payload.notes !== undefined) {
-      return "Edit roadmap notes"
+      return preview ? `Edit roadmap notes · ${preview}` : "Edit roadmap notes"
     }
     if (proposal.payload.description !== undefined) {
-      return "Edit roadmap description"
+      return preview
+        ? `Edit roadmap description · ${preview}`
+        : "Edit roadmap description"
     }
     return "Edit roadmap overview"
   }
@@ -69,7 +109,12 @@ export function proposalHeadline(
         : proposal.payload.notesAction === "create"
           ? "Add notes"
           : "Edit notes"
-    return topicTitle ? `${action} · ${topicTitle}` : `${action} · ${proposal.title}`
+    const where = topicTitle || proposal.title
+    const preview = notePreview(proposal.payload.preview)
+    if (preview && where) {
+      return `${action} · ${where} · ${preview}`
+    }
+    return where ? `${action} · ${where}` : action
   }
 
   const verb =

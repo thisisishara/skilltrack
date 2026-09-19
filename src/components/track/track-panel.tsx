@@ -268,8 +268,10 @@ export function TrackPanel({
       .filter(Boolean)
       .join("\n")
       .slice(0, 3000)
-    setScratchpad((current) => (current === next ? current : next))
-  }, [focusedTopicId, messages, pending, pinnedRefs, setScratchpad])
+    if (scratchpad !== next) {
+      setScratchpad(next)
+    }
+  }, [focusedTopicId, messages, pending, pinnedRefs, scratchpad, setScratchpad])
 
   const busy = status === "submitted" || status === "streaming"
   const canSend = Boolean(input.trim()) && !busy && settings.trackEnabled

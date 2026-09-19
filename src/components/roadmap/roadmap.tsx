@@ -75,6 +75,7 @@ import {
   overlayGhostLinks,
   overlayGhostTasks,
   overlayGhostTopics,
+  type RoadmapSnapshot,
 } from "@/domain/track/overlay"
 import {
   ResizableHandle,
@@ -464,7 +465,7 @@ export function Roadmap({
     for (const proposal of accepted) {
       appliedAcceptedRef.current.add(proposal.id)
     }
-    let next = { roleId, ...snapshotRef.current }
+    let next: RoadmapSnapshot = { roleId, ...snapshotRef.current }
     for (const proposal of accepted) {
       next = applyAcceptedProposal(next, proposal)
     }

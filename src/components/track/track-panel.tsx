@@ -345,8 +345,7 @@ export function TrackPanel({
             const isLive =
               busy &&
               message.role === "assistant" &&
-              (index === messages.length - 1 ||
-                messages.slice(index + 1).every((item) => item.role !== "assistant"))
+              index === messages.length - 1
             const elapsedMs = isLive
               ? turnStartedAtRef.current
                 ? now - turnStartedAtRef.current
@@ -394,6 +393,7 @@ export function TrackPanel({
                   activities={activities}
                   busy={isLive}
                   elapsedMs={elapsedMs}
+                  hasText={Boolean(text.trim())}
                 />
                 {text.trim() ? (
                   <TrackMarkdown

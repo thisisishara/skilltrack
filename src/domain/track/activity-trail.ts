@@ -168,9 +168,10 @@ export function activitySummary(input: {
 
 export function activityNextLabel(
   activities: TrackToolActivity[],
-  busy: boolean
+  busy: boolean,
+  hasText = false
 ) {
-  if (!busy) {
+  if (!busy || hasText) {
     return null
   }
   const last = activities.at(-1)

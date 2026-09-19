@@ -89,6 +89,24 @@ describe("activityNextLabel", () => {
       )
     ).toBe("Writing reply")
   })
+
+  it("does not keep writing once reply text is on the message", () => {
+    expect(
+      activityNextLabel(
+        [
+          {
+            id: "a",
+            name: "list_roots",
+            label: "Listed roots",
+            detail: null,
+            state: "done",
+          },
+        ],
+        true,
+        true
+      )
+    ).toBeNull()
+  })
 })
 
 describe("formatElapsedMs", () => {

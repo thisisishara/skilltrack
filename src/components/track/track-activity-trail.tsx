@@ -14,13 +14,15 @@ export function TrackActivityTrail({
   activities,
   busy,
   elapsedMs,
+  hasText = false,
 }: {
   activities: TrackToolActivity[]
   busy: boolean
   elapsedMs: number | null
+  hasText?: boolean
 }) {
   const summary = activitySummary({ activities, busy, elapsedMs })
-  const next = activityNextLabel(activities, busy)
+  const next = activityNextLabel(activities, busy, hasText)
   const [userOpen, setUserOpen] = useState<boolean | null>(null)
   const expanded = userOpen ?? busy
 

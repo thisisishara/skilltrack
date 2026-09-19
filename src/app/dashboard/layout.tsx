@@ -15,6 +15,7 @@ import { TrackWorkspace } from "@/components/track/track-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { defaultTrackConfig } from "@/domain/user-settings/defaults"
+import { emptyExtraModels } from "@/domain/user-settings/models"
 import { isApplicationError } from "@/domain/errors"
 import type { PublicUserSettings } from "@/domain/user-settings/types"
 import type { Role } from "@/domain/roles/types"
@@ -30,6 +31,7 @@ const FALLBACK_SETTINGS: PublicUserSettings = {
   trackApiKeyLast4: null,
   hasApiKey: false,
   trackConfig: defaultTrackConfig(),
+  extraModels: emptyExtraModels(),
   encryptionConfigured: false,
 }
 

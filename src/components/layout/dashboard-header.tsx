@@ -83,7 +83,9 @@ export function DashboardHeader() {
                   variant={trackPanelOpen || isOver ? "secondary" : "ghost"}
                   size="icon"
                   aria-label="Track"
-                  className={cn(isOver && "ring-2 ring-primary/50")}
+                  className={cn(
+                    isOver && "border border-dashed border-primary bg-primary/10 text-primary"
+                  )}
                   onClick={() => setTrackPanelOpen(!trackPanelOpen)}
                   {...dropProps}
                 />

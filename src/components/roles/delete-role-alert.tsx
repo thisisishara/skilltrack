@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { WithTooltip } from "@/components/ui/tooltip"
 
 export function DeleteRoleAlert({
   open,
@@ -92,16 +93,18 @@ export function DeleteRoleAlert({
               <p className="min-w-0 flex-1 truncate font-mono text-sm">
                 {roleName}
               </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                aria-label="Copy role name"
-                disabled={pending || !roleName}
-                onClick={() => void copyRoleName()}
-              >
-                {copied ? <CheckIcon /> : <CopyIcon />}
-              </Button>
+              <WithTooltip label={copied ? "Copied" : "Copy role name"}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Copy role name"
+                  disabled={pending || !roleName}
+                  onClick={() => void copyRoleName()}
+                >
+                  {copied ? <CheckIcon /> : <CopyIcon />}
+                </Button>
+              </WithTooltip>
             </div>
             <Field>
               <Input

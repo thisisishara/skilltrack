@@ -27,10 +27,10 @@ export function defaultTrackConfig(): TrackConfig {
 }
 
 export const DEFAULT_TRACK_MODELS: Record<TrackProvider, string> = {
-  anthropic: "claude-sonnet-4-5",
-  openai: "gpt-4o-mini",
-  google: "gemini-2.5-flash",
-  openrouter: "openai/gpt-4o-mini",
+  anthropic: "claude-sonnet-5",
+  openai: "gpt-5.6-luna",
+  google: "gemini-3.8-flash",
+  openrouter: "openai/gpt-5.6-luna",
 }
 
 export function isTrackProvider(value: unknown): value is TrackProvider {

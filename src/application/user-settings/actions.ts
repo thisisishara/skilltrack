@@ -11,11 +11,16 @@ import {
 } from "@/application/user-settings/user-settings-service"
 import type { ApplicationErrorCode } from "@/domain/errors"
 import type { ApplicationUser } from "@/domain/users/types"
+import type { TrackExtraModels } from "@/domain/user-settings/models"
 import type {
   PublicUserSettings,
   TrackConfig,
   TrackProvider,
 } from "@/domain/user-settings/types"
+import {
+  addTrackCatalogModel,
+  removeTrackCatalogModel,
+} from "@/application/track-model-catalog/track-model-catalog-service"
 import { failAction } from "@/lib/errors/present"
 import { requireApprovedSession } from "@/lib/auth/session"
 
@@ -81,6 +86,46 @@ export async function resetTrackConfigAction(): Promise<SettingsActionResult> {
     return { ok: true, settings }
   } catch (error) {
     return failAction(error, "user_settings.reset_failed")
+  }
+}
+
+export type ModelCatalogResult =
+  | { ok: true; extraModels: TrackExtraModels }
+  | { ok: false; code: ApplicationErrorCode; message: string }
+
+export async function addTrackCatalogModelAction(
+  provider: TrackProvider,
+  modelId: string
+): Promise<ModelCatalogResult> {
+  try {
+    const { applicationUser } = await requireApprovedSession()
+    const extraModels = await addTrackCatalogModel(
+      applicationUser,
+      provider,
+      modelId
+    )
+    revalidateDashboard()
+    return { ok: true, extraModels }
+  } catch (error) {
+    return failAction(error, "user_settings.models_failed")
+  }
+}
+
+export async function removeTrackCatalogModelAction(
+  provider: TrackProvider,
+  modelId: string
+): Promise<ModelCatalogResult> {
+  try {
+    const { applicationUser } = await requireApprovedSession()
+    const extraModels = await removeTrackCatalogModel(
+      applicationUser,
+      provider,
+      modelId
+    )
+    revalidateDashboard()
+    return { ok: true, extraModels }
+  } catch (error) {
+    return failAction(error, "user_settings.models_failed")
   }
 }
 

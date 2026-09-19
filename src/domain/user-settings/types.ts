@@ -71,5 +71,6 @@ export type PublicUserSettings = {
   trackApiKeyLast4: string | null
   hasApiKey: boolean
   trackConfig: TrackConfig
+  extraModels: Record<TrackProvider, string[]>
   encryptionConfigured: boolean
 }

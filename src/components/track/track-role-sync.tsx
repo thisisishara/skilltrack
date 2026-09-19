@@ -20,7 +20,12 @@ export function TrackRoleSync() {
 
   useEffect(() => {
     const tab = searchParams.get("settings")
-    if (tab === "users" || tab === "track" || tab === "general") {
+    if (
+      tab === "users" ||
+      tab === "models" ||
+      tab === "track" ||
+      tab === "general"
+    ) {
       openSettings(tab)
     }
   }, [openSettings, searchParams])

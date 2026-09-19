@@ -46,7 +46,7 @@ export function assembleWorkingSet(input: {
     readBudget: {
       maxSteps: TRACK_READ_STEP_BUDGET,
       policy:
-        "Pinned items were dragged into chat — start with those ids (get_topic / get_tasks / get_path / get_notes). One orientation (search_topics or list_roots) only if nothing is pinned, one zoom (list_children), then details. Prefer search path over walking the whole tree. Do not re-fetch ids from this turn.",
+        "Pinned items were dragged onto this user message only — start with those ids (get_topic / get_tasks / get_path / get_notes). One orientation (search_topics or list_roots) only if nothing is pinned, one zoom (list_children), then details. Prefer search path over walking the whole tree. Do not re-fetch ids from this turn.",
     },
   }
 }

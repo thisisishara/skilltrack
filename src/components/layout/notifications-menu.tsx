@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
+import { WithTooltip } from "@/components/ui/tooltip"
 
 export function NotificationsMenu() {
   const router = useRouter()
@@ -85,24 +86,26 @@ export function NotificationsMenu() {
 
   return (
     <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative cursor-pointer"
-            aria-label={
-              count > 0 ? `Notifications, ${count} unread` : "Notifications"
-            }
-          />
-        }
-      >
-        <Bell />
-        {count > 0 ? (
-          <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
-        ) : null}
-      </PopoverTrigger>
+      <WithTooltip label={count > 0 ? `Notifications, ${count} unread` : "Notifications"}>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="relative cursor-pointer"
+              aria-label={
+                count > 0 ? `Notifications, ${count} unread` : "Notifications"
+              }
+            />
+          }
+        >
+          <Bell />
+          {count > 0 ? (
+            <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
+          ) : null}
+        </PopoverTrigger>
+      </WithTooltip>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-start justify-between gap-2 px-3 pt-3 pb-2">
           <PopoverHeader>
@@ -177,16 +180,18 @@ export function NotificationsMenu() {
                       can.
                     </p>
                   </button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="mt-1"
-                    aria-label={`Dismiss ${item.roleName} reminder`}
-                    onClick={() => dismiss(item.id)}
-                  >
-                    <X />
-                  </Button>
+                  <WithTooltip label="Dismiss">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      className="mt-1"
+                      aria-label={`Dismiss ${item.roleName} reminder`}
+                      onClick={() => dismiss(item.id)}
+                    >
+                      <X />
+                    </Button>
+                  </WithTooltip>
                 </li>
               ))}
             </ul>

@@ -9,8 +9,9 @@ import {
   saveTrackSettingsAction,
   setNotificationsEnabledAction,
 } from "@/application/user-settings/actions"
-import { DEFAULT_TRACK_MODELS, defaultTrackConfig } from "@/domain/user-settings/defaults"
+import { defaultTrackConfig } from "@/domain/user-settings/defaults"
 import { TRACK_TOOL_IDS, type TrackConfig, type TrackProvider, type TrackToolId } from "@/domain/user-settings/types"
+import { TRACK_PROVIDER_OPTIONS, defaultModelForProvider, modelsForProvider } from "@/domain/user-settings/models"
 import { useTrackWorkspace } from "@/components/track/track-workspace"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,15 +42,9 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UsersSettingsPanel } from "@/components/settings/users-settings-panel"
+import { ModelsSettingsPanel } from "@/components/settings/models-settings-panel"
 import { ResetTrackDefaultsAlert } from "@/components/settings/reset-track-defaults-alert"
 import { DEFAULT_TRACK_SYSTEM_PROMPT, defaultGenerationPrompt } from "@/application/track/prompts"
-
-const PROVIDERS: { id: TrackProvider; label: string }[] = [
-  { id: "anthropic", label: "Claude" },
-  { id: "openai", label: "OpenAI" },
-  { id: "google", label: "Gemini" },
-  { id: "openrouter", label: "OpenRouter" },
-]
 
 const TOOL_GROUPS: {
   id: string
@@ -160,7 +155,11 @@ export function UserSettingsDialog() {
         <Tabs
           value={settingsTab}
           onValueChange={(value) => {
-            if (value === "general" || value === "track" || value === "users") {
+            if (value === "general" || value === "track") {
+              setSettingsTab(value)
+              return
+            }
+            if (canManageUsers && (value === "models" || value === "users")) {
               setSettingsTab(value)
             }
           }}
@@ -170,6 +169,7 @@ export function UserSettingsDialog() {
           <TabsList variant="line" className="w-40 shrink-0 self-start">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="track">Track</TabsTrigger>
+            {canManageUsers ? <TabsTrigger value="models">Models</TabsTrigger> : null}
             {canManageUsers ? <TabsTrigger value="users">Users</TabsTrigger> : null}
           </TabsList>
           <TabsContent value="general" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
@@ -193,6 +193,11 @@ export function UserSettingsDialog() {
           <TabsContent value="track" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
             <TrackSettingsForm />
           </TabsContent>
+          {canManageUsers ? (
+            <TabsContent value="models" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
+              <ModelsSettingsPanel />
+            </TabsContent>
+          ) : null}
           {canManageUsers ? (
             <TabsContent value="users" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
               <UsersSettingsPanel />
@@ -336,7 +341,9 @@ function TrackSettingsForm() {
         provider: draft.provider || null,
         model:
           draft.model.trim() ||
-          (draft.provider ? DEFAULT_TRACK_MODELS[draft.provider] : null),
+          (draft.provider
+            ? defaultModelForProvider(draft.provider, settings.extraModels)
+            : null),
         baseUrl: draft.baseUrl.trim() || null,
         apiKey: draft.apiKey.trim() || null,
         clearApiKey: draft.clearApiKey,
@@ -438,6 +445,9 @@ function TrackSettingsForm() {
     toast.success("Track defaults restored")
   }
 
+  const extraModels = settings.extraModels
+  const modelChoices = provider ? modelsForProvider(provider, extraModels) : []
+
   return (
     <div className="flex flex-col gap-8">
       {!settings.encryptionConfigured ? (
@@ -469,7 +479,7 @@ function TrackSettingsForm() {
             <Select
               value={provider || null}
               itemToStringLabel={(value) =>
-                PROVIDERS.find((item) => item.id === value)?.label ?? ""
+                TRACK_PROVIDER_OPTIONS.find((item) => item.id === value)?.label ?? ""
               }
               onValueChange={(value) => {
                 if (
@@ -480,7 +490,11 @@ function TrackSettingsForm() {
                 ) {
                   persistNow({
                     provider: value,
-                    model: draftRef.current.model || DEFAULT_TRACK_MODELS[value],
+                    model: modelsForProvider(value, extraModels).includes(
+                      draftRef.current.model
+                    )
+                      ? draftRef.current.model
+                      : defaultModelForProvider(value, extraModels),
                   })
                 }
               }}
@@ -490,7 +504,7 @@ function TrackSettingsForm() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {PROVIDERS.map((item) => (
+                  {TRACK_PROVIDER_OPTIONS.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.label}
                     </SelectItem>
@@ -501,13 +515,39 @@ function TrackSettingsForm() {
           </Field>
           <Field>
             <FieldLabel htmlFor="track-model">Model</FieldLabel>
-            <Input
-              id="track-model"
-              value={model}
-              onChange={(event) => schedulePersist({ model: event.target.value })}
-              onBlur={() => persistNow()}
-              placeholder={provider ? DEFAULT_TRACK_MODELS[provider] : "model id"}
-            />
+            <Select
+              value={model || null}
+              disabled={!provider}
+              itemToStringLabel={(value) => value ?? ""}
+              onValueChange={(value) => {
+                if (typeof value === "string" && value) {
+                  persistNow({ model: value })
+                }
+              }}
+            >
+              <SelectTrigger id="track-model" className="w-full">
+                <SelectValue placeholder={provider ? "Choose a model" : "Choose a provider first"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {(provider
+                    ? [
+                        ...modelChoices,
+                        ...(model && !modelChoices.includes(model) ? [model] : []),
+                      ]
+                    : []
+                  ).map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {id}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldDescription>
+              Models from the shared catalog. An admin can add or remove them in
+              Models.
+            </FieldDescription>
           </Field>
           {provider === "openrouter" ? (
             <Field>
@@ -733,7 +773,8 @@ function TrackSettingsForm() {
       <FieldSet>
         <FieldLegend>Reset</FieldLegend>
         <FieldDescription>
-          Restores tools, cost caps, and both prompts. Provider and API key are kept.
+          Restores tools, cost caps, and both prompts. Provider, API key, and
+          models you added are kept.
         </FieldDescription>
         <div>
           <Button

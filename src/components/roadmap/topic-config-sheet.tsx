@@ -22,6 +22,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  WithTooltip,
 } from "@/components/ui/tooltip"
 import {
   Empty,
@@ -432,15 +433,17 @@ export function TopicConfigSheet({
                 </p>
               </div>
               {showClose ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Close topic details"
-                  onClick={() => onOpenChange(false)}
-                >
-                  <XIcon />
-                </Button>
+                <WithTooltip label="Close details">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Close topic details"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    <XIcon />
+                  </Button>
+                </WithTooltip>
               ) : null}
             </div>
             {showProgressBar ? (

@@ -87,6 +87,37 @@ describe("parseRoadmapJson", () => {
       "roadmap.title cannot be empty"
     )
   })
+
+  it("drops a root topic that only restates roadmap.title", () => {
+    const document = parseRoadmapJson(
+      JSON.stringify({
+        roadmap: {
+          title: "Senior AI Engineer",
+          description: "Role summary",
+        },
+        topics: [
+          {
+            id: "00000000-0000-4000-8000-000000000001",
+            title: "Senior AI Engineer",
+            description: "T-shaped target",
+            topics: [
+              {
+                id: "00000000-0000-4000-8000-000000000002",
+                title: "Software Engineering Foundations",
+              },
+            ],
+          },
+        ],
+      })
+    )
+
+    expect(document.topics.map((topic) => topic.title)).toEqual([
+      "Software Engineering Foundations",
+    ])
+    expect(document.topics[0]?.parentId).toBeNull()
+    expect(document.description).toContain("Role summary")
+    expect(document.description).toContain("T-shaped target")
+  })
 })
 
 describe("serializeRoadmapDocument", () => {

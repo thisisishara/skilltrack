@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
 import { ACCENT_PRESETS, parseAccentHex } from "@/domain/topics/accent"
+import { WithTooltip } from "@/components/ui/tooltip"
 
 export function AccentColorField({
   value,
@@ -58,17 +59,18 @@ export function AccentColorField({
         {ACCENT_PRESETS.map((preset) => {
           const selected = value === preset.hex
           return (
-            <Button
-              key={preset.id}
-              type="button"
-              size="icon-sm"
-              variant="outline"
-              aria-label={preset.label}
-              aria-pressed={selected}
-              className={cn(selected && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
-              style={{ backgroundColor: preset.hex }}
-              onClick={() => onChange(preset.hex)}
-            />
+            <WithTooltip key={preset.id} label={preset.label}>
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="outline"
+                aria-label={preset.label}
+                aria-pressed={selected}
+                className={cn(selected && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
+                style={{ backgroundColor: preset.hex }}
+                onClick={() => onChange(preset.hex)}
+              />
+            </WithTooltip>
           )
         })}
         {canInherit ? (

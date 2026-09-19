@@ -95,6 +95,24 @@ export type Database = {
           },
         ]
       }
+      track_model_catalog: {
+        Row: {
+          provider: "anthropic" | "openai" | "google" | "openrouter"
+          model_id: string
+          created_at: string
+        }
+        Insert: {
+          provider: "anthropic" | "openai" | "google" | "openrouter"
+          model_id: string
+          created_at?: string
+        }
+        Update: {
+          provider?: "anthropic" | "openai" | "google" | "openrouter"
+          model_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           id: string

@@ -5,6 +5,7 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
+import { WithTooltip } from "@/components/ui/tooltip"
 
 export function ModeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -18,18 +19,22 @@ export function ModeToggle() {
 
   const isDark = mounted && resolvedTheme === "dark"
 
+  const label = isDark ? "Switch to light theme" : "Switch to dark theme"
+
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="cursor-pointer"
-      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-    >
-      <Sun className="dark:hidden" />
-      <Moon className="hidden dark:inline" />
-      <span className="sr-only">Toggle color theme</span>
-    </Button>
+    <WithTooltip label={label}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="cursor-pointer"
+        aria-label={label}
+        onClick={() => setTheme(isDark ? "light" : "dark")}
+      >
+        <Sun className="dark:hidden" />
+        <Moon className="hidden dark:inline" />
+        <span className="sr-only">Toggle color theme</span>
+      </Button>
+    </WithTooltip>
   )
 }

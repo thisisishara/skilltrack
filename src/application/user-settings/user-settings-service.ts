@@ -2,6 +2,7 @@ import "server-only"
 
 import { ApplicationError, isApplicationError } from "@/domain/errors"
 import { defaultTrackConfig } from "@/domain/user-settings/defaults"
+import { emptyExtraModels, type TrackExtraModels } from "@/domain/user-settings/models"
 import { parseTrackConfig } from "@/domain/user-settings/parse"
 import type {
   PublicUserSettings,
@@ -9,6 +10,7 @@ import type {
   TrackProvider,
   UserSettings,
 } from "@/domain/user-settings/types"
+import { getTrackModelCatalog } from "@/application/track-model-catalog/track-model-catalog-service"
 import {
   decryptSecret,
   encryptSecret,
@@ -21,7 +23,10 @@ import {
   upsertUserSettings,
 } from "@/repositories/user-settings/user-settings-repository"
 
-export function toPublicSettings(settings: UserSettings | null): PublicUserSettings {
+export function toPublicSettings(
+  settings: UserSettings | null,
+  extraModels: TrackExtraModels = emptyExtraModels()
+): PublicUserSettings {
   const encryptionConfigured = isTrackEncryptionConfigured()
   const config = settings?.trackConfig ?? defaultTrackConfig()
   const hasApiKey = Boolean(
@@ -39,17 +44,22 @@ export function toPublicSettings(settings: UserSettings | null): PublicUserSetti
     trackApiKeyLast4: settings?.trackApiKeyLast4 ?? null,
     hasApiKey,
     trackConfig: config,
+    extraModels,
     encryptionConfigured,
   }
+}
+
+async function toPublicSettingsWithCatalog(settings: UserSettings | null) {
+  return toPublicSettings(settings, await getTrackModelCatalog())
 }
 
 export async function getPublicUserSettings(userId: string) {
   try {
     const settings = await getUserSettings(userId)
-    return toPublicSettings(settings)
+    return toPublicSettingsWithCatalog(settings)
   } catch (error) {
     if (isApplicationError(error) && error.code === "database") {
-      return toPublicSettings(null)
+      return toPublicSettingsWithCatalog(null)
     }
     throw error
   }
@@ -73,7 +83,7 @@ export async function getUserSettingsOrDefault(userId: string) {
 }
 
 export async function setNotificationsEnabled(userId: string, enabled: boolean) {
-  return toPublicSettings(
+  return toPublicSettingsWithCatalog(
     await upsertUserSettings(userId, { notificationsEnabled: enabled })
   )
 }
@@ -151,7 +161,7 @@ export async function saveTrackSettings(
     trackEnabled = false
   }
 
-  return toPublicSettings(
+  return toPublicSettingsWithCatalog(
     await upsertUserSettings(userId, {
       trackEnabled,
       trackProvider: provider,
@@ -167,7 +177,7 @@ export async function saveTrackSettings(
 
 export async function resetTrackConfig(userId: string) {
   const existing = await getUserSettingsOrDefault(userId)
-  return toPublicSettings(
+  return toPublicSettingsWithCatalog(
     await upsertUserSettings(userId, {
       trackConfig: defaultTrackConfig(),
       trackEnabled: existing.trackEnabled,

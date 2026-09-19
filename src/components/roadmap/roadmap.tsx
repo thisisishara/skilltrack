@@ -338,7 +338,12 @@ export function Roadmap({
   const appliedFocusNonceRef = useRef(0)
   const revealRetryRef = useRef(0)
   const [revealTick, setRevealTick] = useState(0)
-  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null)
+  const [flashNodeId, setFlashNodeId] = useState<string | null>(null)
+  const [flashTaskId, setFlashTaskId] = useState<string | null>(null)
+  const [flashFading, setFlashFading] = useState(false)
+  const flashFadeTimerRef = useRef(0)
+  const flashClearTimerRef = useRef(0)
+  const pendingFlashTaskRef = useRef<string | null>(null)
   const pendingRevealRef = useRef<string | null>(
     focusNodeIdFromServer ?? null
   )
@@ -455,6 +460,11 @@ export function Roadmap({
     appliedFocusNonceRef.current = 0
     appliedAcceptedRef.current = new Set()
     pendingRevealRef.current = focusNodeFromUrlRef.current ?? null
+    window.clearTimeout(flashFadeTimerRef.current)
+    window.clearTimeout(flashClearTimerRef.current)
+    setFlashNodeId(null)
+    setFlashTaskId(null)
+    setFlashFading(false)
   }, [roleId])
 
   useEffect(() => {
@@ -468,6 +478,8 @@ export function Roadmap({
     return () => {
       window.clearTimeout(programmaticScrollTimerRef.current)
       window.clearTimeout(scrollPersistTimerRef.current)
+      window.clearTimeout(flashFadeTimerRef.current)
+      window.clearTimeout(flashClearTimerRef.current)
     }
   }, [])
 
@@ -481,8 +493,7 @@ export function Roadmap({
       pendingRevealRef.current = treeFocusRequest.nodeId
       focusedRef.current = null
       revealRetryRef.current = 0
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFocusedTaskId(treeFocusRequest.taskId ?? null)
+      pendingFlashTaskRef.current = treeFocusRequest.taskId ?? null
     }
 
     const nodeId = pendingRevealRef.current
@@ -539,8 +550,28 @@ export function Roadmap({
     focusedRef.current = nodeId
     pendingRevealRef.current = null
     revealRetryRef.current = 0
+    window.clearTimeout(flashFadeTimerRef.current)
+    window.clearTimeout(flashClearTimerRef.current)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setConfigNodeId(nodeId)
+    setFlashNodeId(pendingFlashTaskRef.current ? null : nodeId)
+    setFlashTaskId(pendingFlashTaskRef.current)
+    setFlashFading(false)
+    flashFadeTimerRef.current = window.setTimeout(() => {
+      setFlashFading(true)
+    }, 200)
+    flashClearTimerRef.current = window.setTimeout(() => {
+      setFlashNodeId(null)
+      setFlashTaskId(null)
+      setFlashFading(false)
+    }, 1200)
+    const fromTrackFocus =
+      treeFocusRequest?.roleId === roleId &&
+      treeFocusRequest.nodeId === nodeId &&
+      treeFocusRequest.nonce === appliedFocusNonceRef.current
+    if (!fromTrackFocus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConfigNodeId(nodeId)
+    }
   }, [displayNodes, expandedHydrated, expandedIds, revealTick, roleId, treeFocusRequest])
 
   const skillNodes = useMemo(() => displayNodes.filter(isSkillNode), [displayNodes])
@@ -1617,7 +1648,9 @@ export function Roadmap({
                   onAddItem={handleAddItem}
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
-                  focusedTaskId={focusedTaskId}
+                  focusedTaskId={flashTaskId}
+                  flashNodeId={flashNodeId}
+                  flashFading={flashFading}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}

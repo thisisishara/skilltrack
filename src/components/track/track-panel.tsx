@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { DefaultChatTransport } from "ai"
 import { useChat } from "@ai-sdk/react"
 import {
@@ -26,18 +26,14 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupTextarea,
-} from "@/components/ui/input-group"
+import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Spinner } from "@/components/ui/spinner"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  WithTooltip,
 } from "@/components/ui/tooltip"
 import { dropRefLabel, type TrackDropRef } from "@/domain/track/drop-ref"
 import { pendingProposals } from "@/domain/track/overlay"
@@ -97,11 +93,22 @@ export function TrackPanel({
     pinnedRefs,
     pinTrackRef,
     unpinTrackRef,
+    clearPinnedRefs,
+    composerFocusNonce,
   } = useTrackWorkspace()
   const { focusTree } = useRolesUi()
   const [input, setInput] = useState("")
+  const [messageContext, setMessageContext] = useState<Record<string, TrackDropRef[]>>(
+    {}
+  )
   const pending = pendingProposals(proposals)
   const { isOver, dropProps } = useTrackRefDrop(pinTrackRef)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const pinnedForSendRef = useRef<TrackDropRef[]>([])
+  const pendingMessageContextRef = useRef<{
+    text: string
+    pins: TrackDropRef[]
+  } | null>(null)
   const bodyRef = useRef({
     roleId,
     focusedTopicId,
@@ -125,6 +132,7 @@ export function TrackPanel({
           body: {
             messages,
             ...bodyRef.current,
+            pinned: pinnedForSendRef.current,
           },
         }),
       }),
@@ -135,6 +143,56 @@ export function TrackPanel({
     id: `${roleId}:${sessionEpoch}`,
     transport,
   })
+
+  useEffect(() => {
+    setMessageContext({})
+  }, [sessionEpoch, roleId])
+
+  useEffect(() => {
+    if (composerFocusNonce === 0) {
+      return
+    }
+    const focusComposer = () => inputRef.current?.focus()
+    const frame = window.requestAnimationFrame(focusComposer)
+    const timer = window.setTimeout(focusComposer, 50)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
+  }, [composerFocusNonce])
+
+  useEffect(() => {
+    const pendingContext = pendingMessageContextRef.current
+    if (!pendingContext) {
+      return
+    }
+    const lastUser = [...messages].reverse().find((message) => message.role === "user")
+    if (
+      !lastUser ||
+      messageContext[lastUser.id] ||
+      textFromParts(lastUser.parts) !== pendingContext.text
+    ) {
+      return
+    }
+    pendingMessageContextRef.current = null
+    if (pendingContext.pins.length === 0) {
+      return
+    }
+    setMessageContext((current) => ({
+      ...current,
+      [lastUser.id]: pendingContext.pins,
+    }))
+  }, [messageContext, messages])
+
+  function takeComposerContext(text: string) {
+    const pins = pinnedRefs
+    pinnedForSendRef.current = pins
+    pendingMessageContextRef.current = { text, pins }
+    bodyRef.current = { ...bodyRef.current, pinned: pins }
+    if (pins.length > 0) {
+      clearPinnedRefs()
+    }
+  }
 
   useEffect(() => {
     const outputs = messages.flatMap((message) =>
@@ -151,6 +209,7 @@ export function TrackPanel({
     }
     const text = seedPrompt
     setSeedPrompt(null)
+    takeComposerContext(text)
     void sendMessage({ text })
   }, [seedPrompt, sendMessage, setSeedPrompt])
 
@@ -187,15 +246,13 @@ export function TrackPanel({
       return
     }
     setInput("")
+    takeComposerContext(text)
     void sendMessage({ text })
   }
 
   return (
     <div
-      className={cn(
-        "flex h-full min-h-0 flex-col border-l bg-background",
-        isOver && "ring-2 ring-inset ring-primary/60"
-      )}
+      className="relative flex h-full min-h-0 flex-col border-l bg-background"
       {...dropProps}
     >
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 px-2">
@@ -230,7 +287,8 @@ export function TrackPanel({
               <EmptyTitle>Ask Track</EmptyTitle>
               <EmptyDescription>
                 Ask about this role’s roadmap. Changes stay proposed until you
-                accept them. Drop a topic or task here to pin it.
+                accept them. Drop a topic or task here to attach it to your next
+                message.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -256,9 +314,30 @@ export function TrackPanel({
               return null
             }
             if (message.role === "user") {
+              const attached = messageContext[message.id] ?? []
               return (
                 <div key={message.id} className="flex justify-end">
                   <div className="max-w-[92%] rounded-2xl bg-muted px-3 py-2 text-sm leading-relaxed">
+                    {attached.length > 0 ? (
+                      <div className="mb-1.5 flex flex-wrap justify-end gap-1">
+                        {attached.map((ref) => (
+                          <PinnedRefChip
+                            key={`${ref.kind}:${ref.id}`}
+                            refItem={ref}
+                            onFocus={() => {
+                              const nodeId = ref.topicId
+                              if (nodeId) {
+                                focusTree({
+                                  roleId,
+                                  nodeId,
+                                  taskId: ref.kind === "task" ? ref.id : null,
+                                })
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
                     <p className="whitespace-pre-wrap">{text}</p>
                   </div>
                 </div>
@@ -354,9 +433,23 @@ export function TrackPanel({
           submit()
         }}
       >
-        <InputGroup className="h-auto rounded-xl bg-muted/40 dark:bg-input/20">
+        <div
+          className={cn(
+            "relative rounded-xl border border-border/70 transition-colors",
+            isOver
+              ? "bg-primary/10"
+              : "bg-muted/40 focus-within:border-ring"
+          )}
+          onMouseDown={(event) => {
+            if ((event.target as HTMLElement).closest("button, textarea")) {
+              return
+            }
+            event.preventDefault()
+            inputRef.current?.focus()
+          }}
+        >
           {pinnedRefs.length > 0 ? (
-            <InputGroupAddon align="block-start" className="flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 px-2.5 pt-2">
               {pinnedRefs.map((ref) => (
                 <PinnedRefChip
                   key={`${ref.kind}:${ref.id}`}
@@ -374,13 +467,15 @@ export function TrackPanel({
                   onRemove={() => unpinTrackRef(ref)}
                 />
               ))}
-            </InputGroupAddon>
+            </div>
           ) : null}
-          <InputGroupTextarea
+          <Textarea
+            ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Ask Track…"
-            className="min-h-16 md:text-sm"
+            style={{ backgroundColor: "transparent" }}
+            className="min-h-16 rounded-none border-0 bg-transparent px-2.5 py-2 pb-9 shadow-none outline-none ring-0 focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent md:text-sm"
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
@@ -388,19 +483,19 @@ export function TrackPanel({
               }
             }}
           />
-          <InputGroupAddon align="block-end" className="justify-end">
-            <InputGroupButton
+          <WithTooltip label="Send">
+            <Button
               type="submit"
               variant="default"
               size="icon-xs"
-              className="rounded-full"
+              className="absolute right-1.5 bottom-1.5 rounded-full"
               disabled={!canSend}
               aria-label="Send"
             >
               {busy ? <Spinner /> : <ArrowUp />}
-            </InputGroupButton>
-          </InputGroupAddon>
-        </InputGroup>
+            </Button>
+          </WithTooltip>
+        </div>
       </form>
     </div>
   )
@@ -423,29 +518,53 @@ function PinnedRefChip({
 }: {
   refItem: TrackDropRef
   onFocus: () => void
-  onRemove: () => void
+  onRemove?: () => void
 }) {
+  const label = dropRefLabel(refItem)
+  const labelRef = useRef<HTMLSpanElement>(null)
+  const [truncated, setTruncated] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = labelRef.current
+    if (!el) {
+      return
+    }
+    const update = () => {
+      setTruncated(el.scrollWidth > el.clientWidth + 1)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [label])
+
+  const nameButton = (
+    <button type="button" className="min-w-0" onClick={onFocus}>
+      <span ref={labelRef} className="block truncate">
+        {label}
+      </span>
+    </button>
+  )
+
   return (
-    <Badge variant="outline" className="h-6 max-w-full gap-1 bg-background pr-0.5">
+    <Badge
+      variant="secondary"
+      className="h-6 max-w-full gap-1 rounded-md border-0 pr-0.5 font-normal"
+    >
       {pinIcon(refItem.kind)}
-      <button
-        type="button"
-        className="min-w-0 truncate"
-        onClick={onFocus}
-        title={refItem.path.join(" / ")}
-      >
-        {dropRefLabel(refItem)}
-      </button>
-      <Button
-        type="button"
-        size="icon-xs"
-        variant="ghost"
-        className="size-5"
-        aria-label={`Unpin ${refItem.title}`}
-        onClick={onRemove}
-      >
-        <X />
-      </Button>
+      {truncated ? <WithTooltip label={label}>{nameButton}</WithTooltip> : nameButton}
+      {onRemove ? (
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          className="size-5"
+          aria-label={`Remove ${refItem.title}`}
+          onClick={onRemove}
+        >
+          <X />
+        </Button>
+      ) : null}
     </Badge>
   )
 }

@@ -93,10 +93,11 @@ Unknown fields are rejected. Do not include parent_id, schema, nodes, checklist,
 - Depth is unlimited, but keep the tree usable: typically 5–12 top-level topics, 2–4 levels deep unless the user asked for more.
 - A topic may have both topics and tasks. The roadmap itself cannot have tasks.
 - Do not create cycles.
+- Do not add a topic whose title is the same as roadmap.title. That title is the document name. Role summary belongs in roadmap.description / roadmap.notes.
 
 ## Authoring checklist
 
-1. One file = one role. Set roadmap.title to "${roleTitle}".
+1. One file = one role. Set roadmap.title to "${roleTitle}". Do not also create a topic with that title.
 2. Top-level topics[] = major sections of the role.
 3. Intermediate grouping rows = nested topics.
 4. Atomic skills / evidence items = tasks with completed: false.

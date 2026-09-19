@@ -19,6 +19,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  WithTooltip,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { ChecklistItem } from "@/domain/tasks/types"
@@ -102,6 +103,7 @@ function TaskTickList({
   items,
   editing,
   focusedTaskId,
+  flashFading,
   topicId,
   topicTitle,
   topicPathTitles,
@@ -115,6 +117,7 @@ function TaskTickList({
   items: ChecklistItem[]
   editing: boolean
   focusedTaskId: string | null
+  flashFading: boolean
   topicId: string
   topicTitle: string
   topicPathTitles: string[]
@@ -186,7 +189,11 @@ function TaskTickList({
                   "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
                   item.completed && "opacity-80",
                   draggedId === item.id && "opacity-50",
-                  focusedTaskId === item.id && "bg-accent ring-2 ring-primary/50",
+                  focusedTaskId === item.id &&
+                    cn(
+                      "transition-colors duration-1000 ease-out",
+                      !flashFading && "bg-primary/15"
+                    ),
                   hint === "before" &&
                     "before:absolute before:inset-x-2 before:top-0 before:h-0.5 before:rounded-full before:bg-primary",
                   hint === "after" &&
@@ -227,6 +234,7 @@ function TaskTickList({
                 }}
               >
                 {editing ? (
+                <WithTooltip label="Reorder">
                 <span
                   draggable
                   aria-label="Reorder task"
@@ -255,6 +263,7 @@ function TaskTickList({
                 >
                   <GripVertical className="size-3.5" />
                 </span>
+                </WithTooltip>
                 ) : null}
                 <Checkbox
                   checked={item.completed}
@@ -400,6 +409,8 @@ export function TopicRow({
   getChecklistHandlers,
   editMode,
   focusedTaskId,
+  flashNodeId,
+  flashFading,
   subtreeProgressFor,
   draggedId,
   dropHint,
@@ -423,6 +434,8 @@ export function TopicRow({
   getChecklistHandlers: (nodeId: string) => ChecklistHandlers
   editMode: boolean
   focusedTaskId: string | null
+  flashNodeId: string | null
+  flashFading: boolean
   subtreeProgressFor: (nodeId: string) => ProgressSnapshot
   draggedId: string | null
   dropHint: { nodeId: string; position: TreeDropPosition } | null
@@ -438,6 +451,13 @@ export function TopicRow({
   const expanded = expandedIds.has(node.id)
   const subtree = subtreeProgressFor(node.id)
   const selected = selectedNodeId === node.id
+  const flashed = flashNodeId === node.id
+  const flashClass = flashed
+    ? cn(
+        "transition-colors duration-1000 ease-out",
+        !flashFading && "bg-primary/15"
+      )
+    : ""
   const description = node.description?.trim() ?? ""
   const isSubgroup = depth === 0
   const accent = inheritedAccentColor(nodes, node.id)
@@ -602,6 +622,7 @@ export function TopicRow({
       className="flex shrink-0 items-center"
     >
       <DropdownMenu>
+        <WithTooltip label="Add to topic">
         <DropdownMenuTrigger
           render={
             <Button
@@ -619,6 +640,7 @@ export function TopicRow({
         >
           <Plus className="size-3.5" />
         </DropdownMenuTrigger>
+        </WithTooltip>
         <DropdownMenuContent
           align="end"
           className="min-w-40 w-auto"
@@ -668,6 +690,7 @@ export function TopicRow({
   ) : null
 
   const expandIcon = canExpand ? (
+    <WithTooltip label={expanded ? "Collapse" : "Expand"}>
     <Button
       type="button"
       variant="ghost"
@@ -682,6 +705,7 @@ export function TopicRow({
         <ChevronRight className="size-3.5" />
       )}
     </Button>
+    </WithTooltip>
   ) : (
     <span className="size-6 shrink-0" />
   )
@@ -705,6 +729,7 @@ export function TopicRow({
             "group relative flex cursor-pointer items-center gap-1.5 rounded-md py-1 pr-1",
             isDragging && "opacity-50",
             isGhost && "border border-dashed border-primary/40 bg-primary/5",
+            flashClass,
             dropClasses
           )}
           onClick={activateTopic}
@@ -756,6 +781,7 @@ export function TopicRow({
               : "border-border/60 bg-card hover:border-border hover:bg-accent/40",
             isGhost && "border-dashed border-primary/50 bg-primary/5",
             isDragging && "opacity-50",
+            flashClass,
             dropClasses
           )}
           onClick={activateTopic}
@@ -827,6 +853,7 @@ export function TopicRow({
             items={ownItems}
             editing={editMode}
             focusedTaskId={focusedTaskId}
+            flashFading={flashFading}
             topicId={node.id}
             topicTitle={node.title}
             topicPathTitles={
@@ -857,6 +884,8 @@ export function TopicRow({
                   getChecklistHandlers={getChecklistHandlers}
                   editMode={editMode}
                   focusedTaskId={focusedTaskId}
+                  flashNodeId={flashNodeId}
+                  flashFading={flashFading}
                   subtreeProgressFor={subtreeProgressFor}
                   draggedId={draggedId}
                   dropHint={dropHint}

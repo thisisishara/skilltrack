@@ -31,7 +31,7 @@ import {
   writeStoredDetailsPanelOpen,
 } from "@/lib/layout/details-panel-storage"
 
-export type SettingsTab = "general" | "track" | "users"
+export type SettingsTab = "general" | "track" | "models" | "users"
 
 type TrackWorkspaceValue = {
   settings: PublicUserSettings
@@ -63,6 +63,8 @@ type TrackWorkspaceValue = {
   pinnedRefs: TrackDropRef[]
   pinTrackRef: (ref: TrackDropRef) => void
   unpinTrackRef: (ref: TrackDropRef) => void
+  clearPinnedRefs: () => void
+  composerFocusNonce: number
 }
 
 const TrackWorkspaceContext = createContext<TrackWorkspaceValue | null>(null)
@@ -102,6 +104,7 @@ export function TrackWorkspace({
   const [scratchpad, setScratchpad] = useState("")
   const [focusedRoleId, setFocusedRoleId] = useState<string | null>(null)
   const [pinnedRefs, setPinnedRefs] = useState<TrackDropRef[]>([])
+  const [composerFocusNonce, setComposerFocusNonce] = useState(0)
 
   useEffect(() => {
     setTrackPanelOpenState(readStoredTrackPanelOpen(userId))
@@ -129,6 +132,7 @@ export function TrackWorkspace({
       return
     }
     setPinnedRefs((current) => upsertTrackRef(current, ref))
+    setComposerFocusNonce((value) => value + 1)
   }, [])
 
   const unpinTrackRef = useCallback((ref: TrackDropRef) => {
@@ -137,10 +141,18 @@ export function TrackWorkspace({
     )
   }, [])
 
-  const openSettings = useCallback((tab: SettingsTab = "general") => {
-    setSettingsTab(tab)
-    setSettingsOpen(true)
+  const clearPinnedRefs = useCallback(() => {
+    setPinnedRefs([])
   }, [])
+
+  const openSettings = useCallback((tab: SettingsTab = "general") => {
+    const next =
+      (tab === "users" || tab === "models") && !canManageUsers
+        ? "general"
+        : tab
+    setSettingsTab(next)
+    setSettingsOpen(true)
+  }, [canManageUsers])
 
   const ingestProposals = useCallback((values: unknown[]) => {
     setProposals((current) => {
@@ -282,6 +294,8 @@ export function TrackWorkspace({
       pinnedRefs,
       pinTrackRef,
       unpinTrackRef,
+      clearPinnedRefs,
+      composerFocusNonce,
     }),
     [
       settings,
@@ -307,6 +321,8 @@ export function TrackWorkspace({
       pinnedRefs,
       pinTrackRef,
       unpinTrackRef,
+      clearPinnedRefs,
+      composerFocusNonce,
     ]
   )
 

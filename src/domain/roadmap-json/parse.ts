@@ -13,6 +13,7 @@ import {
   type NormalizedTask,
   type NormalizedTopic,
 } from "@/domain/roadmap-json/types"
+import { foldRoleTitleRoot } from "@/domain/roadmap-json/fold-role-title-root"
 import { isUuid } from "@/domain/roadmap-json/uuid"
 
 const DOCUMENT_KEYS = new Set(["roadmap", "topics"])
@@ -286,11 +287,11 @@ export function validateRoadmapDocument(value: unknown): NormalizedRoadmapDocume
 
   assertGraph(topics)
 
-  return {
+  return foldRoleTitleRoot({
     name,
     description: description?.trim() ? description.trim() : null,
     notes: notes?.trim() ? notes.trim() : null,
     links: roadmapLinks,
     topics,
-  }
+  })
 }

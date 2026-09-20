@@ -339,13 +339,14 @@ export function TopicConfigSheet({
       >
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-6 p-4">
-            <div className="min-w-0">
-              <h2
-                id="node-config-title"
-                className="font-heading text-base font-medium text-pretty"
-              >
-                {fallbackTitle || "Roadmap"}
-              </h2>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h2
+                  id="node-config-title"
+                  className="font-heading text-base font-medium text-pretty"
+                >
+                  {fallbackTitle || "Roadmap"}
+                </h2>
               {editMode ? (
                 <Field className="mt-3">
                   <FieldLabel htmlFor="roadmap-description">Description</FieldLabel>
@@ -368,6 +369,20 @@ export function TopicConfigSheet({
                 </p>
               ) : null}
             </div>
+            {showClose ? (
+              <WithTooltip label="Close details">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Close roadmap details"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <XIcon />
+                </Button>
+              </WithTooltip>
+            ) : null}
+          </div>
             <Progress value={subtreeProgress.percent}>
               <ProgressLabel className="text-xs">Overall</ProgressLabel>
               <ProgressValue className="text-xs">

@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -34,6 +35,7 @@ import {
   readStoredDetailsPanelOpen,
   writeStoredDetailsPanelOpen,
 } from "@/lib/layout/details-panel-storage"
+import { useIsLgUp } from "@/hooks/use-mobile"
 
 export type SettingsTab = "general" | "track" | "models" | "users"
 
@@ -98,6 +100,7 @@ export function TrackWorkspace({
   children: ReactNode
 }) {
   const router = useRouter()
+  const lgUp = useIsLgUp()
   const [settings, setSettings] = useState(initialSettings)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("general")
@@ -111,10 +114,17 @@ export function TrackWorkspace({
   const [pinnedRefs, setPinnedRefs] = useState<TrackDropRef[]>([])
   const [composerFocusNonce, setComposerFocusNonce] = useState(0)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!lgUp) {
+      // Overlay sheets start closed so the topic list is not covered on phones.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore desktop panel state from storage
+      setTrackPanelOpenState(false)
+      setDetailsPanelOpenState(false)
+      return
+    }
     setTrackPanelOpenState(readStoredTrackPanelOpen(userId))
     setDetailsPanelOpenState(readStoredDetailsPanelOpen(userId))
-  }, [userId])
+  }, [lgUp, userId])
 
   useEffect(() => {
     if (!focusedRoleId) {
@@ -129,17 +139,29 @@ export function TrackWorkspace({
   const setTrackPanelOpen = useCallback(
     (open: boolean) => {
       setTrackPanelOpenState(open)
-      writeStoredTrackPanelOpen(userId, open)
+      if (lgUp) {
+        writeStoredTrackPanelOpen(userId, open)
+        return
+      }
+      if (open) {
+        setDetailsPanelOpenState(false)
+      }
     },
-    [userId]
+    [lgUp, userId]
   )
 
   const setDetailsPanelOpen = useCallback(
     (open: boolean) => {
       setDetailsPanelOpenState(open)
-      writeStoredDetailsPanelOpen(userId, open)
+      if (lgUp) {
+        writeStoredDetailsPanelOpen(userId, open)
+        return
+      }
+      if (open) {
+        setTrackPanelOpenState(false)
+      }
     },
-    [userId]
+    [lgUp, userId]
   )
 
   const pinTrackRef = useCallback((ref: TrackDropRef) => {

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function UsersLoading() {
   return (
-    <main className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-6">
+    <main className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 sm:p-6">
       <div className="flex flex-col gap-2">
         <Skeleton className="h-6 w-24" />
         <Skeleton className="h-4 w-80" />

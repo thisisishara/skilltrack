@@ -70,6 +70,7 @@ import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import { TrackPanel } from "@/components/track/track-panel"
 import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
+import { useIsLgUp } from "@/hooks/use-mobile"
 import {
   applyAcceptedProposal,
   overlayGhostLinks,
@@ -95,6 +96,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import {
   Tooltip,
   TooltipContent,
@@ -398,6 +405,7 @@ export function Roadmap({
   const listRef = useRef<HTMLDivElement>(null)
   const { treeFocusRequest } = useRolesUi()
   const track = useTrackWorkspaceOptional()
+  const lgUp = useIsLgUp()
   const appliedAcceptedRef = useRef(new Set<string>())
   const snapshotRef = useRef({
     nodes,
@@ -1788,8 +1796,91 @@ export function Roadmap({
       ? "72%"
       : "100%"
 
+  const details = (
+    <TopicConfigSheet
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          if (lgUp) {
+            setConfigNodeId(null)
+            return
+          }
+          track?.setDetailsPanelOpen(false)
+        }
+      }}
+      node={panelNode}
+      checklistItems={selectedItems}
+      links={selectedLinks}
+      nodeProgress={selectedNodeProgress}
+      subtreeProgress={selectedSubtreeProgress}
+      mode={isOverview ? "overview" : "topic"}
+      showClose={!lgUp}
+      showChecklist={!isOverview}
+      showIcon={Boolean(panelNode?.parentId)}
+      showProgressBar
+      editMode={editMode}
+      fallbackTitle={roleName}
+      overviewDescription={overviewDescription}
+      overviewNotes={displayOverviewNotes}
+      highlightFacet={detailsHighlight}
+      canInheritAccent={Boolean(panelNode?.parentId)}
+      subtitle={
+        isOverview
+          ? editMode
+            ? "Edit this roadmap’s description, notes, and links."
+            : "Overview of this roadmap."
+          : editMode
+            ? "Configure details, tasks, and links for this topic."
+            : "Progress, notes, and links for this topic."
+      }
+      checklistHeading="Tasks"
+      checklistCopy={TASK_CHECKLIST_COPY}
+      deleteLabel="Delete topic"
+      hasNestedTopics={
+        Boolean(panelNode && hasNestedTopics(skillNodes, panelNode.id))
+      }
+      onSaveDetails={async (input) => handleSaveDetails(input)}
+      onToggleChecklist={configChecklistHandlers.onToggle}
+      onCreateChecklist={configChecklistHandlers.onCreate}
+      onUpdateChecklist={configChecklistHandlers.onUpdate}
+      onDeleteChecklist={configChecklistHandlers.onDelete}
+      onReorderChecklist={configChecklistHandlers.onReorder}
+      onCreateLink={handleCreateLink}
+      onUpdateLink={handleUpdateLink}
+      onDeleteLink={handleDeleteLink}
+      onDelete={
+        editMode && !isOverview && panelNode
+          ? () => {
+              const nodeId = panelNode.id
+              openDelete(nodeId)
+            }
+          : undefined
+      }
+      canClearRoadmap={
+        Boolean(
+          isOverview &&
+            (nodes.length > 0 ||
+              links.length > 0 ||
+              Boolean(overviewNotes.trim()))
+        )
+      }
+      onClearRoadmap={handleClearRoadmap}
+    />
+  )
+
+  const trackPanel = (
+    <TrackPanel
+      roleId={roleId}
+      focusedTopicId={isOverview ? null : configNodeId}
+      topicTitles={topicTitles}
+      className={lgUp ? undefined : "border-l-0"}
+      onRequestClose={lgUp ? undefined : () => track?.setTrackPanelOpen(false)}
+    />
+  )
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {lgUp ? (
       <ResizablePanelGroup
         key={`${groupKey}-${detailsOpen ? "details" : "nodetails"}-${trackOpen ? "track" : "notrack"}`}
         orientation="horizontal"
@@ -1813,69 +1904,7 @@ export function Roadmap({
               maxSize={`${DETAILS_PANEL_MAX_SIZE}%`}
             >
           <div className="h-full min-h-0 overflow-hidden">
-            <TopicConfigSheet
-              open
-              onOpenChange={() => {
-                setConfigNodeId(null)
-              }}
-              node={panelNode}
-              checklistItems={selectedItems}
-              links={selectedLinks}
-              nodeProgress={selectedNodeProgress}
-              subtreeProgress={selectedSubtreeProgress}
-              mode={isOverview ? "overview" : "topic"}
-              showClose={false}
-              showChecklist={!isOverview}
-              showIcon={Boolean(panelNode?.parentId)}
-              showProgressBar
-              editMode={editMode}
-              fallbackTitle={roleName}
-              overviewDescription={overviewDescription}
-              overviewNotes={displayOverviewNotes}
-              highlightFacet={detailsHighlight}
-              canInheritAccent={Boolean(panelNode?.parentId)}
-              subtitle={
-                isOverview
-                  ? editMode
-                    ? "Edit this roadmap’s description, notes, and links."
-                    : "Overview of this roadmap."
-                  : editMode
-                    ? "Configure details, tasks, and links for this topic."
-                    : "Progress, notes, and links for this topic."
-              }
-              checklistHeading="Tasks"
-              checklistCopy={TASK_CHECKLIST_COPY}
-              deleteLabel="Delete topic"
-              hasNestedTopics={
-                Boolean(panelNode && hasNestedTopics(skillNodes, panelNode.id))
-              }
-              onSaveDetails={async (input) => handleSaveDetails(input)}
-              onToggleChecklist={configChecklistHandlers.onToggle}
-              onCreateChecklist={configChecklistHandlers.onCreate}
-              onUpdateChecklist={configChecklistHandlers.onUpdate}
-              onDeleteChecklist={configChecklistHandlers.onDelete}
-              onReorderChecklist={configChecklistHandlers.onReorder}
-              onCreateLink={handleCreateLink}
-              onUpdateLink={handleUpdateLink}
-              onDeleteLink={handleDeleteLink}
-              onDelete={
-                editMode && !isOverview && panelNode
-                  ? () => {
-                      const nodeId = panelNode.id
-                      openDelete(nodeId)
-                    }
-                  : undefined
-              }
-              canClearRoadmap={
-                Boolean(
-                  isOverview &&
-                    (nodes.length > 0 ||
-                      links.length > 0 ||
-                      Boolean(overviewNotes.trim()))
-                )
-              }
-              onClearRoadmap={handleClearRoadmap}
-            />
+            {details}
           </div>
             </ResizablePanel>
           </>
@@ -1884,16 +1913,57 @@ export function Roadmap({
           <>
             <ResizableHandle withHandle />
             <ResizablePanel id="track-chat" defaultSize="28%" minSize="18%">
-              <TrackPanel
-                roleId={roleId}
-                focusedTopicId={isOverview ? null : configNodeId}
-                topicTitles={topicTitles}
-              />
+              {trackPanel}
             </ResizablePanel>
           </>
         ) : null}
       </ResizablePanelGroup>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-hidden">{list}</div>
+      )}
       <RoadmapStatusBar roleName={roleName} progress={overallProgress} counts={statusCounts} />
+      {!lgUp ? (
+        <>
+          <Sheet
+            open={detailsOpen}
+            onOpenChange={(open) => track?.setDetailsPanelOpen(open)}
+          >
+            <SheetContent
+              side="right"
+              showCloseButton={false}
+              className="h-full min-h-0 w-full max-w-none gap-0 p-0 pb-[env(safe-area-inset-bottom)] data-[side=right]:w-full data-[side=right]:max-w-none data-[side=right]:sm:max-w-md"
+            >
+              <SheetTitle className="sr-only">Details</SheetTitle>
+              <SheetDescription className="sr-only">
+                Topic details, tasks, notes, and links.
+              </SheetDescription>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                {detailsOpen ? details : null}
+              </div>
+            </SheetContent>
+          </Sheet>
+          {track?.settings.trackEnabled ? (
+            <Sheet
+              open={trackOpen}
+              onOpenChange={(open) => track.setTrackPanelOpen(open)}
+            >
+              <SheetContent
+                side="right"
+                showCloseButton={false}
+                className="h-full min-h-0 w-full max-w-none gap-0 p-0 pb-[env(safe-area-inset-bottom)] data-[side=right]:w-full data-[side=right]:max-w-none data-[side=right]:sm:max-w-lg"
+              >
+                <SheetTitle className="sr-only">Track</SheetTitle>
+                <SheetDescription className="sr-only">
+                  Chat with Track about this roadmap.
+                </SheetDescription>
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  {trackOpen ? trackPanel : null}
+                </div>
+              </SheetContent>
+            </Sheet>
+          ) : null}
+        </>
+      ) : null}
       <TopicDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}

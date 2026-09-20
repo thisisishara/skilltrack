@@ -159,11 +159,12 @@ export function CommandSearch() {
         type="button"
         variant="outline"
         size="sm"
-        className="text-muted-foreground"
+        aria-label="Search"
+        className="text-muted-foreground max-sm:size-8 max-sm:px-0"
         onClick={() => setOpen(true)}
       >
         <Search data-icon="inline-start" />
-        Search
+        <span className="hidden sm:inline">Search</span>
         <CommandShortcut className="hidden sm:inline">⌘K</CommandShortcut>
       </Button>
       <CommandDialog

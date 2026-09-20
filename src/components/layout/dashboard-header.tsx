@@ -46,7 +46,7 @@ export function DashboardHeader() {
   })
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b px-4">
+    <header className="flex h-12 shrink-0 items-center justify-between gap-1 border-b px-2 sm:gap-3 sm:px-4">
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger />
         <CommandSearch />
@@ -104,7 +104,7 @@ export function DashboardHeader() {
               <Badge
                 variant="secondary"
                 render={<button type="button" />}
-                className="font-mono tabular-nums"
+                className="hidden font-mono tabular-nums sm:inline-flex"
               />
             }
           >

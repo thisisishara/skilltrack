@@ -6,7 +6,7 @@ export default function RoleRoadmapLoading() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1">
-        <div className="flex min-h-0 w-full flex-1 flex-col border-r md:max-w-[420px]">
+        <div className="flex min-h-0 w-full flex-1 flex-col border-r lg:max-w-[420px]">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-2.5">
             <Skeleton className="h-4 w-32" />
             <div className="flex shrink-0 items-center gap-1.5">
@@ -28,7 +28,7 @@ export default function RoleRoadmapLoading() {
             ))}
           </div>
         </div>
-        <div className="hidden min-h-0 flex-1 flex-col gap-4 p-4 md:flex">
+        <div className="hidden min-h-0 flex-1 flex-col gap-4 p-4 lg:flex">
           <div className="flex items-center gap-3">
             <Skeleton className="size-8 rounded-lg" />
             <Skeleton className="h-5 w-40" />

@@ -186,7 +186,7 @@ function TaskTickList({
                 data-tree-task={item.id}
                 data-task-row
                 className={cn(
-                  "group relative flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
+                  "group relative flex min-h-11 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-accent/40",
                   item.completed && "opacity-80",
                   draggedId === item.id && "opacity-50",
                   focusedTaskId === item.id &&
@@ -726,7 +726,7 @@ export function TopicRow({
           tabIndex={0}
           aria-expanded={canExpand ? expanded : undefined}
           className={cn(
-            "group relative flex cursor-pointer items-center gap-1.5 rounded-md py-1 pr-1",
+            "group relative flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md py-1 pr-1",
             isDragging && "opacity-50",
             isGhost && "border border-dashed border-primary/40 bg-primary/5",
             flashClass,
@@ -775,7 +775,7 @@ export function TopicRow({
           tabIndex={0}
           aria-expanded={canExpand ? expanded : undefined}
           className={cn(
-            "group relative flex cursor-pointer items-center gap-2 rounded-lg border px-2 py-2 transition-colors",
+            "group relative flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-2 py-2 transition-colors",
             selected
               ? "border-primary/40 bg-accent shadow-sm"
               : "border-border/60 bg-card hover:border-border hover:bg-accent/40",

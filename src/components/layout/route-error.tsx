@@ -29,7 +29,7 @@ export function RouteErrorState({
   }, [error, event])
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 sm:p-6">
       <Alert variant="destructive" className="max-w-md">
         <CircleAlert />
         <AlertTitle>{title}</AlertTitle>

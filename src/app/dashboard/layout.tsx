@@ -71,7 +71,7 @@ export default async function DashboardLayout({
 
   if (databaseUnavailable) {
     return (
-      <main className="flex flex-1 flex-col p-6">
+      <main className="flex flex-1 flex-col p-4 sm:p-6">
         <Alert variant="destructive">
           <CircleAlert />
           <AlertTitle>Account could not be loaded</AlertTitle>

@@ -17,7 +17,7 @@ export default function RoleSettingsPage() {
 
   if (!activeRole) {
     return (
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6">
         <Empty className="h-full">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -35,7 +35,7 @@ export default function RoleSettingsPage() {
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6">
       <RoleSettings role={activeRole} />
     </main>
   )

@@ -96,6 +96,7 @@ export function ImportRoadmapDialog({
   return (
     <>
       <Dialog
+        form
         open={open}
         onOpenChange={(next) => {
           if (!next) {

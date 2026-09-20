@@ -143,7 +143,7 @@ export function UserSettingsDialog() {
   } = useTrackWorkspace()
 
   return (
-    <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+    <Dialog form open={settingsOpen} onOpenChange={setSettingsOpen}>
       <DialogContent
         className="flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl"
         showCloseButton

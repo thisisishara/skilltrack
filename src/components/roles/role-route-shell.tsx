@@ -49,7 +49,10 @@ export function RoleRouteShell({ children }: { children: ReactNode }) {
   const params = useParams<{ roleId?: string }>()
   const { cachedRoadmap, pendingHref } = useRolesUi()
   const roleId = params.roleId
-  const onSettings = Boolean(roleId && pathname.endsWith("/settings"))
+  const onNonCanvasRoute = Boolean(
+    roleId &&
+      (pathname.endsWith("/settings") || pathname.includes("/jobs"))
+  )
   const showCachedCanvas = Boolean(
     cachedRoadmap && roleId && cachedRoadmap.roleId === roleId
   )
@@ -68,13 +71,13 @@ export function RoleRouteShell({ children }: { children: ReactNode }) {
         <div
           className={cn(
             "min-h-0 flex-1 flex-col overflow-hidden",
-            onSettings ? "hidden" : "flex"
+            onNonCanvasRoute ? "hidden" : "flex"
           )}
         >
           <Roadmap {...cachedRoadmap} />
         </div>
       ) : null}
-      {onSettings || !showCachedCanvas ? children : null}
+      {onNonCanvasRoute || !showCachedCanvas ? children : null}
       {switchingAwayFromRole ? <RoleTransitionOverlay /> : null}
     </div>
   )

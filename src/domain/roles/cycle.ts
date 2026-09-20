@@ -38,6 +38,9 @@ export function roleHrefForCurrentView(
   if (rest === "/settings") {
     return `${base}${rest}`
   }
+  if (rest === "/jobs" || rest.startsWith("/jobs/")) {
+    return `${base}/jobs`
+  }
 
   return base
 }

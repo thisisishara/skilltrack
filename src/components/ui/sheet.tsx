@@ -7,8 +7,18 @@ import { cn } from "cn"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function Sheet({
+  form = false,
+  disablePointerDismissal,
+  ...props
+}: SheetPrimitive.Root.Props & { form?: boolean }) {
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      disablePointerDismissal={disablePointerDismissal ?? form}
+      {...props}
+    />
+  )
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {

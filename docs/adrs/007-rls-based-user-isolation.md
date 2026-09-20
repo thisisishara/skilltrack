@@ -20,7 +20,7 @@ Core rule: a user may only read or mutate rows belonging to their application us
 | `roles` | `user_id` = authenticated app user |
 | `roadmap_nodes` | Parent role owned by user |
 | `checklist_items` / `node_links` | Node’s role owned by user |
-| `job_descriptions` | `user_id` = authenticated app user |
+| `job_descriptions` | `user_id` = application user and parent `role_id` owned by that user |
 
 Also:
 

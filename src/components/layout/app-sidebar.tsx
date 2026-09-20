@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown, LogOut, Map, Settings } from "lucide-react"
+import { ChevronsUpDown, Briefcase, LogOut, Map, Settings } from "lucide-react"
 
 import { signOutAction } from "@/lib/auth/actions"
 import { RoleSwitcher } from "@/components/roles/role-switcher"
@@ -48,8 +48,10 @@ export function AppSidebar({
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()
   const roleHref = activeRole ? `/dashboard/roles/${activeRole.id}` : null
+  const jobsHref = roleHref ? `${roleHref}/jobs` : null
   const settingsHref = roleHref ? `${roleHref}/settings` : null
   const roadmapActive = Boolean(roleHref && pathname === roleHref)
+  const jobsActive = Boolean(jobsHref && pathname.startsWith(jobsHref))
   const settingsActive = Boolean(
     settingsHref && pathname.startsWith(settingsHref)
   )
@@ -61,7 +63,7 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {activeRole && roleHref && settingsHref ? (
+        {activeRole && roleHref && jobsHref && settingsHref ? (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -80,6 +82,23 @@ export function AppSidebar({
                   >
                     <Map />
                     <span>Roadmap</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={jobsActive}
+                    tooltip="Jobs"
+                    render={
+                      <Link
+                        href={jobsHref}
+                        prefetch
+                        scroll={false}
+                        onClick={() => beginNavigation(jobsHref)}
+                      />
+                    }
+                  >
+                    <Briefcase />
+                    <span>Jobs</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>

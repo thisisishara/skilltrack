@@ -27,6 +27,15 @@ describe("roleHrefForCurrentView", () => {
     ).toBe("/dashboard/roles/b/settings")
   })
 
+  it("keeps the jobs list while switching roles", () => {
+    expect(roleHrefForCurrentView("b", "/dashboard/roles/a/jobs", "a")).toBe(
+      "/dashboard/roles/b/jobs"
+    )
+    expect(
+      roleHrefForCurrentView("b", "/dashboard/roles/a/jobs/job-1", "a")
+    ).toBe("/dashboard/roles/b/jobs")
+  })
+
   it("falls back to the role canvas", () => {
     expect(roleHrefForCurrentView("b", "/dashboard/roles/a", "a")).toBe(
       "/dashboard/roles/b"

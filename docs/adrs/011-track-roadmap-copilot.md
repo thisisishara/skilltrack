@@ -23,4 +23,4 @@ Ship **Track** as an account-level, **opt-in, BYOK** copilot:
 
 - The core app still works with zero LLM keys.
 - Human confirmation from ADR-008 is preserved via staged proposals.
-- Job extraction, gap analysis, and semantic matching remain deferred.
+- Job extraction from **user-supplied** LinkedIn HTML now exists as rules-first import ([ADR-013](./013-linkedin-job-extraction.md)). Gap analysis and semantic matching remain deferred.

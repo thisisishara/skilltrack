@@ -83,8 +83,15 @@ export function CreateRoleDialog({
     }
   }, [open])
 
+  const dirty = Boolean(
+    name.trim() || json.trim() || brief.trim() || mode !== "empty" || pending
+  )
+
   function requestClose() {
-    if (mode === "import" && json.trim()) {
+    if (pending) {
+      return
+    }
+    if (dirty) {
       setDiscardOpen(true)
       return
     }
@@ -128,6 +135,7 @@ export function CreateRoleDialog({
   return (
     <>
       <Dialog
+        form
         open={open}
         onOpenChange={(next) => {
           if (!next) {
@@ -276,9 +284,9 @@ export function CreateRoleDialog({
       <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard this import?</AlertDialogTitle>
+            <AlertDialogTitle>Discard this role?</AlertDialogTitle>
             <AlertDialogDescription>
-              The JSON you entered will not be saved.
+              What you entered will not be saved.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

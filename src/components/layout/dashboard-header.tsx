@@ -38,7 +38,10 @@ export function DashboardHeader() {
     setDetailsPanelOpen,
     pinTrackRef,
   } = useTrackWorkspace()
-  const showTrack = settings.trackEnabled && !pathname.endsWith("/settings")
+  const showTrack =
+    settings.trackEnabled &&
+    !pathname.endsWith("/settings") &&
+    !pathname.includes("/jobs")
   const showDetailsToggle = /^\/dashboard\/roles\/[^/]+\/?$/.test(pathname)
   const { isOver, dropProps } = useTrackRefDrop((ref) => {
     pinTrackRef(ref)

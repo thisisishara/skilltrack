@@ -312,6 +312,179 @@ export type Database = {
           },
         ]
       }
+      job_descriptions: {
+        Row: {
+          id: string
+          user_id: string
+          role_id: string
+          company_name: string
+          role_title: string
+          source: string | null
+          source_url: string | null
+          description: string
+          posted_at: string | null
+          captured_at: string
+          created_at: string
+          updated_at: string
+          external_id: string | null
+          company_url: string | null
+          location: string | null
+          locations: string[]
+          seniority_level: string | null
+          employment_type: string | null
+          job_functions: string[]
+          industries: string[]
+          workplace_type: "on_site" | "hybrid" | "remote" | "unknown"
+          applicant_count: number | null
+          salary_text: string | null
+          compensation: Json
+          posted_relative: string | null
+          posted_at_precision: "exact" | "estimated" | "unknown"
+          extraction_method: "rules" | "ai" | "mixed" | "manual"
+          extracted_at: string | null
+          field_confidence: Json
+          description_html: string | null
+          sections: Json
+          extras: Json
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role_id: string
+          company_name: string
+          role_title: string
+          source?: string | null
+          source_url?: string | null
+          description: string
+          posted_at?: string | null
+          captured_at?: string
+          created_at?: string
+          updated_at?: string
+          external_id?: string | null
+          company_url?: string | null
+          location?: string | null
+          locations?: string[]
+          seniority_level?: string | null
+          employment_type?: string | null
+          job_functions?: string[]
+          industries?: string[]
+          workplace_type?: "on_site" | "hybrid" | "remote" | "unknown"
+          applicant_count?: number | null
+          salary_text?: string | null
+          compensation?: Json
+          posted_relative?: string | null
+          posted_at_precision?: "exact" | "estimated" | "unknown"
+          extraction_method?: "rules" | "ai" | "mixed" | "manual"
+          extracted_at?: string | null
+          field_confidence?: Json
+          description_html?: string | null
+          sections?: Json
+          extras?: Json
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role_id?: string
+          company_name?: string
+          role_title?: string
+          source?: string | null
+          source_url?: string | null
+          description?: string
+          posted_at?: string | null
+          captured_at?: string
+          created_at?: string
+          updated_at?: string
+          external_id?: string | null
+          company_url?: string | null
+          location?: string | null
+          locations?: string[]
+          seniority_level?: string | null
+          employment_type?: string | null
+          job_functions?: string[]
+          industries?: string[]
+          workplace_type?: "on_site" | "hybrid" | "remote" | "unknown"
+          applicant_count?: number | null
+          salary_text?: string | null
+          compensation?: Json
+          posted_relative?: string | null
+          posted_at_precision?: "exact" | "estimated" | "unknown"
+          extraction_method?: "rules" | "ai" | "mixed" | "manual"
+          extracted_at?: string | null
+          field_confidence?: Json
+          description_html?: string | null
+          sections?: Json
+          extras?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_descriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_descriptions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_requirements: {
+        Row: {
+          id: string
+          job_description_id: string
+          skill_name: string
+          importance: "required" | "preferred" | "unknown"
+          notes: string | null
+          created_at: string
+          source_section:
+            | "minimum_qualifications"
+            | "preferred_qualifications"
+            | "responsibilities"
+            | "skills"
+            | "other"
+        }
+        Insert: {
+          id?: string
+          job_description_id: string
+          skill_name: string
+          importance?: "required" | "preferred" | "unknown"
+          notes?: string | null
+          created_at?: string
+          source_section?:
+            | "minimum_qualifications"
+            | "preferred_qualifications"
+            | "responsibilities"
+            | "skills"
+            | "other"
+        }
+        Update: {
+          id?: string
+          job_description_id?: string
+          skill_name?: string
+          importance?: "required" | "preferred" | "unknown"
+          notes?: string | null
+          created_at?: string
+          source_section?:
+            | "minimum_qualifications"
+            | "preferred_qualifications"
+            | "responsibilities"
+            | "skills"
+            | "other"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_requirements_job_description_id_fkey"
+            columns: ["job_description_id"]
+            isOneToOne: false
+            referencedRelation: "job_descriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

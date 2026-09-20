@@ -67,11 +67,12 @@ SkillTrack lets users:
 - Unique roadmap names per user.
 
 ### Job Analytics
-- Add job descriptions manually.
-- Store company, role title, source, URL if available, and dates.
+- Add job descriptions per selected career role (sidebar **Jobs**).
+- Import LinkedIn guest HTML (page source) or pasted job text; optional job URL; optional BYOK AI fill.
+- Store company, role title, source, URL if available, location, criteria, qualifications, and dates.
 - Store extracted/manual skill requirements.
-- Compare job requirements against roadmap nodes.
-- Show basic deterministic skill coverage/gaps.
+- Compare job requirements against roadmap nodes (later).
+- Show basic deterministic skill coverage/gaps (later).
 
 ### Data
 - Supabase PostgreSQL.
@@ -85,7 +86,7 @@ AI features are explicitly **not part of the MVP**.
 
 Potential future capabilities:
 
-- LLM-assisted job description skill extraction.
+- LLM-assisted job description skill extraction (optional BYOK fill already exists; richer extraction can improve).
 - LLM-assisted roadmap gap analysis.
 - Roadmap improvement suggestions.
 - Industry trend analysis.
@@ -836,9 +837,10 @@ Zero search hits use `CommandEmpty` (“No roles found.”). **Create Role** sta
 With a role selected, the first destination is the **roadmap** view (`/dashboard/roles/[roleId]`). Sidebar nav, in order:
 
 1. **Roadmap** — canvas for the active role
-2. **Settings** — per-role settings (`/dashboard/roles/[roleId]/settings`)
+2. **Jobs** — role-scoped job postings (`/dashboard/roles/[roleId]/jobs`)
+3. **Settings** — per-role settings (`/dashboard/roles/[roleId]/settings`)
 
-Job Analytics is **role-specific** and must not appear as global chrome. It is added to this nav later, after Roadmap, when that feature is scoped to the active role.
+Job Analytics matching against the roadmap is still later. The Jobs nav item is **role-specific** and must not appear as global chrome.
 
 The footer account menu opens **above** the trigger and includes Logout. It is not user “settings” for the role.
 
@@ -847,7 +849,7 @@ Requirements:
 - collapsible shadcn `Sidebar`
 - role switcher with search (`Command` in `Popover`)
 - create role (`Dialog` from the switcher)
-- Roadmap and Settings nav items only when a role is selected (Roadmap first)
+- Roadmap, Jobs, and Settings nav items only when a role is selected (Roadmap first, then Jobs, then Settings)
 - rename role: inline `Field` on the role Settings screen
 - delete role: `AlertDialog` from the role Settings screen
 - no roles: blocking `Empty` plus Create Role in the switcher
@@ -1323,13 +1325,34 @@ job_descriptions
 ----------------
 id uuid primary key
 user_id uuid not null references users(id) on delete cascade
+role_id uuid not null references roles(id) on delete cascade
 company_name text not null
 role_title text not null
 source text
 source_url text
 description text not null
+description_html text
 posted_at date
+posted_relative text
+posted_at_precision text -- exact | estimated | unknown
 captured_at timestamptz not null
+external_id text
+company_url text
+location text
+locations text[]
+seniority_level text
+employment_type text
+job_functions text[]
+industries text[]
+workplace_type text -- on_site | hybrid | remote | unknown
+applicant_count int
+salary_text text
+compensation jsonb
+extraction_method text -- rules | ai | mixed | manual
+extracted_at timestamptz
+field_confidence jsonb
+sections jsonb
+extras jsonb
 created_at timestamptz not null
 updated_at timestamptz not null
 ```
@@ -1345,6 +1368,7 @@ id uuid primary key
 job_description_id uuid not null
 skill_name text not null
 importance text
+source_section text
 notes text
 created_at timestamptz not null
 ```
@@ -1577,13 +1601,15 @@ This area is built from shadcn `Card`, `Table` (or card list), `Badge` for cover
 
 A user can:
 
-- create a job entry
-- paste a job description
-- record company
-- record role
-- record source
-- record posting/capture dates
-- manually associate skills with roadmap nodes
+- open **Jobs** for the active role
+- paste LinkedIn page source or job text
+- optionally provide a LinkedIn job URL (best-effort fetch; paste is the reliable path)
+- extract with rules by default, or BYOK AI to fill/replace fields
+- record company, title, location, criteria, qualifications, responsibilities, and dates
+- save the posting to the role
+- delete a saved job
+
+Roadmap matching (associate requirements with topics, coverage %) remains later.
 
 Example:
 
@@ -2699,6 +2725,7 @@ Before or during implementation, create ADRs for:
 9. **ADR-009:** React Flow or selected canvas implementation.
 10. **ADR-010:** Deterministic job-to-roadmap matching for MVP.
 11. **ADR-011:** Inter typeface, Lucide icons, and shadcn/ui as the exclusive UI system.
+12. **ADR-013:** User-supplied LinkedIn HTML, rules-first job extraction, optional BYOK.
 
 ---
 

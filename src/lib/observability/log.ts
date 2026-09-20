@@ -6,19 +6,24 @@ export type LogValue = string | number | boolean | null
 
 function serializeError(error: unknown) {
   if (isApplicationError(error)) {
+    const cause = error.cause
     return {
       code: error.code,
+      causeName: cause instanceof Error ? cause.name : null,
+      causeMessage:
+        cause instanceof Error ? cause.message.slice(0, 200) : null,
     }
   }
 
   if (error instanceof Error) {
     return {
       code: "unexpected" as const,
-      name: error.name,
+      causeName: error.name,
+      causeMessage: error.message.slice(0, 200),
     }
   }
 
-  return { code: "unexpected" as const }
+  return { code: "unexpected" as const, causeName: null, causeMessage: null }
 }
 
 export function logEvent(
@@ -52,5 +57,10 @@ export function logFailure(
       ? "warn"
       : "error"
 
-  logEvent(level, event, { ...fields, code: serialized.code })
+  logEvent(level, event, {
+    ...fields,
+    code: serialized.code,
+    causeName: serialized.causeName ?? null,
+    causeMessage: serialized.causeMessage ?? null,
+  })
 }

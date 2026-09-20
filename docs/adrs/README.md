@@ -16,5 +16,6 @@ These ADRs record the MVP decisions listed in [`docs/spec/spec.md`](../spec/spec
 | [ADR-010](./010-deterministic-job-to-roadmap-matching.md) | Deterministic job-to-roadmap matching | Accepted |
 | [ADR-011](./011-inter-lucide-shadcn-ui-system.md) | Inter, Lucide, and shadcn/ui as the exclusive UI system | Accepted |
 | [ADR-012](./012-admin-approval-for-github-users.md) | Admin approval for GitHub users | Accepted |
+| [ADR-013](./013-linkedin-job-extraction.md) | User-supplied LinkedIn HTML, rules-first extraction | Accepted |
 
 Format follows [MADR](https://adr.github.io/madr/): context, decision, consequences, and alternatives. Change a decision by superseding the ADR, not by rewriting history.

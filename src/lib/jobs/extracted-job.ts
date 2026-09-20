@@ -33,6 +33,26 @@ export type RequirementSection = (typeof REQUIREMENT_SECTIONS)[number]
 export const FIELD_CONFIDENCE = ["high", "medium", "low", "missing"] as const
 export type FieldConfidence = (typeof FIELD_CONFIDENCE)[number]
 
+export const JOB_ANALYSIS_RATINGS = [
+  "poor",
+  "fair",
+  "good",
+  "strong",
+  "excellent",
+] as const
+export type JobAnalysisRating = (typeof JOB_ANALYSIS_RATINGS)[number]
+
+export const jobAnalysisSchema = z.object({
+  rating: z.enum(JOB_ANALYSIS_RATINGS),
+  summary: z.string(),
+  company: z.string(),
+  posting: z.string(),
+  location: z.string(),
+  highlights: z.array(z.string()),
+  concerns: z.array(z.string()),
+})
+export type JobAnalysis = z.infer<typeof jobAnalysisSchema>
+
 export const jobCompensationSchema = z.object({
   min: z.number().nullable(),
   max: z.number().nullable(),
@@ -111,6 +131,7 @@ export const extractedJobSchema = z.object({
   extractedAt: z.string(),
   fieldConfidence: z.record(z.string(), z.enum(FIELD_CONFIDENCE)),
   warnings: z.array(z.string()),
+  analysis: jobAnalysisSchema.nullable().default(null),
 })
 
 export type JobCompensation = z.infer<typeof jobCompensationSchema>
@@ -184,6 +205,7 @@ export function emptyExtractedJob(nowIso: string): ExtractedJob {
     extractedAt: nowIso,
     fieldConfidence: {},
     warnings: [],
+    analysis: null,
   }
 }
 

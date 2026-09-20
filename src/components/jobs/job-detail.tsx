@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { deleteJobAction } from "@/application/jobs/actions"
 import { JobsImportDialog } from "@/components/jobs/jobs-import-dialog"
+import { JobAnalysisCard } from "@/components/jobs/job-analysis-card"
 import { SkillChipList } from "@/components/jobs/skill-chips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -116,6 +117,8 @@ export function JobDetail({
           <Badge variant="outline">{job.applicantCount} applicants</Badge>
         ) : null}
       </div>
+
+      {job.analysis ? <JobAnalysisCard analysis={job.analysis} /> : null}
 
       {job.sourceUrl ? (
         <p className="text-sm">

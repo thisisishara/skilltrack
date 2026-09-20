@@ -24,7 +24,8 @@ export function mergeExtractedJobs(
       key === "warnings" ||
       key === "fieldConfidence" ||
       key === "extractionMethod" ||
-      key === "capturedAt"
+      key === "capturedAt" ||
+      key === "analysis"
     ) {
       continue
     }

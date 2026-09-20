@@ -42,7 +42,10 @@ export function DashboardHeader() {
     settings.trackEnabled &&
     !pathname.endsWith("/settings") &&
     !pathname.includes("/jobs")
-  const showDetailsToggle = /^\/dashboard\/roles\/[^/]+\/?$/.test(pathname)
+  const isJobsList = /^\/dashboard\/roles\/[^/]+\/jobs\/?$/.test(pathname)
+  const showDetailsToggle =
+    /^\/dashboard\/roles\/[^/]+\/?$/.test(pathname) || isJobsList
+  const detailsLabel = isJobsList ? "filters" : "details"
   const { isOver, dropProps } = useTrackRefDrop((ref) => {
     pinTrackRef(ref)
     setTrackPanelOpen(true)
@@ -64,7 +67,9 @@ export function DashboardHeader() {
                   variant={detailsPanelOpen ? "secondary" : "ghost"}
                   size="icon"
                   aria-label={
-                    detailsPanelOpen ? "Hide details" : "Show details"
+                    detailsPanelOpen
+                      ? `Hide ${detailsLabel}`
+                      : `Show ${detailsLabel}`
                   }
                   onClick={() => setDetailsPanelOpen(!detailsPanelOpen)}
                 />
@@ -73,7 +78,9 @@ export function DashboardHeader() {
               <PanelRight />
             </TooltipTrigger>
             <TooltipContent>
-              {detailsPanelOpen ? "Hide details" : "Show details"}
+              {detailsPanelOpen
+                ? `Hide ${detailsLabel}`
+                : `Show ${detailsLabel}`}
             </TooltipContent>
           </Tooltip>
         ) : null}

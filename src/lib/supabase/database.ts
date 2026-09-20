@@ -346,6 +346,7 @@ export type Database = {
           description_html: string | null
           sections: Json
           extras: Json
+          analysis: Json | null
         }
         Insert: {
           id?: string
@@ -380,6 +381,7 @@ export type Database = {
           description_html?: string | null
           sections?: Json
           extras?: Json
+          analysis?: Json | null
         }
         Update: {
           id?: string
@@ -414,6 +416,7 @@ export type Database = {
           description_html?: string | null
           sections?: Json
           extras?: Json
+          analysis?: Json | null
         }
         Relationships: [
           {

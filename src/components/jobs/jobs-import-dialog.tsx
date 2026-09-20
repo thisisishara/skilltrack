@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { cn } from "cn"
 
 import {
+  analyzeJobAction,
   extractJobAction,
   saveJobAction,
 } from "@/application/jobs/actions"
@@ -36,6 +37,7 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { SkillChipInput } from "@/components/jobs/skill-chips"
+import { JobAnalysisCard } from "@/components/jobs/job-analysis-card"
 import type { Job } from "@/domain/jobs/types"
 import {
   emptyExtractedJob,
@@ -247,7 +249,10 @@ export function JobsImportDialog({
   const [warnings, setWarnings] = useState<string[]>([])
   const [fetchFailed, setFetchFailed] = useState<string | null>(null)
   const [replaceWithAi, setReplaceWithAi] = useState(true)
-  const [pending, setPending] = useState<"rules" | "ai" | "save" | null>(null)
+  const [analyzeWithAi, setAnalyzeWithAi] = useState(true)
+  const [pending, setPending] = useState<
+    "rules" | "ai" | "analyze" | "save" | null
+  >(null)
 
   useEffect(() => {
     if (open) {
@@ -258,6 +263,7 @@ export function JobsImportDialog({
       setWarnings([])
       setFetchFailed(null)
       setReplaceWithAi(true)
+      setAnalyzeWithAi(true)
       setPending(null)
     }
   }, [open, editingJob])
@@ -277,6 +283,7 @@ export function JobsImportDialog({
       method,
       mergeMode: replaceWithAi ? "replace" : "fill",
       fetchIfEmpty: !paste.trim() && Boolean(sourceUrl.trim()),
+      analyze: method === "ai" && analyzeWithAi,
     })
     setPending(null)
     if (!result.ok) {
@@ -289,6 +296,21 @@ export function JobsImportDialog({
     if (result.fetchFailed) {
       toast.message(result.fetchFailed)
     }
+  }
+
+  async function analyze() {
+    if (!preview) {
+      return
+    }
+    setPending("analyze")
+    const result = await analyzeJobAction(preview)
+    setPending(null)
+    if (!result.ok) {
+      toast.error(result.message)
+      return
+    }
+    setPreview({ ...preview, analysis: result.analysis })
+    toast.success("Job rated.")
   }
 
   const existing = findSavedJobForSource(jobs, {
@@ -418,25 +440,51 @@ export function JobsImportDialog({
                 ) : null}
                 Extract with AI
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || !canUseAi || !preview}
+                onClick={() => void analyze()}
+              >
+                {pending === "analyze" ? (
+                  <Spinner data-icon="inline-start" />
+                ) : null}
+                Analyze job
+              </Button>
             </div>
             {!canUseAi ? (
               <p className="text-xs text-muted-foreground">
-                AI extraction needs Track enabled with an API key in User
-                settings.
+                AI extraction and ratings need Track enabled with an API key in
+                User settings.
               </p>
             ) : (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="job-ai-overwrite"
-                  checked={replaceWithAi}
-                  onCheckedChange={(checked) =>
-                    setReplaceWithAi(checked === true)
-                  }
-                  disabled={busy}
-                />
-                <FieldLabel htmlFor="job-ai-overwrite" className="font-normal">
-                  Overwrite fields already found when using AI
-                </FieldLabel>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="job-ai-overwrite"
+                    checked={replaceWithAi}
+                    onCheckedChange={(checked) =>
+                      setReplaceWithAi(checked === true)
+                    }
+                    disabled={busy}
+                  />
+                  <FieldLabel htmlFor="job-ai-overwrite" className="font-normal">
+                    Overwrite fields already found when using AI
+                  </FieldLabel>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="job-ai-analyze"
+                    checked={analyzeWithAi}
+                    onCheckedChange={(checked) =>
+                      setAnalyzeWithAi(checked === true)
+                    }
+                    disabled={busy}
+                  />
+                  <FieldLabel htmlFor="job-ai-analyze" className="font-normal">
+                    Rate the posting when extracting with AI
+                  </FieldLabel>
+                </div>
               </div>
             )}
             {fetchFailed ? (
@@ -476,6 +524,9 @@ export function JobsImportDialog({
                   ) : null}
                 </AlertDescription>
               </Alert>
+            ) : null}
+            {preview?.analysis ? (
+              <JobAnalysisCard analysis={preview.analysis} />
             ) : null}
             {preview ? (
               <FieldGroup className="min-w-0">

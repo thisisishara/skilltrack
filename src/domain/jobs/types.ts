@@ -1,6 +1,7 @@
 import type {
   ExtractionMethod,
   FieldConfidence,
+  JobAnalysis,
   JobCompensation,
   JobExtras,
   JobSections,
@@ -52,5 +53,6 @@ export type Job = {
   descriptionHtml: string | null
   sections: JobSections
   extras: JobExtras
+  analysis: JobAnalysis | null
   requirements: JobRequirement[]
 }

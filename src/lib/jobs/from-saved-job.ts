@@ -32,5 +32,6 @@ export function extractedJobFromSaved(job: Job): ExtractedJob {
     extractedAt: job.extractedAt ?? nowIso,
     fieldConfidence: job.fieldConfidence,
     warnings: [],
+    analysis: job.analysis,
   }
 }

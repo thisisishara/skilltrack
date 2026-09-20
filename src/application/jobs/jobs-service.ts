@@ -11,6 +11,7 @@ import {
 import { ApplicationError } from "@/domain/errors"
 import type { ExtractedJob } from "@/lib/jobs/extracted-job"
 import { extractJobWithAi } from "@/lib/jobs/extract-with-ai"
+import { analyzeJobWithAi } from "@/lib/jobs/analyze-job"
 import { tryFetchLinkedInJobHtml } from "@/lib/jobs/fetch-linkedin"
 import { mergeExtractedJobs, type MergeMode } from "@/lib/jobs/merge-extracted"
 import { parseJobInput } from "@/lib/jobs/parse-linkedin"
@@ -44,6 +45,7 @@ export async function extractJobForUser(
     method: "rules" | "ai"
     mergeMode?: MergeMode
     fetchIfEmpty?: boolean
+    analyze?: boolean
   }
 ) {
   let paste = input.paste ?? ""
@@ -85,37 +87,68 @@ export async function extractJobForUser(
     return { job: rules, fetchFailed }
   }
 
+  const model = await trackModelForUser(userId)
+
+  const ai = await extractJobWithAi({
+    model,
+    paste,
+    sourceUrl: fetchedUrl ?? input.sourceUrl,
+  })
+
+  const merged = mergeExtractedJobs(rules, ai, input.mergeMode ?? "fill")
+  if (!input.analyze) {
+    return { job: merged, fetchFailed }
+  }
+
+  try {
+    return {
+      job: { ...merged, analysis: await analyzeJobWithAi({ model, job: merged }) },
+      fetchFailed,
+    }
+  } catch {
+    return {
+      job: {
+        ...merged,
+        warnings: [
+          ...merged.warnings,
+          "Extracted the posting, but rating it failed. You can analyze it before saving.",
+        ],
+      },
+      fetchFailed,
+    }
+  }
+}
+
+async function trackModelForUser(userId: string) {
   const settings = await getUserSettingsOrDefault(userId)
   const publicSettings = toPublicSettings(settings)
   if (!publicSettings.trackEnabled || !settings.trackProvider) {
     throw new ApplicationError(
       "authorization",
-      "Turn on Track and add an API key in User settings to extract with AI."
+      "Turn on Track and add an API key in User settings to use AI on jobs."
     )
   }
   const apiKey = await decryptTrackApiKey(settings)
   if (!apiKey) {
     throw new ApplicationError(
       "authorization",
-      "Track needs an API key before AI extraction can run."
+      "Track needs an API key before AI can run on jobs."
     )
   }
-
-  const ai = await extractJobWithAi({
-    model: createTrackModel({
-      provider: settings.trackProvider,
-      apiKey,
-      model: settings.trackModel,
-      baseUrl: settings.trackBaseUrl,
-    }),
-    paste,
-    sourceUrl: fetchedUrl ?? input.sourceUrl,
+  return createTrackModel({
+    provider: settings.trackProvider,
+    apiKey,
+    model: settings.trackModel,
+    baseUrl: settings.trackBaseUrl,
   })
+}
 
-  return {
-    job: mergeExtractedJobs(rules, ai, input.mergeMode ?? "fill"),
-    fetchFailed,
-  }
+export async function analyzeExtractedJobForUser(
+  userId: string,
+  job: ExtractedJob
+) {
+  const model = await trackModelForUser(userId)
+  return analyzeJobWithAi({ model, job })
 }
 
 export async function createJobForRole(

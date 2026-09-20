@@ -11,6 +11,7 @@ import {
   jobCompensationSchema,
   jobExtrasSchema,
   jobSectionsSchema,
+  jobAnalysisSchema,
   type ExtractedJob,
   type FieldConfidence,
   type JobCompensation,
@@ -104,6 +105,10 @@ function toJob(row: JobRow, requirements: JobRequirement[] = []): Job {
     descriptionHtml: row.description_html,
     sections: parseJson(jobSectionsSchema, row.sections, emptyJobSections()),
     extras: parseJson(jobExtrasSchema, row.extras, emptyJobExtras()),
+    analysis:
+      row.analysis == null
+        ? null
+        : parseJson(jobAnalysisSchema, row.analysis, null),
     requirements,
   }
 }
@@ -195,6 +200,7 @@ export async function insert(
       description_html: job.descriptionHtml,
       sections: job.sections as Json,
       extras: job.extras as Json,
+      analysis: job.analysis as Json | null,
     })
     .select()
     .single()
@@ -251,6 +257,7 @@ function extractedJobColumns(job: ExtractedJob) {
     description_html: job.descriptionHtml,
     sections: job.sections as Json,
     extras: job.extras as Json,
+    analysis: job.analysis as Json | null,
   }
 }
 

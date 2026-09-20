@@ -9,7 +9,7 @@ import {
   writeStoredDetailsPanelSize,
 } from "@/lib/layout/details-panel-storage"
 
-const DETAILS_PANEL_IDS = ["roadmap-details", "node-config"] as const
+const DETAILS_PANEL_IDS = ["roadmap-details", "node-config", "jobs-filters"] as const
 
 export function useDetailsPanelLayout(userId: string) {
   const [detailsSize, setDetailsSize] = useState(DETAILS_PANEL_DEFAULT_SIZE)

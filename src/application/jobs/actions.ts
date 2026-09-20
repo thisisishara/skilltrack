@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import {
+  analyzeExtractedJobForUser,
   createJobForRole,
   deleteJobForRole,
   extractJobForUser,
@@ -10,7 +11,12 @@ import {
 } from "@/application/jobs/jobs-service"
 import { ApplicationError, type ApplicationErrorCode } from "@/domain/errors"
 import type { Job } from "@/domain/jobs/types"
-import { extractedJobSchema, type ExtractedJob } from "@/lib/jobs/extracted-job"
+import {
+  extractedJobSchema,
+  jobAnalysisSchema,
+  type ExtractedJob,
+  type JobAnalysis,
+} from "@/lib/jobs/extracted-job"
 import type { MergeMode } from "@/lib/jobs/merge-extracted"
 import { failAction } from "@/lib/errors/present"
 import { requireApprovedSession } from "@/lib/auth/session"
@@ -21,6 +27,10 @@ export type ExtractJobActionResult =
 
 export type SaveJobActionResult =
   | { ok: true; job: Job; updated: boolean }
+  | { ok: false; code: ApplicationErrorCode; message: string }
+
+export type AnalyzeJobActionResult =
+  | { ok: true; analysis: JobAnalysis }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 export type DeleteJobActionResult =
@@ -40,6 +50,7 @@ export async function extractJobAction(input: {
   method: "rules" | "ai"
   mergeMode?: MergeMode
   fetchIfEmpty?: boolean
+  analyze?: boolean
 }): Promise<ExtractJobActionResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
@@ -49,10 +60,34 @@ export async function extractJobAction(input: {
       method: input.method,
       mergeMode: input.mergeMode,
       fetchIfEmpty: input.fetchIfEmpty,
+      analyze: input.analyze,
     })
     return { ok: true, job: result.job, fetchFailed: result.fetchFailed }
   } catch (error) {
     return failAction(error, "jobs.extract_failed")
+  }
+}
+
+export async function analyzeJobAction(
+  job: ExtractedJob
+): Promise<AnalyzeJobActionResult> {
+  try {
+    const parsed = extractedJobSchema.safeParse(job)
+    if (!parsed.success) {
+      throw new ApplicationError("validation", "Extract the job first, then analyze it.")
+    }
+    const { applicationUser } = await requireApprovedSession()
+    const analysis = await analyzeExtractedJobForUser(
+      applicationUser.id,
+      parsed.data
+    )
+    const checked = jobAnalysisSchema.safeParse(analysis)
+    if (!checked.success) {
+      throw new ApplicationError("validation", "Analysis was not valid.")
+    }
+    return { ok: true, analysis: checked.data }
+  } catch (error) {
+    return failAction(error, "jobs.analyze_failed")
   }
 }
 

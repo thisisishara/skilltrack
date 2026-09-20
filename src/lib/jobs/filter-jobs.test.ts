@@ -123,5 +123,21 @@ describe("extractedJobFromSaved", () => {
     const extracted = extractedJobFromSaved(saved)
     expect(extracted.roleTitle).toBe("Applied AI Engineer")
     expect(extracted.sourceUrl).toBe(saved.sourceUrl)
+    expect(extracted.analysis).toBeNull()
+  })
+
+  it("keeps a saved posting rating", () => {
+    const saved = job({
+      analysis: {
+        rating: "strong",
+        summary: "Clear JD at a well-known company.",
+        company: "Google is named in the posting.",
+        posting: "Specific qualifications and responsibilities.",
+        location: "Madrid with a listed salary band.",
+        highlights: ["Named company", "Salary listed"],
+        concerns: ["Seniority listed as not applicable"],
+      },
+    })
+    expect(extractedJobFromSaved(saved).analysis?.rating).toBe("strong")
   })
 })

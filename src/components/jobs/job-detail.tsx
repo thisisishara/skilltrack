@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import { deleteJobAction } from "@/application/jobs/actions"
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import type { Job } from "@/domain/jobs/types"
+import { formatJobPostedDate, resolvePostedAt } from "@/lib/jobs/relative-posted-at"
 
 function SectionList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) {
@@ -33,6 +35,13 @@ export function JobDetail({ job }: { job: Job }) {
   const { beginNavigation } = useRolesUi()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const listHref = `/dashboard/roles/${job.roleId}/jobs`
+  const posted = formatJobPostedDate(
+    resolvePostedAt({
+      postedAt: job.postedAt,
+      postedRelative: job.postedRelative,
+      capturedAt: job.capturedAt,
+    })
+  )
 
   async function handleDelete() {
     const result = await deleteJobAction(job.roleId, job.id)
@@ -47,19 +56,21 @@ export function JobDetail({ job }: { job: Job }) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">
-            <Link href={listHref} className="hover:underline">
-              Jobs
-            </Link>
-          </p>
-          <h1 className="font-heading text-lg font-medium">{job.roleTitle}</h1>
-          <p className="text-sm text-muted-foreground">
-            {job.companyName}
-            {job.location ? ` · ${job.location}` : ""}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          render={
+            <Link
+              href={listHref}
+              prefetch
+              onClick={() => beginNavigation(listHref)}
+            />
+          }
+        >
+          <ArrowLeft data-icon="inline-start" />
+          Back to jobs
+        </Button>
         <Button
           type="button"
           variant="destructive"
@@ -67,6 +78,13 @@ export function JobDetail({ job }: { job: Job }) {
         >
           Delete
         </Button>
+      </div>
+      <div className="flex flex-col gap-1">
+        <h1 className="font-heading text-lg font-medium">{job.roleTitle}</h1>
+        <p className="text-sm text-muted-foreground">
+          {job.companyName}
+          {job.location ? ` · ${job.location}` : ""}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -76,15 +94,7 @@ export function JobDetail({ job }: { job: Job }) {
         {job.seniorityLevel ? (
           <Badge variant="outline">{job.seniorityLevel}</Badge>
         ) : null}
-        {job.postedRelative ? (
-          <Badge variant="outline">{job.postedRelative}</Badge>
-        ) : null}
-        {job.postedAt ? (
-          <Badge variant="outline">
-            {job.postedAtPrecision === "estimated" ? "~" : ""}
-            {job.postedAt}
-          </Badge>
-        ) : null}
+        {posted ? <Badge variant="outline">{posted}</Badge> : null}
         {job.applicantCount != null ? (
           <Badge variant="outline">{job.applicantCount} applicants</Badge>
         ) : null}

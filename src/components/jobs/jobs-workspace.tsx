@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Briefcase, Plus } from "lucide-react"
+import { Briefcase, Eye, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { JobsImportDialog } from "@/components/jobs/jobs-import-dialog"
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/empty"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import type { Job } from "@/domain/jobs/types"
+import { formatJobPostedDate, resolvePostedAt } from "@/lib/jobs/relative-posted-at"
 
 export function JobsWorkspace({
   roleId,
@@ -80,6 +82,13 @@ export function JobsWorkspace({
         <ul className="flex flex-col gap-3">
           {sorted.map((job) => {
             const href = `/dashboard/roles/${roleId}/jobs/${job.id}`
+            const posted = formatJobPostedDate(
+              resolvePostedAt({
+                postedAt: job.postedAt,
+                postedRelative: job.postedRelative,
+                capturedAt: job.capturedAt,
+              })
+            )
             return (
               <li key={job.id}>
                 <Card size="sm">
@@ -98,14 +107,28 @@ export function JobsWorkspace({
                       {job.companyName}
                       {job.location ? ` · ${job.location}` : ""}
                     </CardDescription>
+                    <CardAction>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        render={
+                          <Link
+                            href={href}
+                            prefetch
+                            onClick={() => beginNavigation(href)}
+                          />
+                        }
+                      >
+                        <Eye data-icon="inline-start" />
+                        View
+                      </Button>
+                    </CardAction>
                   </CardHeader>
                   <CardContent className="flex flex-wrap items-center gap-1.5">
                     {job.employmentType ? (
                       <Badge variant="secondary">{job.employmentType}</Badge>
                     ) : null}
-                    {job.postedRelative ? (
-                      <Badge variant="outline">{job.postedRelative}</Badge>
-                    ) : null}
+                    {posted ? <Badge variant="outline">{posted}</Badge> : null}
                     {job.salaryText ? (
                       <Badge variant="outline">{job.salaryText}</Badge>
                     ) : null}

@@ -4,7 +4,12 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 
 import { parseJobInput } from "@/lib/jobs/parse-linkedin"
-import { estimatePostedAt } from "@/lib/jobs/relative-posted-at"
+import {
+  estimatePostedAt,
+  formatJobPostedDate,
+  parseJobPostedDate,
+  resolvePostedAt,
+} from "@/lib/jobs/relative-posted-at"
 import { mergeExtractedJobs } from "@/lib/jobs/merge-extracted"
 import { emptyExtractedJob } from "@/lib/jobs/extracted-job"
 
@@ -76,6 +81,21 @@ describe("estimatePostedAt", () => {
     })
     expect(estimatePostedAt("1 month ago", capturedAt).precision).toBe("estimated")
     expect(estimatePostedAt("just now", capturedAt).postedAt).toBe("2026-09-20")
+  })
+
+  it("formats calendar dates instead of relative strings", () => {
+    const capturedAt = new Date("2026-09-20T12:00:00.000Z")
+    expect(formatJobPostedDate("2026-09-18")).toBe("18 Sep 2026")
+    expect(formatJobPostedDate("2026-08-20")).toBe("20 Aug 2026")
+    expect(parseJobPostedDate("20 Aug 2026")).toBe("2026-08-20")
+    expect(parseJobPostedDate("09/19/2026")).toBe("2026-09-19")
+    expect(parseJobPostedDate("19/09/2026")).toBe("2026-09-19")
+    expect(
+      resolvePostedAt({
+        postedRelative: "2 days ago",
+        capturedAt,
+      })
+    ).toBe("2026-09-18")
   })
 })
 

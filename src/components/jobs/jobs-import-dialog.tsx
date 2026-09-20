@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -41,16 +42,141 @@ import {
   emptyExtractedJob,
   type ExtractedJob,
 } from "@/lib/jobs/extracted-job"
+import {
+  formatJobPostedDate,
+  parseJobPostedDate,
+  resolvePostedAt,
+} from "@/lib/jobs/relative-posted-at"
 
-function listToText(values: string[]) {
-  return values.join("\n")
+function PostedDateField({
+  isoDate,
+  disabled,
+  onChange,
+}: {
+  isoDate: string | null
+  disabled?: boolean
+  onChange: (isoDate: string | null) => void
+}) {
+  const formatted = formatJobPostedDate(isoDate) ?? ""
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(formatted)
+
+  return (
+    <Field>
+      <FieldLabel htmlFor="job-posted">Posted</FieldLabel>
+      <Input
+        id="job-posted"
+        value={editing ? draft : formatted}
+        placeholder="20 Aug 2026"
+        disabled={disabled}
+        onFocus={() => {
+          setEditing(true)
+          setDraft(formatted)
+        }}
+        onChange={(event) => {
+          const next = event.target.value
+          setDraft(next)
+          if (!next.trim()) {
+            onChange(null)
+            return
+          }
+          const parsed = parseJobPostedDate(next)
+          if (parsed) {
+            onChange(parsed)
+          }
+        }}
+        onBlur={() => {
+          setEditing(false)
+          if (!draft.trim()) {
+            onChange(null)
+            setDraft("")
+            return
+          }
+          const parsed = parseJobPostedDate(draft)
+          if (parsed) {
+            onChange(parsed)
+            setDraft(formatJobPostedDate(parsed) ?? "")
+            return
+          }
+          setDraft(formatted)
+        }}
+      />
+      <FieldDescription>Use DD Mon YYYY, for example 20 Aug 2026.</FieldDescription>
+    </Field>
+  )
 }
 
-function textToList(value: string) {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
+function compactList(values: string[]) {
+  return values.map((value) => value.trim()).filter(Boolean)
+}
+
+function EditableStringList({
+  label,
+  values,
+  disabled,
+  addLabel,
+  onChange,
+}: {
+  label: string
+  values: string[]
+  disabled?: boolean
+  addLabel: string
+  onChange: (values: string[]) => void
+}) {
+  return (
+    <Field>
+      <FieldLabel>{label}</FieldLabel>
+      {values.length > 0 ? (
+        <ul className="flex flex-col gap-2">
+          {values.map((item, index) => (
+            <li key={`${label}-${index}`} className="flex items-start gap-2">
+              <span
+                aria-hidden
+                className="mt-3 size-1.5 shrink-0 rounded-full bg-muted-foreground"
+              />
+              <Textarea
+                value={item}
+                rows={2}
+                className="min-h-16 flex-1"
+                disabled={disabled}
+                onChange={(event) => {
+                  const next = [...values]
+                  next[index] = event.target.value
+                  onChange(next)
+                }}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                disabled={disabled}
+                aria-label={`Remove ${label} item ${index + 1}`}
+                onClick={() =>
+                  onChange(values.filter((_, itemIndex) => itemIndex !== index))
+                }
+              >
+                <Trash2 />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">No items yet.</p>
+      )}
+      <div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => onChange([...values, ""])}
+        >
+          <Plus data-icon="inline-start" />
+          {addLabel}
+        </Button>
+      </div>
+    </Field>
+  )
 }
 
 export function JobsImportDialog({
@@ -71,7 +197,7 @@ export function JobsImportDialog({
   const [preview, setPreview] = useState<ExtractedJob | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
   const [fetchFailed, setFetchFailed] = useState<string | null>(null)
-  const [replaceWithAi, setReplaceWithAi] = useState(false)
+  const [replaceWithAi, setReplaceWithAi] = useState(true)
   const [pending, setPending] = useState<"rules" | "ai" | "save" | null>(null)
   const [discardOpen, setDiscardOpen] = useState(false)
 
@@ -83,7 +209,7 @@ export function JobsImportDialog({
       setPreview(null)
       setWarnings([])
       setFetchFailed(null)
-      setReplaceWithAi(false)
+      setReplaceWithAi(true)
       setPending(null)
       setDiscardOpen(false)
     }
@@ -131,7 +257,20 @@ export function JobsImportDialog({
       return
     }
     setPending("save")
-    const result = await saveJobAction(roleId, preview)
+    const result = await saveJobAction(roleId, {
+      ...preview,
+      sections: {
+        ...preview.sections,
+        minimumQualifications: compactList(
+          preview.sections.minimumQualifications
+        ),
+        preferredQualifications: compactList(
+          preview.sections.preferredQualifications
+        ),
+        responsibilities: compactList(preview.sections.responsibilities),
+        skills: compactList(preview.sections.skills),
+      },
+    })
     setPending(null)
     if (!result.ok) {
       toast.error(result.message)
@@ -165,15 +304,15 @@ export function JobsImportDialog({
           onOpenChange(true)
         }}
       >
-        <DialogContent className="flex w-full flex-col sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Add job</DialogTitle>
             <DialogDescription>
               Paste LinkedIn View page source, or the job text. A job URL is
               optional and often blocked from the server.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
             <FieldGroup className="min-w-0">
               <Field>
                 <FieldLabel htmlFor="job-url">LinkedIn job URL</FieldLabel>
@@ -312,69 +451,76 @@ export function JobsImportDialog({
                     />
                   </Field>
                 </div>
-                <Field>
-                  <FieldLabel htmlFor="job-posted">Posted</FieldLabel>
-                  <Input
-                    id="job-posted"
-                    value={job.postedRelative ?? ""}
-                    onChange={(event) =>
-                      patch({ postedRelative: event.target.value || null })
-                    }
-                    disabled={busy}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="job-min-q">
-                    Minimum qualifications
-                  </FieldLabel>
-                  <Textarea
-                    id="job-min-q"
-                    value={listToText(job.sections.minimumQualifications)}
-                    onChange={(event) =>
-                      patch({
-                        sections: {
-                          ...job.sections,
-                          minimumQualifications: textToList(event.target.value),
-                        },
-                      })
-                    }
-                    disabled={busy}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="job-pref-q">
-                    Preferred qualifications
-                  </FieldLabel>
-                  <Textarea
-                    id="job-pref-q"
-                    value={listToText(job.sections.preferredQualifications)}
-                    onChange={(event) =>
-                      patch({
-                        sections: {
-                          ...job.sections,
-                          preferredQualifications: textToList(event.target.value),
-                        },
-                      })
-                    }
-                    disabled={busy}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="job-resp">Responsibilities</FieldLabel>
-                  <Textarea
-                    id="job-resp"
-                    value={listToText(job.sections.responsibilities)}
-                    onChange={(event) =>
-                      patch({
-                        sections: {
-                          ...job.sections,
-                          responsibilities: textToList(event.target.value),
-                        },
-                      })
-                    }
-                    disabled={busy}
-                  />
-                </Field>
+                <PostedDateField
+                  isoDate={resolvePostedAt({
+                    postedAt: job.postedAt,
+                    postedRelative: job.postedRelative,
+                    capturedAt: job.capturedAt,
+                  })}
+                  disabled={busy}
+                  onChange={(postedAt) =>
+                    patch({
+                      postedAt,
+                      postedAtPrecision: postedAt ? "exact" : "unknown",
+                    })
+                  }
+                />
+                <EditableStringList
+                  label="Minimum qualifications"
+                  addLabel="Add qualification"
+                  values={job.sections.minimumQualifications}
+                  disabled={busy}
+                  onChange={(minimumQualifications) =>
+                    patch({
+                      sections: {
+                        ...job.sections,
+                        minimumQualifications,
+                      },
+                    })
+                  }
+                />
+                <EditableStringList
+                  label="Preferred qualifications"
+                  addLabel="Add qualification"
+                  values={job.sections.preferredQualifications}
+                  disabled={busy}
+                  onChange={(preferredQualifications) =>
+                    patch({
+                      sections: {
+                        ...job.sections,
+                        preferredQualifications,
+                      },
+                    })
+                  }
+                />
+                <EditableStringList
+                  label="Responsibilities"
+                  addLabel="Add responsibility"
+                  values={job.sections.responsibilities}
+                  disabled={busy}
+                  onChange={(responsibilities) =>
+                    patch({
+                      sections: {
+                        ...job.sections,
+                        responsibilities,
+                      },
+                    })
+                  }
+                />
+                <EditableStringList
+                  label="Skills"
+                  addLabel="Add skill"
+                  values={job.sections.skills}
+                  disabled={busy}
+                  onChange={(skills) =>
+                    patch({
+                      sections: {
+                        ...job.sections,
+                        skills,
+                      },
+                    })
+                  }
+                />
                 <Field>
                   <FieldLabel htmlFor="job-desc">Description</FieldLabel>
                   <Textarea
@@ -390,7 +536,7 @@ export function JobsImportDialog({
               </FieldGroup>
             ) : null}
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button type="button" variant="outline" onClick={requestClose}>
               Cancel
             </Button>

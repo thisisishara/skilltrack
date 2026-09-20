@@ -1,0 +1,14 @@
+---
+description: Deploy SkillTrack (git push, Supabase migrations on dev/prod, Vercel CLI). Use when the user asks to ship, deploy, migrate DBs, or push to git/Vercel.
+alwaysApply: false
+---
+# Deployment
+
+When the user asks to deploy, ship, apply DB migrations, or push to Git/Vercel, follow **[docs/engineering/deployment.md](docs/engineering/deployment.md)**. Do not invent project refs, URLs, or CLI flags.
+
+## Use it intelligently
+
+- **Git:** Push regularly as part of a ship (`git push origin HEAD`) after an explicit commit request. Do not force-push `main`. Do not commit secrets, `.env.local`, or `.next`.
+- **Databases:** Only `npm run db:push` when there is **new** SQL in `supabase/migrations/` that is not on the remote. Apply **both** `skilltrack-dev` (`kttuqdmzakhvzahizunv`) and `skilltrack-prod` (`whtsvfcjqyflugocuwip`). Re-link to **dev** afterward. If remotes are current, skip DB entirely.
+- **Vercel:** Production is [https://skilltrack-lovat.vercel.app](https://skilltrack-lovat.vercel.app). Deploy with `npx vercel --prod --yes` from the repo root (add `--force` when a cache-busted alias is needed). GitHub Actions does not deploy.
+- **Do not** run migrations or production deploys for unrelated coding work. Read the doc for the exact command sequence.

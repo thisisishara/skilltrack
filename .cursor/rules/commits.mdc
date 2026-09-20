@@ -1,0 +1,49 @@
+---
+description: Conventional commits, PRs, required lint, and when to use [skip ci]. Use whenever creating a git commit or pull request.
+alwaysApply: false
+---
+# Commits and pull requests
+
+Commit **only when the user asks**. Before every commit, run `npm run lint` and **fix failures** (do not `--no-verify` unless the user explicitly asks). Prefer `npm run typecheck` as well when `src/` or tests change.
+
+## Conventional commits
+
+Format: `type(optional-scope): short summary`
+
+Use the **type** that matches the change. Scope is optional (`track`, `roadmap`, `auth`, `ci`).
+
+| Type | When |
+| --- | --- |
+| `feat` | User-facing behavior that did not exist before |
+| `fix` | Bug fix |
+| `docs` | Docs, ADRs, Cursor rules only |
+| `style` | Formatting; no logic change |
+| `refactor` | Restructure without changing behavior |
+| `perf` | Performance |
+| `test` | Tests only |
+| `chore` | Tooling, deps, housekeeping |
+| `ci` | GitHub Actions / workflow config |
+| `build` | Build or bundler config |
+| `revert` | Revert a previous commit (`revert: feat(track): …`) |
+
+Subject: imperative, ~72 chars, no trailing period. Body (optional): why, not a file list.
+
+Examples: `feat(track): persist chat per role`, `fix(roadmap): refresh notes after Track accept`, `docs: add deployment runbook`.
+
+## `[skip ci]`
+
+CI on `main` and PRs runs lint, typecheck, tests, migration check, build, and Playwright (see `.github/workflows/ci.yml`). GitHub skips that workflow when the commit message contains `[skip ci]` or `[ci skip]`.
+
+**Prefer `[skip ci]`** when the diff cannot affect the app or CI itself, for example:
+
+- Markdown / ADRs / `docs/`
+- `.cursor/rules/`
+- Comments or copy with no runtime impact
+
+Put it at the end of the subject or on its own body line: `docs: add deployment runbook [skip ci]`.
+
+**Do not skip CI** when anything in `src/`, tests, `supabase/migrations/`, `package.json` / lockfile, Playwright, Next config, or `.github/workflows/` changed. If unsure, run CI.
+
+## Pull requests
+
+Title uses the same conventional type as the commits (or the primary type if mixed). Body: short summary and a test plan. Do not force-push `main`. Use `gh pr create` when the user asks for a PR.

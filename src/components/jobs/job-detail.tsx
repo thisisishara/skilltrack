@@ -86,6 +86,7 @@ export function JobDetail({
         <Button
           variant="outline"
           size="sm"
+          nativeButton={false}
           render={
             <Link
               href={listHref}

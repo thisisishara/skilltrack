@@ -336,6 +336,7 @@ export function JobsWorkspace({
                                 variant="outline"
                                 size="sm"
                                 className="rounded-r-none"
+                                nativeButton={false}
                                 render={
                                   <Link
                                     href={href}

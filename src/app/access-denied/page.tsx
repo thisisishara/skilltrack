@@ -22,7 +22,11 @@ export default async function AccessDeniedPage({
         <AlertTitle>Access denied</AlertTitle>
         <AlertDescription>{description}</AlertDescription>
       </Alert>
-      <Button variant="outline" render={<Link href="/login" />}>
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={<Link href="/login" />}
+      >
         Back to login
       </Button>
     </main>

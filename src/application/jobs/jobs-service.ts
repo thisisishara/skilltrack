@@ -121,6 +121,30 @@ export async function extractJobForUser(
 export async function createJobForRole(
   userId: string,
   roleId: string,
+  job: ExtractedJob,
+  options?: { allowDuplicateExternalId?: boolean }
+) {
+  const role = await getRoleForUser(userId, roleId)
+  if (!role) {
+    throw new ApplicationError("not_found", "That role was not found.")
+  }
+  if (!job.companyName.trim() || !job.roleTitle.trim()) {
+    throw new ApplicationError(
+      "validation",
+      "Company and job title are required before saving."
+    )
+  }
+  const saved = await jobsRepository.insert(userId, roleId, job, options)
+  if (!saved) {
+    throw new ApplicationError("database", "Could not save that job.")
+  }
+  return saved
+}
+
+export async function updateJobForRole(
+  userId: string,
+  roleId: string,
+  jobId: string,
   job: ExtractedJob
 ) {
   const role = await getRoleForUser(userId, roleId)
@@ -133,7 +157,7 @@ export async function createJobForRole(
       "Company and job title are required before saving."
     )
   }
-  const saved = await jobsRepository.insert(userId, roleId, job)
+  const saved = await jobsRepository.updateForUser(userId, roleId, jobId, job)
   if (!saved) {
     throw new ApplicationError("database", "Could not save that job.")
   }

@@ -158,7 +158,8 @@ export async function getByIdForUser(userId: string, roleId: string, jobId: stri
 export async function insert(
   userId: string,
   roleId: string,
-  job: ExtractedJob
+  job: ExtractedJob,
+  options?: { allowDuplicateExternalId?: boolean }
 ) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
@@ -173,7 +174,7 @@ export async function insert(
       description: job.description.trim() || job.roleTitle.trim(),
       posted_at: job.postedAt,
       captured_at: job.capturedAt,
-      external_id: job.externalId,
+      external_id: options?.allowDuplicateExternalId ? null : job.externalId,
       company_url: job.companyUrl,
       location: job.location,
       locations: job.locations,
@@ -218,6 +219,89 @@ export async function insert(
   }
 
   return getByIdForUser(userId, roleId, data.id)
+}
+
+function extractedJobColumns(job: ExtractedJob) {
+  return {
+    company_name: job.companyName.trim(),
+    role_title: job.roleTitle.trim(),
+    source: job.source,
+    source_url: job.sourceUrl,
+    description: job.description.trim() || job.roleTitle.trim(),
+    posted_at: job.postedAt,
+    captured_at: job.capturedAt,
+    external_id: job.externalId,
+    company_url: job.companyUrl,
+    location: job.location,
+    locations: job.locations,
+    seniority_level: job.seniorityLevel,
+    employment_type: job.employmentType,
+    job_functions: job.jobFunctions,
+    industries: job.industries,
+    workplace_type: job.workplaceType,
+    applicant_count:
+      job.applicantCount == null ? null : Math.round(job.applicantCount),
+    salary_text: job.salaryText,
+    compensation: job.compensation as Json,
+    posted_relative: job.postedRelative,
+    posted_at_precision: job.postedAtPrecision,
+    extraction_method: job.extractionMethod,
+    extracted_at: job.extractedAt,
+    field_confidence: job.fieldConfidence as Json,
+    description_html: job.descriptionHtml,
+    sections: job.sections as Json,
+    extras: job.extras as Json,
+  }
+}
+
+export async function updateForUser(
+  userId: string,
+  roleId: string,
+  jobId: string,
+  job: ExtractedJob
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("job_descriptions")
+    .update(extractedJobColumns(job))
+    .eq("user_id", userId)
+    .eq("role_id", roleId)
+    .eq("id", jobId)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+  if (!data) {
+    throw new ApplicationError("not_found", "That job was not found.")
+  }
+
+  const { error: deleteReqError } = await supabase
+    .from("job_requirements")
+    .delete()
+    .eq("job_description_id", jobId)
+
+  if (deleteReqError) {
+    throwFromSupabase(deleteReqError)
+  }
+
+  const requirements = requirementsFromExtracted(job)
+  if (requirements.length > 0) {
+    const { error: reqError } = await supabase.from("job_requirements").insert(
+      requirements.map((requirement) => ({
+        job_description_id: jobId,
+        skill_name: requirement.skillName,
+        importance: requirement.importance,
+        source_section: requirement.sourceSection,
+      }))
+    )
+    if (reqError) {
+      throwFromSupabase(reqError)
+    }
+  }
+
+  return getByIdForUser(userId, roleId, jobId)
 }
 
 export async function deleteForUser(userId: string, roleId: string, jobId: string) {

@@ -3,10 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 import { deleteJobAction } from "@/application/jobs/actions"
+import { JobsImportDialog } from "@/components/jobs/jobs-import-dialog"
+import { SkillChipList } from "@/components/jobs/skill-chips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
@@ -30,9 +32,18 @@ function SectionList({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-export function JobDetail({ job }: { job: Job }) {
+export function JobDetail({
+  job,
+  jobs,
+  canUseAi,
+}: {
+  job: Job
+  jobs: Job[]
+  canUseAi: boolean
+}) {
   const router = useRouter()
   const { beginNavigation } = useRolesUi()
+  const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const listHref = `/dashboard/roles/${job.roleId}/jobs`
   const posted = formatJobPostedDate(
@@ -71,13 +82,19 @@ export function JobDetail({ job }: { job: Job }) {
           <ArrowLeft data-icon="inline-start" />
           Back to jobs
         </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={() => setDeleteOpen(true)}
-        >
-          Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil data-icon="inline-start" />
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setDeleteOpen(true)}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
       <div className="flex flex-col gap-1">
         <h1 className="font-heading text-lg font-medium">{job.roleTitle}</h1>
@@ -137,7 +154,7 @@ export function JobDetail({ job }: { job: Job }) {
         items={job.sections.preferredQualifications}
       />
       <SectionList title="Responsibilities" items={job.sections.responsibilities} />
-      <SectionList title="Skills" items={job.sections.skills} />
+      <SkillChipList items={job.sections.skills} />
 
       {job.extras.travel ? (
         <p className="text-sm">Travel: {job.extras.travel}</p>
@@ -150,6 +167,23 @@ export function JobDetail({ job }: { job: Job }) {
         </p>
       </section>
 
+      <JobsImportDialog
+        roleId={job.roleId}
+        jobs={jobs}
+        editingJob={job}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        canUseAi={canUseAi}
+        onSaved={(saved) => {
+          if (saved.id !== job.id) {
+            const href = `/dashboard/roles/${job.roleId}/jobs/${saved.id}`
+            beginNavigation(href)
+            router.push(href)
+            return
+          }
+          router.refresh()
+        }}
+      />
       <ConfirmDeleteAlert
         open={deleteOpen}
         onOpenChange={setDeleteOpen}

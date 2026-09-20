@@ -1,7 +1,8 @@
 import { Briefcase } from "lucide-react"
 
-import { getJobForRole } from "@/application/jobs/jobs-service"
+import { getJobForRole, listJobsForRole } from "@/application/jobs/jobs-service"
 import { getRoleForUser } from "@/application/roles/roles-service"
+import { getPublicUserSettings } from "@/application/user-settings/user-settings-service"
 import { JobDetail } from "@/components/jobs/job-detail"
 import {
   Empty,
@@ -40,7 +41,11 @@ export default async function RoleJobDetailPage({
     )
   }
 
-  const job = await getJobForRole(applicationUser.id, role.id, jobId)
+  const [job, jobs, settings] = await Promise.all([
+    getJobForRole(applicationUser.id, role.id, jobId),
+    listJobsForRole(applicationUser.id, role.id),
+    getPublicUserSettings(applicationUser.id),
+  ])
   if (!job) {
     return (
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6">
@@ -61,7 +66,11 @@ export default async function RoleJobDetailPage({
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 sm:p-6">
-      <JobDetail job={job} />
+      <JobDetail
+        job={job}
+        jobs={jobs}
+        canUseAi={settings.trackEnabled && settings.hasApiKey}
+      />
     </main>
   )
 }

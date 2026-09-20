@@ -8,16 +8,6 @@ import { cn } from "cn"
 import type { RoleActionResult } from "@/application/roles/actions"
 import { ImportJsonFields } from "@/components/roles/import-json-fields"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -62,7 +52,6 @@ export function CreateRoleDialog({
   const [mode, setMode] = useState<CreateMode>("empty")
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [discardOpen, setDiscardOpen] = useState(false)
   const { isOver: isFileOver, dropProps } = useJsonFileDrop((text) => {
     setMode("import")
     setJson(text)
@@ -79,20 +68,11 @@ export function CreateRoleDialog({
       setMode("empty")
       setError(null)
       setPending(false)
-      setDiscardOpen(false)
     }
   }, [open])
 
-  const dirty = Boolean(
-    name.trim() || json.trim() || brief.trim() || mode !== "empty" || pending
-  )
-
   function requestClose() {
     if (pending) {
-      return
-    }
-    if (dirty) {
-      setDiscardOpen(true)
       return
     }
     onOpenChange(false)
@@ -133,18 +113,17 @@ export function CreateRoleDialog({
   }
 
   return (
-    <>
-      <Dialog
-        form
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) {
-            requestClose()
-            return
-          }
-          onOpenChange(true)
-        }}
-      >
+    <Dialog
+      form
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          requestClose()
+          return
+        }
+        onOpenChange(true)
+      }}
+    >
         <DialogContent
           className={cn(
             "flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl",
@@ -275,27 +254,5 @@ export function CreateRoleDialog({
           </form>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard this role?</AlertDialogTitle>
-            <AlertDialogDescription>
-              What you entered will not be saved.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setDiscardOpen(false)
-                onOpenChange(false)
-              }}
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   )
 }

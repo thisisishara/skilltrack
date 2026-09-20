@@ -1,25 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { CalendarIcon, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "cn"
 
 import {
   extractJobAction,
   saveJobAction,
 } from "@/application/jobs/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -36,17 +28,47 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
+import { SkillChipInput } from "@/components/jobs/skill-chips"
 import type { Job } from "@/domain/jobs/types"
 import {
   emptyExtractedJob,
   type ExtractedJob,
 } from "@/lib/jobs/extracted-job"
+import { extractedJobFromSaved } from "@/lib/jobs/from-saved-job"
 import {
   formatJobPostedDate,
-  parseJobPostedDate,
   resolvePostedAt,
 } from "@/lib/jobs/relative-posted-at"
+import {
+  findSavedJobForSource,
+  formatJobMatchLine,
+  looksLikeSamePosting,
+} from "@/lib/jobs/find-saved-job"
+
+function dateFromIso(iso: string | null) {
+  if (!iso) {
+    return undefined
+  }
+  const [year, month, day] = iso.split("-").map(Number)
+  if (!year || !month || !day) {
+    return undefined
+  }
+  return new Date(year, month - 1, day)
+}
+
+function isoFromLocalDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
 
 function PostedDateField({
   isoDate,
@@ -57,51 +79,44 @@ function PostedDateField({
   disabled?: boolean
   onChange: (isoDate: string | null) => void
 }) {
-  const formatted = formatJobPostedDate(isoDate) ?? ""
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(formatted)
+  const [open, setOpen] = useState(false)
+  const selected = dateFromIso(isoDate)
+  const formatted = formatJobPostedDate(isoDate)
 
   return (
     <Field>
       <FieldLabel htmlFor="job-posted">Posted</FieldLabel>
-      <Input
-        id="job-posted"
-        value={editing ? draft : formatted}
-        placeholder="20 Aug 2026"
-        disabled={disabled}
-        onFocus={() => {
-          setEditing(true)
-          setDraft(formatted)
-        }}
-        onChange={(event) => {
-          const next = event.target.value
-          setDraft(next)
-          if (!next.trim()) {
-            onChange(null)
-            return
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          render={
+            <Button
+              id="job-posted"
+              type="button"
+              variant="outline"
+              disabled={disabled}
+              className={cn(
+                "w-full justify-start",
+                !formatted && "text-muted-foreground"
+              )}
+            />
           }
-          const parsed = parseJobPostedDate(next)
-          if (parsed) {
-            onChange(parsed)
-          }
-        }}
-        onBlur={() => {
-          setEditing(false)
-          if (!draft.trim()) {
-            onChange(null)
-            setDraft("")
-            return
-          }
-          const parsed = parseJobPostedDate(draft)
-          if (parsed) {
-            onChange(parsed)
-            setDraft(formatJobPostedDate(parsed) ?? "")
-            return
-          }
-          setDraft(formatted)
-        }}
-      />
-      <FieldDescription>Use DD Mon YYYY, for example 20 Aug 2026.</FieldDescription>
+        >
+          <CalendarIcon data-icon="inline-start" />
+          {formatted ?? "Pick a date"}
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={selected}
+            defaultMonth={selected}
+            captionLayout="dropdown"
+            onSelect={(date) => {
+              onChange(date ? isoFromLocalDate(date) : null)
+              setOpen(false)
+            }}
+          />
+        </PopoverContent>
+      </Popover>
     </Field>
   )
 }
@@ -123,53 +138,83 @@ function EditableStringList({
   addLabel: string
   onChange: (values: string[]) => void
 }) {
+  function updateAt(index: number, value: string) {
+    const next = [...values]
+    next[index] = value
+    onChange(next)
+  }
+
+  function removeAt(index: number) {
+    onChange(values.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  function addItem() {
+    onChange([...values, ""])
+  }
+
   return (
     <Field>
       <FieldLabel>{label}</FieldLabel>
       {values.length > 0 ? (
-        <ul className="flex flex-col gap-2">
-          {values.map((item, index) => (
-            <li key={`${label}-${index}`} className="flex items-start gap-2">
-              <span
-                aria-hidden
-                className="mt-3 size-1.5 shrink-0 rounded-full bg-muted-foreground"
-              />
-              <Textarea
-                value={item}
-                rows={2}
-                className="min-h-16 flex-1"
-                disabled={disabled}
-                onChange={(event) => {
-                  const next = [...values]
-                  next[index] = event.target.value
-                  onChange(next)
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                disabled={disabled}
-                aria-label={`Remove ${label} item ${index + 1}`}
-                onClick={() =>
-                  onChange(values.filter((_, itemIndex) => itemIndex !== index))
-                }
+        <div className="overflow-hidden rounded-lg border bg-transparent dark:bg-input/30">
+          <ol className="flex flex-col divide-y">
+            {values.map((item, index) => (
+              <li
+                key={`${label}-${index}`}
+                className="group/item flex items-start"
               >
-                <Trash2 />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-muted-foreground">No items yet.</p>
-      )}
-      <div>
+                <span
+                  aria-hidden
+                  className="w-8 shrink-0 pt-2.5 text-center text-xs tabular-nums text-muted-foreground"
+                >
+                  {index + 1}
+                </span>
+                <Textarea
+                  value={item}
+                  rows={1}
+                  disabled={disabled}
+                  placeholder="Write this item…"
+                  className="min-h-8 flex-1 resize-none rounded-none border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0 dark:bg-transparent"
+                  onChange={(event) => updateAt(index, event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault()
+                      if (index === values.length - 1) {
+                        addItem()
+                      }
+                    }
+                    if (
+                      event.key === "Backspace" &&
+                      item.length === 0 &&
+                      values.length > 0
+                    ) {
+                      event.preventDefault()
+                      removeAt(index)
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={disabled}
+                  className="mt-1 mr-1 opacity-0 group-hover/item:opacity-100 group-focus-within/item:opacity-100"
+                  aria-label={`Remove ${label} item ${index + 1}`}
+                  onClick={() => removeAt(index)}
+                >
+                  <Trash2 />
+                </Button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+      <div className="flex justify-end">
         <Button
           type="button"
-          variant="outline"
           size="sm"
           disabled={disabled}
-          onClick={() => onChange([...values, ""])}
+          onClick={addItem}
         >
           <Plus data-icon="inline-start" />
           {addLabel}
@@ -181,16 +226,20 @@ function EditableStringList({
 
 export function JobsImportDialog({
   roleId,
+  jobs,
   open,
   onOpenChange,
   canUseAi,
   onSaved,
+  editingJob = null,
 }: {
   roleId: string
+  jobs: Job[]
   open: boolean
   onOpenChange: (open: boolean) => void
   canUseAi: boolean
   onSaved: (job: Job) => void
+  editingJob?: Job | null
 }) {
   const [sourceUrl, setSourceUrl] = useState("")
   const [paste, setPaste] = useState("")
@@ -199,32 +248,22 @@ export function JobsImportDialog({
   const [fetchFailed, setFetchFailed] = useState<string | null>(null)
   const [replaceWithAi, setReplaceWithAi] = useState(true)
   const [pending, setPending] = useState<"rules" | "ai" | "save" | null>(null)
-  const [discardOpen, setDiscardOpen] = useState(false)
 
   useEffect(() => {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSourceUrl("")
+      setSourceUrl(editingJob?.sourceUrl ?? "")
       setPaste("")
-      setPreview(null)
+      setPreview(editingJob ? extractedJobFromSaved(editingJob) : null)
       setWarnings([])
       setFetchFailed(null)
       setReplaceWithAi(true)
       setPending(null)
-      setDiscardOpen(false)
     }
-  }, [open])
-
-  const dirty = Boolean(
-    sourceUrl.trim() || paste.trim() || preview || pending
-  )
+  }, [open, editingJob])
 
   function requestClose() {
     if (pending) {
-      return
-    }
-    if (dirty) {
-      setDiscardOpen(true)
       return
     }
     onOpenChange(false)
@@ -252,12 +291,21 @@ export function JobsImportDialog({
     }
   }
 
-  async function save() {
+  const existing = findSavedJobForSource(jobs, {
+    sourceUrl: sourceUrl.trim() || preview?.sourceUrl,
+    externalId: preview?.externalId,
+  })
+  const likelySame =
+    preview && existing
+      ? looksLikeSamePosting(existing, preview)
+      : existing != null
+
+  async function save(mode: "new" | "update") {
     if (!preview) {
       return
     }
     setPending("save")
-    const result = await saveJobAction(roleId, {
+    const payload = {
       ...preview,
       sections: {
         ...preview.sections,
@@ -270,6 +318,11 @@ export function JobsImportDialog({
         responsibilities: compactList(preview.sections.responsibilities),
         skills: compactList(preview.sections.skills),
       },
+    }
+    const result = await saveJobAction(roleId, payload, {
+      replaceJobId:
+        mode === "update" ? (editingJob?.id ?? existing?.id) : null,
+      saveAsNew: mode === "new" && Boolean(existing || editingJob),
     })
     setPending(null)
     if (!result.ok) {
@@ -278,6 +331,7 @@ export function JobsImportDialog({
     }
     onOpenChange(false)
     onSaved(result.job)
+    toast.success(result.updated ? "Job updated." : "Job saved.")
   }
 
   const busy = pending !== null
@@ -292,24 +346,24 @@ export function JobsImportDialog({
   }
 
   return (
-    <>
-      <Dialog
-        form
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) {
-            requestClose()
-            return
-          }
-          onOpenChange(true)
-        }}
-      >
+    <Dialog
+      form
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          requestClose()
+          return
+        }
+        onOpenChange(true)
+      }}
+    >
         <DialogContent className="flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl">
           <DialogHeader className="shrink-0">
-            <DialogTitle>Add job</DialogTitle>
+            <DialogTitle>{editingJob ? "Update job" : "Add job"}</DialogTitle>
             <DialogDescription>
-              Paste LinkedIn View page source, or the job text. A job URL is
-              optional and often blocked from the server.
+              {editingJob
+                ? "Edit the saved posting, or extract again from the LinkedIn URL or page source."
+                : "Paste LinkedIn View page source, or the job text. A job URL is optional and often blocked from the server."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
@@ -346,7 +400,10 @@ export function JobsImportDialog({
                 disabled={busy || (!paste.trim() && !sourceUrl.trim())}
                 onClick={() => void extract("rules")}
               >
-                {pending === "rules" ? "Extracting…" : "Extract"}
+                {pending === "rules" ? (
+                  <Spinner data-icon="inline-start" />
+                ) : null}
+                Extract
               </Button>
               <Button
                 type="button"
@@ -356,7 +413,10 @@ export function JobsImportDialog({
                 }
                 onClick={() => void extract("ai")}
               >
-                {pending === "ai" ? "Extracting with AI…" : "Extract with AI"}
+                {pending === "ai" ? (
+                  <Spinner data-icon="inline-start" />
+                ) : null}
+                Extract with AI
               </Button>
             </div>
             {!canUseAi ? (
@@ -365,16 +425,19 @@ export function JobsImportDialog({
                 settings.
               </p>
             ) : (
-              <label className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="job-ai-overwrite"
                   checked={replaceWithAi}
                   onCheckedChange={(checked) =>
                     setReplaceWithAi(checked === true)
                   }
                   disabled={busy}
                 />
-                Overwrite fields already found when using AI
-              </label>
+                <FieldLabel htmlFor="job-ai-overwrite" className="font-normal">
+                  Overwrite fields already found when using AI
+                </FieldLabel>
+              </div>
             )}
             {fetchFailed ? (
               <Alert>
@@ -391,6 +454,26 @@ export function JobsImportDialog({
                       <li key={warning}>{warning}</li>
                     ))}
                   </ul>
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            {existing && existing.id !== editingJob?.id ? (
+              <Alert>
+                <AlertTitle>This link is already saved</AlertTitle>
+                <AlertDescription>
+                  <p>
+                    Saved posting: {formatJobMatchLine(existing)}. This does
+                    not block you. LinkedIn can reuse a job URL, so check
+                    whether this is the same posting before updating.
+                  </p>
+                  {preview ? (
+                    <p>
+                      This extraction: {formatJobMatchLine(preview)}
+                      {likelySame
+                        ? " Title and company match the saved job."
+                        : " Title or company differs from the saved job."}
+                    </p>
+                  ) : null}
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -507,9 +590,7 @@ export function JobsImportDialog({
                     })
                   }
                 />
-                <EditableStringList
-                  label="Skills"
-                  addLabel="Add skill"
+                <SkillChipInput
                   values={job.sections.skills}
                   disabled={busy}
                   onChange={(skills) =>
@@ -540,37 +621,46 @@ export function JobsImportDialog({
             <Button type="button" variant="outline" onClick={requestClose}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              disabled={busy || !preview}
-              onClick={() => void save()}
-            >
-              {pending === "save" ? "Saving…" : "Save job"}
-            </Button>
+            {(existing || editingJob) && preview ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void save("new")}
+                >
+                  {pending === "save" ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : null}
+                  Save as new
+                </Button>
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void save("update")}
+                >
+                  {pending === "save" ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : null}
+                  {editingJob && (!existing || existing.id === editingJob.id)
+                    ? "Save changes"
+                    : "Update existing"}
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                disabled={busy || !preview}
+                onClick={() => void save("new")}
+              >
+                {pending === "save" ? (
+                  <Spinner data-icon="inline-start" />
+                ) : null}
+                Save job
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard this job?</AlertDialogTitle>
-            <AlertDialogDescription>
-              What you entered will not be saved.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setDiscardOpen(false)
-                onOpenChange(false)
-              }}
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   )
 }

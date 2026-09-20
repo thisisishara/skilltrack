@@ -444,7 +444,7 @@ function decodeCodeComment(value: string) {
   return match?.[1] ?? null
 }
 
-function jobIdFromUrl(value: string | null | undefined) {
+export function jobIdFromUrl(value: string | null | undefined) {
   if (!value) {
     return null
   }

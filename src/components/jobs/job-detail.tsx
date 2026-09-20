@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
-import { deleteJobAction } from "@/application/jobs/actions"
+import { deleteJobAction, analyzeSavedJobAction } from "@/application/jobs/actions"
 import { JobsImportDialog } from "@/components/jobs/jobs-import-dialog"
 import { JobAnalysisCard } from "@/components/jobs/job-analysis-card"
 import { SkillChipList } from "@/components/jobs/skill-chips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
+import { Spinner } from "@/components/ui/spinner"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import type { Job } from "@/domain/jobs/types"
 import { formatJobPostedDate, resolvePostedAt } from "@/lib/jobs/relative-posted-at"
@@ -46,6 +47,7 @@ export function JobDetail({
   const { beginNavigation } = useRolesUi()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
   const listHref = `/dashboard/roles/${job.roleId}/jobs`
   const posted = formatJobPostedDate(
     resolvePostedAt({
@@ -64,6 +66,18 @@ export function JobDetail({
     toast.success("Job deleted.")
     beginNavigation(listHref)
     router.push(listHref)
+  }
+
+  async function handleAnalyze() {
+    setAnalyzing(true)
+    const result = await analyzeSavedJobAction(job.roleId, job.id)
+    setAnalyzing(false)
+    if (!result.ok) {
+      toast.error(result.message)
+      return
+    }
+    toast.success("Job rated.")
+    router.refresh()
   }
 
   return (
@@ -118,7 +132,31 @@ export function JobDetail({
         ) : null}
       </div>
 
-      {job.analysis ? <JobAnalysisCard analysis={job.analysis} /> : null}
+      {job.analysis ? (
+        <JobAnalysisCard analysis={job.analysis} />
+      ) : (
+        <section className="flex flex-col gap-3 rounded-lg border p-3">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-sm font-medium">Posting rating</h2>
+            <p className="text-sm text-muted-foreground">
+              {canUseAi
+                ? "This job has no rating yet. Analyze it from the saved posting."
+                : "Ratings need Track enabled with an API key in User settings."}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            disabled={!canUseAi || analyzing}
+            onClick={() => void handleAnalyze()}
+          >
+            {analyzing ? <Spinner data-icon="inline-start" /> : null}
+            Analyze job
+          </Button>
+        </section>
+      )}
 
       {job.sourceUrl ? (
         <p className="text-sm">

@@ -10,6 +10,7 @@ import {
 } from "@/application/user-settings/user-settings-service"
 import { ApplicationError } from "@/domain/errors"
 import type { ExtractedJob } from "@/lib/jobs/extracted-job"
+import { extractedJobFromSaved } from "@/lib/jobs/from-saved-job"
 import { extractJobWithAi } from "@/lib/jobs/extract-with-ai"
 import { analyzeJobWithAi } from "@/lib/jobs/analyze-job"
 import { tryFetchLinkedInJobHtml } from "@/lib/jobs/fetch-linkedin"
@@ -149,6 +150,31 @@ export async function analyzeExtractedJobForUser(
 ) {
   const model = await trackModelForUser(userId)
   return analyzeJobWithAi({ model, job })
+}
+
+export async function analyzeSavedJobForRole(
+  userId: string,
+  roleId: string,
+  jobId: string
+) {
+  const saved = await getJobForRole(userId, roleId, jobId)
+  if (!saved) {
+    throw new ApplicationError("not_found", "That job was not found.")
+  }
+  const analysis = await analyzeExtractedJobForUser(
+    userId,
+    extractedJobFromSaved(saved)
+  )
+  const updated = await jobsRepository.updateAnalysisForUser(
+    userId,
+    roleId,
+    jobId,
+    analysis
+  )
+  if (!updated) {
+    throw new ApplicationError("database", "Could not save that rating.")
+  }
+  return updated
 }
 
 export async function createJobForRole(

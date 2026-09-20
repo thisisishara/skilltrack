@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import {
   analyzeExtractedJobForUser,
+  analyzeSavedJobForRole,
   createJobForRole,
   deleteJobForRole,
   extractJobForUser,
@@ -31,6 +32,10 @@ export type SaveJobActionResult =
 
 export type AnalyzeJobActionResult =
   | { ok: true; analysis: JobAnalysis }
+  | { ok: false; code: ApplicationErrorCode; message: string }
+
+export type AnalyzeSavedJobActionResult =
+  | { ok: true; job: Job }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
 export type DeleteJobActionResult =
@@ -86,6 +91,27 @@ export async function analyzeJobAction(
       throw new ApplicationError("validation", "Analysis was not valid.")
     }
     return { ok: true, analysis: checked.data }
+  } catch (error) {
+    return failAction(error, "jobs.analyze_failed")
+  }
+}
+
+export async function analyzeSavedJobAction(
+  roleId: string,
+  jobId: string
+): Promise<AnalyzeSavedJobActionResult> {
+  try {
+    if (!roleId || !jobId) {
+      throw new ApplicationError("validation", "Select a job first.")
+    }
+    const { applicationUser } = await requireApprovedSession()
+    const job = await analyzeSavedJobForRole(
+      applicationUser.id,
+      roleId,
+      jobId
+    )
+    revalidateJobs(roleId, jobId)
+    return { ok: true, job }
   } catch (error) {
     return failAction(error, "jobs.analyze_failed")
   }

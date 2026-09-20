@@ -14,6 +14,7 @@ import {
   jobAnalysisSchema,
   type ExtractedJob,
   type FieldConfidence,
+  type JobAnalysis,
   type JobCompensation,
   type JobExtras,
   type JobSections,
@@ -306,6 +307,32 @@ export async function updateForUser(
     if (reqError) {
       throwFromSupabase(reqError)
     }
+  }
+
+  return getByIdForUser(userId, roleId, jobId)
+}
+
+export async function updateAnalysisForUser(
+  userId: string,
+  roleId: string,
+  jobId: string,
+  analysis: JobAnalysis
+) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("job_descriptions")
+    .update({ analysis: analysis as Json })
+    .eq("user_id", userId)
+    .eq("role_id", roleId)
+    .eq("id", jobId)
+    .select("id")
+    .maybeSingle()
+
+  if (error) {
+    throwFromSupabase(error)
+  }
+  if (!data) {
+    throw new ApplicationError("not_found", "That job was not found.")
   }
 
   return getByIdForUser(userId, roleId, jobId)

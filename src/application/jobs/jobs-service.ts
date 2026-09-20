@@ -3,21 +3,25 @@ import "server-only"
 import { cache } from "react"
 
 import { getRoleForUser } from "@/application/roles/roles-service"
+import { listTasksForRole } from "@/application/tasks/tasks-service"
+import { listTopicsForRole } from "@/application/topics/topics-service"
 import {
   decryptTrackApiKey,
   getUserSettingsOrDefault,
   toPublicSettings,
 } from "@/application/user-settings/user-settings-service"
 import { ApplicationError } from "@/domain/errors"
+import { roadmapProgress } from "@/domain/progress/progress"
+import { isSkillNode } from "@/domain/topics/kind"
+import { createTrackModel } from "@/lib/ai/providers"
 import type { ExtractedJob } from "@/lib/jobs/extracted-job"
+import { analyzeJobWithAi, type JobAnalysisExpertise } from "@/lib/jobs/analyze-job"
 import { extractedJobFromSaved } from "@/lib/jobs/from-saved-job"
 import { extractJobWithAi } from "@/lib/jobs/extract-with-ai"
-import { analyzeJobWithAi } from "@/lib/jobs/analyze-job"
 import { tryFetchLinkedInJobHtml } from "@/lib/jobs/fetch-linkedin"
 import { mergeExtractedJobs, type MergeMode } from "@/lib/jobs/merge-extracted"
 import { parseJobInput } from "@/lib/jobs/parse-linkedin"
 import { assertPasteSize } from "@/lib/jobs/paste-size"
-import { createTrackModel } from "@/lib/ai/providers"
 import * as jobsRepository from "@/repositories/jobs/jobs-repository"
 
 export const listJobsForRole = cache(async (userId: string, roleId: string) => {
@@ -47,6 +51,7 @@ export async function extractJobForUser(
     mergeMode?: MergeMode
     fetchIfEmpty?: boolean
     analyze?: boolean
+    roleId?: string
   }
 ) {
   let paste = input.paste ?? ""
@@ -103,7 +108,14 @@ export async function extractJobForUser(
 
   try {
     return {
-      job: { ...merged, analysis: await analyzeJobWithAi({ model, job: merged }) },
+      job: {
+        ...merged,
+        analysis: await analyzeJobWithAi({
+          model,
+          job: merged,
+          expertise: await expertiseForRole(userId, input.roleId),
+        }),
+      },
       fetchFailed,
     }
   } catch {
@@ -144,12 +156,43 @@ async function trackModelForUser(userId: string) {
   })
 }
 
+async function expertiseForRole(
+  userId: string,
+  roleId: string | undefined
+): Promise<JobAnalysisExpertise | null> {
+  if (!roleId) {
+    return null
+  }
+  const role = await getRoleForUser(userId, roleId)
+  if (!role) {
+    return null
+  }
+  const [topics, tasks] = await Promise.all([
+    listTopicsForRole(userId, role.id),
+    listTasksForRole(userId, role.id),
+  ])
+  const progress = roadmapProgress(tasks)
+  return {
+    roleName: role.name,
+    roleDescription: role.description,
+    roadmapPercent: progress.percent,
+    completedTasks: progress.completed,
+    totalTasks: progress.total,
+    skillTopicCount: topics.filter(isSkillNode).length,
+  }
+}
+
 export async function analyzeExtractedJobForUser(
   userId: string,
-  job: ExtractedJob
+  job: ExtractedJob,
+  roleId?: string
 ) {
   const model = await trackModelForUser(userId)
-  return analyzeJobWithAi({ model, job })
+  return analyzeJobWithAi({
+    model,
+    job,
+    expertise: await expertiseForRole(userId, roleId),
+  })
 }
 
 export async function analyzeSavedJobForRole(
@@ -163,7 +206,8 @@ export async function analyzeSavedJobForRole(
   }
   const analysis = await analyzeExtractedJobForUser(
     userId,
-    extractedJobFromSaved(saved)
+    extractedJobFromSaved(saved),
+    roleId
   )
   const updated = await jobsRepository.updateAnalysisForUser(
     userId,

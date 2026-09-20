@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { formatSalaryAim } from "@/lib/jobs/format-compensation"
 import type { JobAnalysis, JobAnalysisRating } from "@/lib/jobs/extracted-job"
 
 const RATING_LABEL: Record<JobAnalysisRating, string> = {
@@ -48,6 +49,20 @@ export function JobAnalysisCard({ analysis }: { analysis: JobAnalysis }) {
           <div>
             <dt className="font-medium">Location</dt>
             <dd className="text-muted-foreground">{analysis.location}</dd>
+          </div>
+        ) : null}
+        {analysis.compensationAdvice ? (
+          <div>
+            <dt className="font-medium">Salary to aim for</dt>
+            <dd className="text-muted-foreground">
+              {formatSalaryAim(analysis.compensationAdvice) ?? "Unknown"}
+              {analysis.compensationAdvice.rationale ? (
+                <>
+                  {formatSalaryAim(analysis.compensationAdvice) ? " — " : ". "}
+                  {analysis.compensationAdvice.rationale}
+                </>
+              ) : null}
+            </dd>
           </div>
         ) : null}
       </dl>

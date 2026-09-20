@@ -42,7 +42,22 @@ export const JOB_ANALYSIS_RATINGS = [
 ] as const
 export type JobAnalysisRating = (typeof JOB_ANALYSIS_RATINGS)[number]
 
-export const jobAnalysisSchema = z.object({
+export const COMPENSATION_PERIODS = ["year", "month", "hour"] as const
+export type CompensationPeriod = (typeof COMPENSATION_PERIODS)[number]
+
+export const SALARY_AIM_PERIODS = [...COMPENSATION_PERIODS, "unknown"] as const
+export type SalaryAimPeriod = (typeof SALARY_AIM_PERIODS)[number]
+
+export const compensationAdviceSchema = z.object({
+  target: z.number().nullable(),
+  currency: z.string().nullable(),
+  period: z.enum(SALARY_AIM_PERIODS),
+  rationale: z.string(),
+})
+export type CompensationAdvice = z.infer<typeof compensationAdviceSchema>
+
+/** Schema sent to generateObject: no optional keys. */
+export const aiJobAnalysisSchema = z.object({
   rating: z.enum(JOB_ANALYSIS_RATINGS),
   summary: z.string(),
   company: z.string(),
@@ -50,14 +65,24 @@ export const jobAnalysisSchema = z.object({
   location: z.string(),
   highlights: z.array(z.string()),
   concerns: z.array(z.string()),
+  compensationAdvice: compensationAdviceSchema,
+})
+
+export const jobAnalysisSchema = aiJobAnalysisSchema.extend({
+  compensationAdvice: compensationAdviceSchema.nullable().default(null),
 })
 export type JobAnalysis = z.infer<typeof jobAnalysisSchema>
 
-export const jobCompensationSchema = z.object({
+export const aiJobCompensationSchema = z.object({
   min: z.number().nullable(),
   max: z.number().nullable(),
   currency: z.string().nullable(),
+  period: z.enum(COMPENSATION_PERIODS).nullable(),
   bonusText: z.string().nullable(),
+})
+
+export const jobCompensationSchema = aiJobCompensationSchema.extend({
+  period: z.enum(COMPENSATION_PERIODS).nullable().default(null),
 })
 
 export const jobSectionsSchema = z.object({
@@ -92,7 +117,7 @@ export const aiExtractedJobSchema = z.object({
   workplaceType: z.enum(WORKPLACE_TYPES),
   applicantCount: z.number().nullable(),
   salaryText: z.string().nullable(),
-  compensation: jobCompensationSchema,
+  compensation: aiJobCompensationSchema,
   postedRelative: z.string().nullable(),
   postedAt: z.string().nullable(),
   postedAtPrecision: z.enum(POSTED_AT_PRECISIONS),
@@ -141,7 +166,7 @@ export type ExtractedJob = z.infer<typeof extractedJobSchema>
 export type AiExtractedJob = z.infer<typeof aiExtractedJobSchema>
 
 export function emptyJobCompensation(): JobCompensation {
-  return { min: null, max: null, currency: null, bonusText: null }
+  return { min: null, max: null, currency: null, period: null, bonusText: null }
 }
 
 export function emptyJobExtras(): JobExtras {
@@ -180,12 +205,7 @@ export function emptyExtractedJob(nowIso: string): ExtractedJob {
     workplaceType: "unknown",
     applicantCount: null,
     salaryText: null,
-    compensation: {
-      min: null,
-      max: null,
-      currency: null,
-      bonusText: null,
-    },
+    compensation: emptyJobCompensation(),
     postedRelative: null,
     postedAt: null,
     postedAtPrecision: "unknown",

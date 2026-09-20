@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 import type { Job } from "@/domain/jobs/types"
 import { formatJobPostedDate, resolvePostedAt } from "@/lib/jobs/relative-posted-at"
+import { formatJobCompensation } from "@/lib/jobs/format-compensation"
 
 function SectionList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) {
@@ -56,6 +57,7 @@ export function JobDetail({
       capturedAt: job.capturedAt,
     })
   )
+  const listedPay = formatJobCompensation(job.compensation)
 
   async function handleDelete() {
     const result = await deleteJobAction(job.roleId, job.id)
@@ -172,8 +174,18 @@ export function JobDetail({
         </p>
       ) : null}
 
-      {job.salaryText ? (
-        <p className="text-sm">{job.salaryText}</p>
+      {listedPay || job.salaryText ? (
+        <section className="flex flex-col gap-1">
+          <h2 className="text-sm font-medium">Listed pay</h2>
+          <p className="text-sm text-muted-foreground">
+            {listedPay ?? job.salaryText}
+          </p>
+          {job.compensation.bonusText ? (
+            <p className="text-sm text-muted-foreground">
+              {job.compensation.bonusText}
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {job.jobFunctions.length > 0 ? (

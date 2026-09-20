@@ -48,6 +48,8 @@ describe("parseJobInput", () => {
     expect(job.salaryText).toMatch(/90000/)
     expect(job.compensation.currency).toBe("EUR")
     expect(job.compensation.min).toBe(90000)
+    expect(job.compensation.max).toBe(92000)
+    expect(job.compensation.period).toBe("year")
     expect(job.sections.minimumQualifications[0]).toMatch(/Bachelor/)
     expect(job.sections.preferredQualifications.some((item) => /ReAct/.test(item))).toBe(
       true

@@ -6,10 +6,10 @@ import {
   emptyJobSections,
   type ExtractedJob,
   type FieldConfidence,
-  type JobCompensation,
   type JobSections,
   type WorkplaceType,
 } from "@/lib/jobs/extracted-job"
+import { parseCompensationFromText } from "@/lib/jobs/parse-compensation"
 import {
   estimatePostedAt,
   normalizeRelativePosted,
@@ -24,8 +24,6 @@ import { scoreExtraction } from "@/lib/jobs/score-extraction"
 const LINKEDIN_JOB_ID_RE = /\/jobs\/view\/(?:[\w%-]+-)?(\d{8,})/
 const APPLICANTS_RE = /(\d[\d,]*)\s+applicants?/i
 const TRAVEL_RE = /travel up to \d+%[^.]*/i
-const SALARY_RE =
-  /(?:[A-Za-z]+:\s*)?[€$£]\s*([\d,]+)\s*[-–]\s*[€$£]?\s*([\d,]+)\s*\(([A-Z]{3})\)(?:\s*\+[^\n]*)?/i
 const PREFERRED_LOCATIONS_RE =
   /preferred working location from the following:\s*(.+?)(?:\.|$)/i
 const EEO_RE =
@@ -295,10 +293,10 @@ function applyDescriptionSignals(job: ExtractedJob, text: string, preamble: stri
     job.extras.travel = collapseWhitespace(travel[0])
   }
 
-  const salary = SALARY_RE.exec(haystack)
+  const salary = parseCompensationFromText(haystack)
   if (salary) {
-    job.salaryText = collapseWhitespace(salary[0])
-    job.compensation = parseCompensation(salary)
+    job.salaryText = salary.salaryText
+    job.compensation = salary.compensation
   }
 
   if (/benefits/i.test(haystack)) {
@@ -367,18 +365,6 @@ function inferWorkplaceType(job: ExtractedJob): WorkplaceType {
     return "on_site"
   }
   return "unknown"
-}
-
-function parseCompensation(match: RegExpExecArray): JobCompensation {
-  const min = Number.parseInt(match[1].replace(/,/g, ""), 10)
-  const max = Number.parseInt(match[2].replace(/,/g, ""), 10)
-  const bonus = /\+\s*(.+)$/.exec(match[0])?.[1]?.trim() ?? null
-  return {
-    min: Number.isFinite(min) ? min : null,
-    max: Number.isFinite(max) ? max : null,
-    currency: match[3] || null,
-    bonusText: bonus,
-  }
 }
 
 function applyOgTitleFallback($: CheerioAPI, job: ExtractedJob) {

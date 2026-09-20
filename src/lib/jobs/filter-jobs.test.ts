@@ -136,6 +136,7 @@ describe("extractedJobFromSaved", () => {
         location: "Madrid with a listed salary band.",
         highlights: ["Named company", "Salary listed"],
         concerns: ["Seniority listed as not applicable"],
+        compensationAdvice: null,
       },
     })
     expect(extractedJobFromSaved(saved).analysis?.rating).toBe("strong")

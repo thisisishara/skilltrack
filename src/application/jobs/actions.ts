@@ -56,6 +56,7 @@ export async function extractJobAction(input: {
   mergeMode?: MergeMode
   fetchIfEmpty?: boolean
   analyze?: boolean
+  roleId?: string
 }): Promise<ExtractJobActionResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
@@ -66,6 +67,7 @@ export async function extractJobAction(input: {
       mergeMode: input.mergeMode,
       fetchIfEmpty: input.fetchIfEmpty,
       analyze: input.analyze,
+      roleId: input.roleId,
     })
     return { ok: true, job: result.job, fetchFailed: result.fetchFailed }
   } catch (error) {
@@ -74,7 +76,8 @@ export async function extractJobAction(input: {
 }
 
 export async function analyzeJobAction(
-  job: ExtractedJob
+  job: ExtractedJob,
+  roleId?: string
 ): Promise<AnalyzeJobActionResult> {
   try {
     const parsed = extractedJobSchema.safeParse(job)
@@ -84,7 +87,8 @@ export async function analyzeJobAction(
     const { applicationUser } = await requireApprovedSession()
     const analysis = await analyzeExtractedJobForUser(
       applicationUser.id,
-      parsed.data
+      parsed.data,
+      roleId
     )
     const checked = jobAnalysisSchema.safeParse(analysis)
     if (!checked.success) {

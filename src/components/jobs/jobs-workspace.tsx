@@ -91,6 +91,7 @@ import {
   type JobSort,
 } from "@/lib/jobs/filter-jobs"
 import { formatJobPostedDate, resolvePostedAt } from "@/lib/jobs/relative-posted-at"
+import { formatJobCompensation } from "@/lib/jobs/format-compensation"
 
 export function JobsWorkspace({
   roleId,
@@ -312,6 +313,7 @@ export function JobsWorkspace({
                       capturedAt: job.capturedAt,
                     })
                   )
+                  const listedPay = formatJobCompensation(job.compensation)
                   return (
                     <li key={job.id}>
                       <Card size="sm">
@@ -397,7 +399,9 @@ export function JobsWorkspace({
                           {posted ? (
                             <Badge variant="outline">{posted}</Badge>
                           ) : null}
-                          {job.salaryText ? (
+                          {listedPay ? (
+                            <Badge variant="outline">{listedPay}</Badge>
+                          ) : job.salaryText ? (
                             <Badge variant="outline">{job.salaryText}</Badge>
                           ) : null}
                         </CardContent>

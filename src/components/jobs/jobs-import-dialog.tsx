@@ -34,13 +34,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { SkillChipInput } from "@/components/jobs/skill-chips"
 import { JobAnalysisCard } from "@/components/jobs/job-analysis-card"
 import type { Job } from "@/domain/jobs/types"
 import {
+  COMPENSATION_PERIODS,
   emptyExtractedJob,
+  type CompensationPeriod,
   type ExtractedJob,
 } from "@/lib/jobs/extracted-job"
 import { extractedJobFromSaved } from "@/lib/jobs/from-saved-job"
@@ -70,6 +80,35 @@ function isoFromLocalDate(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0")
   const day = String(date.getDate()).padStart(2, "0")
   return `${year}-${month}-${day}`
+}
+
+function parseOptionalAmount(value: string) {
+  const trimmed = value.trim().replace(/,/g, "")
+  if (!trimmed) {
+    return null
+  }
+  const amount = Number(trimmed)
+  return Number.isFinite(amount) ? amount : null
+}
+
+function periodLabel(value: string) {
+  if (value === "year") {
+    return "Year"
+  }
+  if (value === "month") {
+    return "Month"
+  }
+  if (value === "hour") {
+    return "Hour"
+  }
+  return "Unknown"
+}
+
+function periodFromSelect(value: string | null): CompensationPeriod | null {
+  if (value === "year" || value === "month" || value === "hour") {
+    return value
+  }
+  return null
 }
 
 function PostedDateField({
@@ -284,6 +323,7 @@ export function JobsImportDialog({
       mergeMode: replaceWithAi ? "replace" : "fill",
       fetchIfEmpty: !paste.trim() && Boolean(sourceUrl.trim()),
       analyze: method === "ai" && analyzeWithAi,
+      roleId,
     })
     setPending(null)
     if (!result.ok) {
@@ -303,7 +343,7 @@ export function JobsImportDialog({
       return
     }
     setPending("analyze")
-    const result = await analyzeJobAction(preview)
+    const result = await analyzeJobAction(preview, roleId)
     setPending(null)
     if (!result.ok) {
       toast.error(result.message)
@@ -599,6 +639,110 @@ export function JobsImportDialog({
                     })
                   }
                 />
+                <Field>
+                  <FieldLabel htmlFor="job-salary-text">Listed pay</FieldLabel>
+                  <Input
+                    id="job-salary-text"
+                    value={job.salaryText ?? ""}
+                    placeholder="Unknown unless the posting lists it"
+                    disabled={busy}
+                    onChange={(event) =>
+                      patch({ salaryText: event.target.value || null })
+                    }
+                  />
+                  <FieldDescription>
+                    Only keep a number when the posting states one. Vague pay stays unknown.
+                  </FieldDescription>
+                </Field>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Field>
+                    <FieldLabel htmlFor="job-pay-min">Min</FieldLabel>
+                    <Input
+                      id="job-pay-min"
+                      inputMode="numeric"
+                      value={job.compensation.min ?? ""}
+                      placeholder="Unknown"
+                      disabled={busy}
+                      onChange={(event) =>
+                        patch({
+                          compensation: {
+                            ...job.compensation,
+                            min: parseOptionalAmount(event.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="job-pay-max">Max</FieldLabel>
+                    <Input
+                      id="job-pay-max"
+                      inputMode="numeric"
+                      value={job.compensation.max ?? ""}
+                      placeholder="Unknown"
+                      disabled={busy}
+                      onChange={(event) =>
+                        patch({
+                          compensation: {
+                            ...job.compensation,
+                            max: parseOptionalAmount(event.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="job-pay-currency">Currency</FieldLabel>
+                    <Input
+                      id="job-pay-currency"
+                      value={job.compensation.currency ?? ""}
+                      placeholder="Unknown"
+                      disabled={busy}
+                      onChange={(event) =>
+                        patch({
+                          compensation: {
+                            ...job.compensation,
+                            currency: event.target.value.trim() || null,
+                          },
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="job-pay-period">Period</FieldLabel>
+                    <Select
+                      value={job.compensation.period ?? "unknown"}
+                      itemToStringLabel={(value) => periodLabel(value)}
+                      onValueChange={(value) =>
+                        patch({
+                          compensation: {
+                            ...job.compensation,
+                            period: periodFromSelect(value),
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        id="job-pay-period"
+                        size="sm"
+                        className="w-full"
+                        disabled={busy}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="unknown">Unknown</SelectItem>
+                          {COMPENSATION_PERIODS.map((period) => (
+                            <SelectItem key={period} value={period}>
+                              {periodLabel(period)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
                 <EditableStringList
                   label="Minimum qualifications"
                   addLabel="Add qualification"

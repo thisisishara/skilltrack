@@ -15,6 +15,10 @@ import {
   looksLikeHtml,
   sanitizeLinkedInHtml,
 } from "@/lib/jobs/sanitize-linkedin-html"
+import {
+  normalizeExtractedCompensation,
+  parseCompensationFromText,
+} from "@/lib/jobs/parse-compensation"
 
 const MAX_AI_CHARS = 40_000
 
@@ -49,6 +53,8 @@ export async function extractJobWithAi(input: {
 Ignore site chrome, navigation, footers, similar jobs, people-also-viewed, and any sign-in or join popups.
 Prefer LinkedIn top-card fields and the job description body.
 postedAt must be YYYY-MM-DD or null.
+compensation.min, compensation.max, compensation.currency, and compensation.period must be filled only when the posting explicitly lists a numeric pay range or a single pay number. Convert 90k to 90000. Do not infer pay from "competitive", "DOE", or similar vague wording — leave those fields null and salaryText null (or the vague phrase only, without inventing numbers).
+compensation.period is year, month, hour, or null if the posting does not say.
 sourceUrl hint: ${input.sourceUrl ?? "none"}
 
 CONTENT:
@@ -85,10 +91,24 @@ function fromAiDraft(
     draft.applicantCount == null
       ? null
       : Math.round(draft.applicantCount)
+  const fromListedPay = parseCompensationFromText(draft.salaryText ?? "")
+  const fromDescription = parseCompensationFromText(draft.description)
+  const salaryFromBody = fromListedPay ?? fromDescription
+  const salaryText = fromListedPay
+    ? (draft.salaryText ?? "").trim()
+    : salaryFromBody?.salaryText ?? (draft.salaryText?.trim() || null)
   return {
     ...base,
     ...draft,
     applicantCount: Number.isFinite(applicant) ? applicant : null,
+    salaryText,
+    compensation: normalizeExtractedCompensation(
+      {
+        ...draft.compensation,
+        period: draft.compensation.period ?? salaryFromBody?.compensation.period ?? null,
+      },
+      salaryText
+    ),
     sourceUrl: draft.sourceUrl ?? sourceUrl ?? null,
     source: draft.sourceUrl || sourceUrl ? "linkedin" : "manual",
     extractionMethod: "ai",

@@ -22,7 +22,7 @@ AUTH_TRUST_HOST=true
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-TRACK_ENCRYPTION_KEY=
+TRACKY_ENCRYPTION_KEY=
 ```
 
 Optional helpers such as `SUPABASE_PROD_URL`, `SUPABASE_PROD_ANON_KEY`, and `SUPABASE_PROD_SERVICE_ROLE_KEY` can live in `.env.local` as a notepad for the production project. The Next.js app never reads those names. Vercel Production must get the **same unsuffixed names**, with the prod values copied in.
@@ -33,7 +33,7 @@ GitHub accounts can sign in; they stay pending until the admin (`thisisishara`) 
 
 `SUPABASE_SERVICE_ROLE_KEY` is server-only. Do not import it from Client Components. The publishable/anon key is listed for completeness; the app talks to Postgres from the server with the service-role key and RLS denies browser/anon access.
 
-`TRACK_ENCRYPTION_KEY` is required to enable Track (the optional BYOK roadmap copilot). Any non-empty secret is hashed to an AES-256-GCM key. Without it, Track stays off.
+`TRACKY_ENCRYPTION_KEY` is required to enable Tracky (the optional BYOK roadmap copilot). Any non-empty secret is hashed to an AES-256-GCM key. Without it, Tracky stays off.
 
 Generate `AUTH_SECRET` with:
 

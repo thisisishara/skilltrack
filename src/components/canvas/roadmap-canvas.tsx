@@ -100,7 +100,7 @@ import {
   subtreeProgress,
 } from "@/domain/progress/progress"
 import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
-import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
+import { useTrackyWorkspaceOptional } from "@/components/tracky/tracky-workspace"
 import { readStoredViewport, writeStoredViewport } from "@/lib/canvas/viewport-storage"
 import {
   DETAILS_PANEL_MAX_SIZE,
@@ -340,7 +340,7 @@ function RoadmapCanvasInner({
     detailsDefaultSize,
     onLayoutChanged,
   } = useDetailsPanelLayout(userId)
-  const track = useTrackWorkspaceOptional()
+  const track = useTrackyWorkspaceOptional()
   const detailsOpen = track?.detailsPanelOpen ?? true
   const [themeReady, setThemeReady] = useState(false)
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)

@@ -36,10 +36,10 @@ import {
   DONE_CHECKBOX_CLASS,
   type ProgressSnapshot,
 } from "@/domain/progress/progress"
-import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
-import { proposalForTopic } from "@/domain/track/overlay"
-import { writeTrackDropRef } from "@/domain/track/drop-ref"
-import { topicPath } from "@/domain/track/traverse"
+import { useTrackyWorkspaceOptional } from "@/components/tracky/tracky-workspace"
+import { proposalForTopic } from "@/domain/tracky/overlay"
+import { writeTrackyDropRef } from "@/domain/tracky/drop-ref"
+import { topicPath } from "@/domain/tracky/traverse"
 import { useRolesUi } from "@/components/roles/roles-workspace"
 
 export type ChecklistHandlers = {
@@ -241,7 +241,7 @@ function TaskTickList({
                   className="flex size-4 shrink-0 cursor-grab items-center justify-center text-muted-foreground hover:text-foreground active:cursor-grabbing"
                   onDragStart={(event) => {
                     event.stopPropagation()
-                    writeTrackDropRef(event.dataTransfer, {
+                    writeTrackyDropRef(event.dataTransfer, {
                       kind: "task",
                       id: item.id,
                       title: item.title,
@@ -281,7 +281,7 @@ function TaskTickList({
                   )}
                   onDragStart={(event) => {
                     event.stopPropagation()
-                    writeTrackDropRef(event.dataTransfer, {
+                    writeTrackyDropRef(event.dataTransfer, {
                       kind: "task",
                       id: item.id,
                       title: item.title,
@@ -465,7 +465,7 @@ export function TopicRow({
   const canExpand =
     Boolean(description) || ownItems.length > 0 || children.length > 0 || editMode
   const hasBody = expanded && canExpand
-  const track = useTrackWorkspaceOptional()
+  const track = useTrackyWorkspaceOptional()
   const { activeRole } = useRolesUi()
   const proposal = proposalForTopic(track?.proposals ?? [], node.id)
   const isGhost = proposal?.kind === "create"
@@ -573,7 +573,7 @@ export function TopicRow({
     }
 
     event.dataTransfer.effectAllowed = editMode ? "copyMove" : "copy"
-    writeTrackDropRef(event.dataTransfer, {
+    writeTrackyDropRef(event.dataTransfer, {
       kind: isSubgroup ? "group" : "topic",
       id: node.id,
       title: node.title,

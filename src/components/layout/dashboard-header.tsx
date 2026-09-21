@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { CommandSearch } from "@/components/search/command-search"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
-import { useTrackRefDrop } from "@/components/track/use-track-ref-drop"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
+import { useTrackyRefDrop } from "@/components/tracky/use-tracky-ref-drop"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -32,23 +32,23 @@ export function DashboardHeader() {
   const pathname = usePathname()
   const {
     settings,
-    trackPanelOpen,
-    setTrackPanelOpen,
+    trackyPanelOpen,
+    setTrackyPanelOpen,
     detailsPanelOpen,
     setDetailsPanelOpen,
-    pinTrackRef,
-  } = useTrackWorkspace()
-  const showTrack =
-    settings.trackEnabled &&
+    pinTrackyRef,
+  } = useTrackyWorkspace()
+  const showTracky =
+    settings.trackyEnabled &&
     !pathname.endsWith("/settings") &&
     !pathname.includes("/jobs")
   const isJobsList = /^\/dashboard\/roles\/[^/]+\/jobs\/?$/.test(pathname)
   const showDetailsToggle =
     /^\/dashboard\/roles\/[^/]+\/?$/.test(pathname) || isJobsList
   const detailsLabel = isJobsList ? "filters" : "details"
-  const { isOver, dropProps } = useTrackRefDrop((ref) => {
-    pinTrackRef(ref)
-    setTrackPanelOpen(true)
+  const { isOver, dropProps } = useTrackyRefDrop((ref) => {
+    pinTrackyRef(ref)
+    setTrackyPanelOpen(true)
   })
 
   return (
@@ -84,26 +84,26 @@ export function DashboardHeader() {
             </TooltipContent>
           </Tooltip>
         ) : null}
-        {showTrack ? (
+        {showTracky ? (
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   type="button"
-                  variant={trackPanelOpen || isOver ? "secondary" : "ghost"}
+                  variant={trackyPanelOpen || isOver ? "secondary" : "ghost"}
                   size="icon"
-                  aria-label="Track"
+                  aria-label="Tracky"
                   className={cn(
                     isOver && "border border-dashed border-primary bg-primary/10 text-primary"
                   )}
-                  onClick={() => setTrackPanelOpen(!trackPanelOpen)}
+                  onClick={() => setTrackyPanelOpen(!trackyPanelOpen)}
                   {...dropProps}
                 />
               }
             >
               <MessageSquare />
             </TooltipTrigger>
-            <TooltipContent>Track</TooltipContent>
+            <TooltipContent>Tracky</TooltipContent>
           </Tooltip>
         ) : null}
         <NotificationsMenu />

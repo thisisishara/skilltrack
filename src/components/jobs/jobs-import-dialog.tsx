@@ -494,7 +494,7 @@ export function JobsImportDialog({
             </div>
             {!canUseAi ? (
               <p className="text-xs text-muted-foreground">
-                AI extraction and ratings need Track enabled with an API key in
+                AI extraction and ratings need Tracky enabled with an API key in
                 User settings.
               </p>
             ) : (

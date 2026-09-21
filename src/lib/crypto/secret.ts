@@ -2,14 +2,22 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 
 const ALGO = "aes-256-gcm"
 
-export function isTrackEncryptionConfigured() {
-  return Boolean(process.env.TRACK_ENCRYPTION_KEY?.trim())
+function encryptionSecret() {
+  return (
+    process.env.TRACKY_ENCRYPTION_KEY?.trim() ||
+    process.env.TRACK_ENCRYPTION_KEY?.trim() ||
+    ""
+  )
+}
+
+export function isTrackyEncryptionConfigured() {
+  return Boolean(encryptionSecret())
 }
 
 function encryptionKey() {
-  const secret = process.env.TRACK_ENCRYPTION_KEY?.trim()
+  const secret = encryptionSecret()
   if (!secret) {
-    throw new Error("Missing TRACK_ENCRYPTION_KEY")
+    throw new Error("Missing TRACKY_ENCRYPTION_KEY")
   }
   return createHash("sha256").update(secret).digest()
 }

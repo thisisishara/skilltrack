@@ -1,9 +1,9 @@
-import { DEFAULT_TRACK_MODELS } from "@/domain/user-settings/defaults"
-import type { TrackProvider } from "@/domain/user-settings/types"
+import { DEFAULT_TRACKY_MODELS } from "@/domain/user-settings/defaults"
+import type { TrackyProvider } from "@/domain/user-settings/types"
 
-export type TrackExtraModels = Record<TrackProvider, string[]>
+export type TrackyExtraModels = Record<TrackyProvider, string[]>
 
-export const TRACK_PROVIDER_OPTIONS: { id: TrackProvider; label: string }[] = [
+export const TRACKY_PROVIDER_OPTIONS: { id: TrackyProvider; label: string }[] = [
   { id: "anthropic", label: "Claude" },
   { id: "openai", label: "OpenAI" },
   { id: "google", label: "Gemini" },
@@ -12,7 +12,7 @@ export const TRACK_PROVIDER_OPTIONS: { id: TrackProvider; label: string }[] = [
 
 export const MAX_CATALOG_MODELS_PER_PROVIDER = 50
 
-export function emptyExtraModels(): TrackExtraModels {
+export function emptyExtraModels(): TrackyExtraModels {
   return {
     anthropic: [],
     openai: [],
@@ -30,13 +30,13 @@ export function isValidModelId(value: string) {
   return id.length > 0 && id.length <= 200 && /^[\w./:+-]+$/.test(id)
 }
 
-export function parseExtraModels(value: unknown): TrackExtraModels {
+export function parseExtraModels(value: unknown): TrackyExtraModels {
   const extra = emptyExtraModels()
   if (!value || typeof value !== "object") {
     return extra
   }
   const raw = value as Record<string, unknown>
-  for (const provider of Object.keys(extra) as TrackProvider[]) {
+  for (const provider of Object.keys(extra) as TrackyProvider[]) {
     const list = raw[provider]
     if (!Array.isArray(list)) {
       continue
@@ -58,8 +58,8 @@ export function parseExtraModels(value: unknown): TrackExtraModels {
 }
 
 export function modelsForProvider(
-  provider: TrackProvider,
-  extra: TrackExtraModels
+  provider: TrackyProvider,
+  extra: TrackyExtraModels
 ) {
   const seen = new Set<string>()
   const models: string[] = []
@@ -74,11 +74,11 @@ export function modelsForProvider(
 }
 
 export function defaultModelForProvider(
-  provider: TrackProvider,
-  extra: TrackExtraModels
+  provider: TrackyProvider,
+  extra: TrackyExtraModels
 ) {
   const models = modelsForProvider(provider, extra)
-  const preferred = DEFAULT_TRACK_MODELS[provider]
+  const preferred = DEFAULT_TRACKY_MODELS[provider]
   if (models.includes(preferred)) {
     return preferred
   }
@@ -86,8 +86,8 @@ export function defaultModelForProvider(
 }
 
 export function addExtraModel(
-  extra: TrackExtraModels,
-  provider: TrackProvider,
+  extra: TrackyExtraModels,
+  provider: TrackyProvider,
   modelId: string
 ) {
   const id = normalizeModelId(modelId)
@@ -110,8 +110,8 @@ export function addExtraModel(
 }
 
 export function removeExtraModel(
-  extra: TrackExtraModels,
-  provider: TrackProvider,
+  extra: TrackyExtraModels,
+  provider: TrackyProvider,
   modelId: string
 ) {
   return {

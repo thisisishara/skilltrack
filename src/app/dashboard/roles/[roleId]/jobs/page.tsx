@@ -51,7 +51,7 @@ export default async function RoleJobsPage({
       <JobsWorkspace
         roleId={role.id}
         jobs={jobs}
-        canUseAi={settings.trackEnabled && settings.hasApiKey}
+        canUseAi={settings.trackyEnabled && settings.hasApiKey}
       />
     </main>
   )

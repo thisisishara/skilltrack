@@ -5,14 +5,14 @@ import { toast } from "sonner"
 
 import {
   getPublicUserSettingsAction,
-  resetTrackConfigAction,
-  saveTrackSettingsAction,
+  resetTrackyConfigAction,
+  saveTrackySettingsAction,
   setNotificationsEnabledAction,
 } from "@/application/user-settings/actions"
-import { defaultTrackConfig } from "@/domain/user-settings/defaults"
-import { TRACK_TOOL_IDS, type TrackConfig, type TrackProvider, type TrackToolId } from "@/domain/user-settings/types"
-import { TRACK_PROVIDER_OPTIONS, defaultModelForProvider, modelsForProvider } from "@/domain/user-settings/models"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { defaultTrackyConfig } from "@/domain/user-settings/defaults"
+import { TRACKY_TOOL_IDS, type TrackyConfig, type TrackyProvider, type TrackyToolId } from "@/domain/user-settings/types"
+import { TRACKY_PROVIDER_OPTIONS, defaultModelForProvider, modelsForProvider } from "@/domain/user-settings/models"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -43,19 +43,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { UsersSettingsPanel } from "@/components/settings/users-settings-panel"
 import { ModelsSettingsPanel } from "@/components/settings/models-settings-panel"
-import { ResetTrackDefaultsAlert } from "@/components/settings/reset-track-defaults-alert"
-import { DEFAULT_TRACK_SYSTEM_PROMPT, defaultGenerationPrompt } from "@/application/track/prompts"
+import { ResetTrackyDefaultsAlert } from "@/components/settings/reset-tracky-defaults-alert"
+import { DEFAULT_TRACKY_SYSTEM_PROMPT, defaultGenerationPrompt } from "@/application/tracky/prompts"
 
 const TOOL_GROUPS: {
   id: string
   title: string
   description: string
-  tools: { id: TrackToolId; label: string }[]
+  tools: { id: TrackyToolId; label: string }[]
 }[] = [
   {
     id: "browse",
     title: "Browse",
-    description: "How Track walks the active roadmap.",
+    description: "How Tracky walks the active roadmap.",
     tools: [
       { id: "list_roots", label: "Top-level topics" },
       { id: "list_children", label: "Nested topics" },
@@ -118,19 +118,19 @@ const TOOL_GROUPS: {
 ]
 
 const GROUPED_TOOL_IDS = new Set(TOOL_GROUPS.flatMap((group) => group.tools.map((tool) => tool.id)))
-const UNGROUPED_TOOLS = TRACK_TOOL_IDS.filter((id) => !GROUPED_TOOL_IDS.has(id))
+const UNGROUPED_TOOLS = TRACKY_TOOL_IDS.filter((id) => !GROUPED_TOOL_IDS.has(id))
 
 const TEXT_SAVE_DELAY_MS = 350
 const API_KEY_SAVE_DELAY_MS = 600
 
-type TrackDraft = {
+type TrackyDraft = {
   enabled: boolean
-  provider: TrackProvider | ""
+  provider: TrackyProvider | ""
   model: string
   baseUrl: string
   apiKey: string
   clearApiKey: boolean
-  config: TrackConfig
+  config: TrackyConfig
 }
 
 export function UserSettingsDialog() {
@@ -140,7 +140,7 @@ export function UserSettingsDialog() {
     settingsTab,
     setSettingsTab,
     canManageUsers,
-  } = useTrackWorkspace()
+  } = useTrackyWorkspace()
 
   return (
     <Dialog form open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -157,7 +157,7 @@ export function UserSettingsDialog() {
         <Tabs
           value={settingsTab}
           onValueChange={(value) => {
-            if (value === "general" || value === "track") {
+            if (value === "general" || value === "tracky") {
               setSettingsTab(value)
               return
             }
@@ -170,7 +170,7 @@ export function UserSettingsDialog() {
         >
           <TabsList variant="line" className="w-40 shrink-0 self-start">
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="track">Track</TabsTrigger>
+            <TabsTrigger value="tracky">Tracky</TabsTrigger>
             {canManageUsers ? <TabsTrigger value="models">Models</TabsTrigger> : null}
             {canManageUsers ? <TabsTrigger value="users">Users</TabsTrigger> : null}
           </TabsList>
@@ -192,8 +192,8 @@ export function UserSettingsDialog() {
               </Field>
             </FieldSet>
           </TabsContent>
-          <TabsContent value="track" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
-            <TrackSettingsForm />
+          <TabsContent value="tracky" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
+            <TrackySettingsForm />
           </TabsContent>
           {canManageUsers ? (
             <TabsContent value="models" className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
@@ -212,7 +212,7 @@ export function UserSettingsDialog() {
 }
 
 function RoadmapNotificationsSwitch() {
-  const { settings, setSettings } = useTrackWorkspace()
+  const { settings, setSettings } = useTrackyWorkspace()
   const requestIdRef = useRef(0)
   const settingsRef = useRef(settings)
   settingsRef.current = settings
@@ -251,17 +251,17 @@ function RoadmapNotificationsSwitch() {
   )
 }
 
-function TrackSettingsForm() {
-  const { settings, setSettings } = useTrackWorkspace()
-  const [enabled, setEnabled] = useState(settings.trackEnabled)
-  const [provider, setProvider] = useState<TrackProvider | "">(
-    settings.trackProvider ?? ""
+function TrackySettingsForm() {
+  const { settings, setSettings } = useTrackyWorkspace()
+  const [enabled, setEnabled] = useState(settings.trackyEnabled)
+  const [provider, setProvider] = useState<TrackyProvider | "">(
+    settings.trackyProvider ?? ""
   )
-  const [model, setModel] = useState(settings.trackModel ?? "")
-  const [baseUrl, setBaseUrl] = useState(settings.trackBaseUrl ?? "")
+  const [model, setModel] = useState(settings.trackyModel ?? "")
+  const [baseUrl, setBaseUrl] = useState(settings.trackyBaseUrl ?? "")
   const [apiKey, setApiKey] = useState("")
   const [clearApiKey, setClearApiKey] = useState(false)
-  const [config, setConfig] = useState<TrackConfig>(settings.trackConfig)
+  const [config, setConfig] = useState<TrackyConfig>(settings.trackyConfig)
   const [resetOpen, setResetOpen] = useState(false)
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveGeneration = useRef(0)
@@ -269,7 +269,7 @@ function TrackSettingsForm() {
   const mountedRef = useRef(true)
   const dirtyRef = useRef(false)
   const persistDraftRef = useRef<() => void>(() => undefined)
-  const draftRef = useRef<TrackDraft>({
+  const draftRef = useRef<TrackyDraft>({
     enabled,
     provider,
     model,
@@ -303,7 +303,7 @@ function TrackSettingsForm() {
     }
   }, [])
 
-  function applyDraft(patch: Partial<TrackDraft>) {
+  function applyDraft(patch: Partial<TrackyDraft>) {
     const next = { ...draftRef.current, ...patch }
     draftRef.current = next
     dirtyRef.current = true
@@ -338,7 +338,7 @@ function TrackSettingsForm() {
       }
       const draft = draftRef.current
       const wantedEnabled = draft.enabled
-      const result = await saveTrackSettingsAction({
+      const result = await saveTrackySettingsAction({
         enabled: draft.enabled,
         provider: draft.provider || null,
         model:
@@ -349,7 +349,7 @@ function TrackSettingsForm() {
         baseUrl: draft.baseUrl.trim() || null,
         apiKey: draft.apiKey.trim() || null,
         clearApiKey: draft.clearApiKey,
-        trackConfig: draft.config,
+        trackyConfig: draft.config,
       })
       if (!mountedRef.current || generation !== saveGeneration.current) {
         return
@@ -362,27 +362,27 @@ function TrackSettingsForm() {
         }
         if (latest.ok) {
           setSettings(latest.settings)
-          applyDraft({ enabled: latest.settings.trackEnabled })
+          applyDraft({ enabled: latest.settings.trackyEnabled })
         }
         return
       }
       setSettings(result.settings)
       dirtyRef.current = false
       applyDraft({
-        enabled: result.settings.trackEnabled,
+        enabled: result.settings.trackyEnabled,
         ...(draft.apiKey.trim() || draft.clearApiKey
           ? { apiKey: "", clearApiKey: false }
           : {}),
       })
       dirtyRef.current = generation !== saveGeneration.current
-      if (wantedEnabled && !result.settings.trackEnabled) {
-        toast.error("Track stayed off. Add a valid provider, model, and API key.")
+      if (wantedEnabled && !result.settings.trackyEnabled) {
+        toast.error("Tracky stayed off. Add a valid provider, model, and API key.")
       }
     })
   }
   persistDraftRef.current = persistDraft
 
-  function persistNow(patch?: Partial<TrackDraft>) {
+  function persistNow(patch?: Partial<TrackyDraft>) {
     if (persistTimer.current) {
       clearTimeout(persistTimer.current)
       persistTimer.current = null
@@ -393,7 +393,7 @@ function TrackSettingsForm() {
     persistDraft()
   }
 
-  function schedulePersist(patch: Partial<TrackDraft>, delay = TEXT_SAVE_DELAY_MS) {
+  function schedulePersist(patch: Partial<TrackyDraft>, delay = TEXT_SAVE_DELAY_MS) {
     applyDraft(patch)
     if (persistTimer.current) {
       clearTimeout(persistTimer.current)
@@ -404,7 +404,7 @@ function TrackSettingsForm() {
     }, delay)
   }
 
-  function patchTools(ids: TrackToolId[], enabled: boolean) {
+  function patchTools(ids: TrackyToolId[], enabled: boolean) {
     persistNow({
       config: {
         ...draftRef.current.config,
@@ -417,7 +417,7 @@ function TrackSettingsForm() {
   }
 
   function patchContext(
-    patch: Partial<TrackConfig["context"]>,
+    patch: Partial<TrackyConfig["context"]>,
     persist: "now" | "soon" = "now"
   ) {
     const nextConfig = {
@@ -437,14 +437,14 @@ function TrackSettingsForm() {
       persistTimer.current = null
     }
     saveGeneration.current += 1
-    const result = await resetTrackConfigAction()
+    const result = await resetTrackyConfigAction()
     if (!result.ok) {
       toast.error(result.message)
       throw new Error(result.message)
     }
     setSettings(result.settings)
-    applyDraft({ config: result.settings.trackConfig ?? defaultTrackConfig() })
-    toast.success("Track defaults restored")
+    applyDraft({ config: result.settings.trackyConfig ?? defaultTrackyConfig() })
+    toast.success("Tracky defaults restored")
   }
 
   const extraModels = settings.extraModels
@@ -454,7 +454,7 @@ function TrackSettingsForm() {
     <div className="flex flex-col gap-8">
       {!settings.encryptionConfigured ? (
         <p className="text-sm text-muted-foreground">
-          Track cannot store API keys until TRACK_ENCRYPTION_KEY is set on the server.
+          Tracky cannot store API keys until TRACKY_ENCRYPTION_KEY is set on the server.
         </p>
       ) : null}
 
@@ -463,13 +463,13 @@ function TrackSettingsForm() {
         <Field>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <FieldLabel htmlFor="track-enabled">Enable Track</FieldLabel>
+              <FieldLabel htmlFor="tracky-enabled">Enable Tracky</FieldLabel>
               <FieldDescription>
                 Roadmap copilot for the active role. Needs a verified API key.
               </FieldDescription>
             </div>
             <Switch
-              id="track-enabled"
+              id="tracky-enabled"
               checked={enabled}
               onCheckedChange={(checked) => persistNow({ enabled: checked === true })}
             />
@@ -477,11 +477,11 @@ function TrackSettingsForm() {
         </Field>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="track-provider">Provider</FieldLabel>
+            <FieldLabel htmlFor="tracky-provider">Provider</FieldLabel>
             <Select
               value={provider || null}
               itemToStringLabel={(value) =>
-                TRACK_PROVIDER_OPTIONS.find((item) => item.id === value)?.label ?? ""
+                TRACKY_PROVIDER_OPTIONS.find((item) => item.id === value)?.label ?? ""
               }
               onValueChange={(value) => {
                 if (
@@ -501,12 +501,12 @@ function TrackSettingsForm() {
                 }
               }}
             >
-              <SelectTrigger id="track-provider" className="w-full">
+              <SelectTrigger id="tracky-provider" className="w-full">
                 <SelectValue placeholder="Choose one" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {TRACK_PROVIDER_OPTIONS.map((item) => (
+                  {TRACKY_PROVIDER_OPTIONS.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.label}
                     </SelectItem>
@@ -516,7 +516,7 @@ function TrackSettingsForm() {
             </Select>
           </Field>
           <Field>
-            <FieldLabel htmlFor="track-model">Model</FieldLabel>
+            <FieldLabel htmlFor="tracky-model">Model</FieldLabel>
             <Select
               value={model || null}
               disabled={!provider}
@@ -527,7 +527,7 @@ function TrackSettingsForm() {
                 }
               }}
             >
-              <SelectTrigger id="track-model" className="w-full">
+              <SelectTrigger id="tracky-model" className="w-full">
                 <SelectValue placeholder={provider ? "Choose a model" : "Choose a provider first"} />
               </SelectTrigger>
               <SelectContent>
@@ -553,9 +553,9 @@ function TrackSettingsForm() {
           </Field>
           {provider === "openrouter" ? (
             <Field>
-              <FieldLabel htmlFor="track-base-url">OpenRouter base URL</FieldLabel>
+              <FieldLabel htmlFor="tracky-base-url">OpenRouter base URL</FieldLabel>
               <Input
-                id="track-base-url"
+                id="tracky-base-url"
                 value={baseUrl}
                 onChange={(event) => schedulePersist({ baseUrl: event.target.value })}
                 onBlur={() => persistNow()}
@@ -564,9 +564,9 @@ function TrackSettingsForm() {
             </Field>
           ) : null}
           <Field>
-            <FieldLabel htmlFor="track-api-key">API key</FieldLabel>
+            <FieldLabel htmlFor="tracky-api-key">API key</FieldLabel>
             <Input
-              id="track-api-key"
+              id="tracky-api-key"
               type="password"
               value={apiKey}
               onChange={(event) => {
@@ -577,8 +577,8 @@ function TrackSettingsForm() {
               }}
               onBlur={() => persistNow()}
               placeholder={
-                settings.hasApiKey && settings.trackApiKeyLast4
-                  ? `Saved …${settings.trackApiKeyLast4}`
+                settings.hasApiKey && settings.trackyApiKeyLast4
+                  ? `Saved …${settings.trackyApiKeyLast4}`
                   : "Paste a key"
               }
               autoComplete="off"
@@ -649,7 +649,7 @@ function TrackSettingsForm() {
       <FieldSet>
         <FieldLegend>Tools</FieldLegend>
         <FieldDescription>
-          Turn off a group or a single action. Track only sees tools that are on.
+          Turn off a group or a single action. Tracky only sees tools that are on.
         </FieldDescription>
         <div className="flex flex-col gap-3">
           {TOOL_GROUPS.map((group) => {
@@ -717,12 +717,12 @@ function TrackSettingsForm() {
             </button>
           </div>
           <FieldDescription>
-            Standing instructions for every Track session.
+            Standing instructions for every Tracky session.
           </FieldDescription>
           <Textarea
             id="system-prompt"
             className="min-h-32 font-mono text-xs"
-            value={config.systemPrompt ?? DEFAULT_TRACK_SYSTEM_PROMPT}
+            value={config.systemPrompt ?? DEFAULT_TRACKY_SYSTEM_PROMPT}
             onChange={(event) =>
               schedulePersist({
                 config: {
@@ -784,11 +784,11 @@ function TrackSettingsForm() {
             variant="destructive"
             onClick={() => setResetOpen(true)}
           >
-            Reset Track defaults
+            Reset Tracky defaults
           </Button>
         </div>
       </FieldSet>
-      <ResetTrackDefaultsAlert
+      <ResetTrackyDefaultsAlert
         open={resetOpen}
         onOpenChange={setResetOpen}
         onConfirm={reset}

@@ -21,7 +21,7 @@ import { isEditableKeyboardTarget } from "@/lib/keyboard"
 import { writeStoredActiveRoleId } from "@/lib/roles/active-role"
 
 import { CreateRoleDialog } from "@/components/roles/create-role-dialog"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import type { RoadmapViewProps } from "@/components/roadmap/roadmap"
 
 export type TreeFocusRequest = {
@@ -69,7 +69,7 @@ export function RolesWorkspace({
   roles: Role[]
   children: ReactNode
 }) {
-  const { setSeedPrompt, setTrackPanelOpen } = useTrackWorkspace()
+  const { setSeedPrompt, setTrackyPanelOpen } = useTrackyWorkspace()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams<{ roleId?: string }>()
@@ -264,10 +264,10 @@ export function RolesWorkspace({
       return result
     }
     if ("role" in result) {
-      const href = `/dashboard/roles/${result.role.id}?track=1`
+      const href = `/dashboard/roles/${result.role.id}?tracky=1`
       writeStoredActiveRoleId(result.role.id)
       setSeedPrompt(brief)
-      setTrackPanelOpen(true)
+      setTrackyPanelOpen(true)
       toast.success("Role created")
       setCreateOpen(false)
       beginNavigation(href)
@@ -311,7 +311,7 @@ export function RolesWorkspace({
         onOpenChange={setCreateOpen}
         onCreateEmpty={handleCreate}
         onImport={handleImport}
-        onCreateWithTrack={handleCreateWithTrack}
+        onCreateWithTracky={handleCreateWithTrack}
       />
     </RolesUiContext.Provider>
   )

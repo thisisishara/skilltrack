@@ -46,42 +46,42 @@ export type Database = {
         Row: {
           user_id: string
           notifications_enabled: boolean
-          track_enabled: boolean
-          track_provider: "anthropic" | "openai" | "google" | "openrouter" | null
-          track_model: string | null
-          track_base_url: string | null
-          track_api_key_ciphertext: string | null
-          track_api_key_iv: string | null
-          track_api_key_last4: string | null
-          track_config: Json
+          tracky_enabled: boolean
+          tracky_provider: "anthropic" | "openai" | "google" | "openrouter" | null
+          tracky_model: string | null
+          tracky_base_url: string | null
+          tracky_api_key_ciphertext: string | null
+          tracky_api_key_iv: string | null
+          tracky_api_key_last4: string | null
+          tracky_config: Json
           created_at: string
           updated_at: string
         }
         Insert: {
           user_id: string
           notifications_enabled?: boolean
-          track_enabled?: boolean
-          track_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
-          track_model?: string | null
-          track_base_url?: string | null
-          track_api_key_ciphertext?: string | null
-          track_api_key_iv?: string | null
-          track_api_key_last4?: string | null
-          track_config?: Json
+          tracky_enabled?: boolean
+          tracky_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
+          tracky_model?: string | null
+          tracky_base_url?: string | null
+          tracky_api_key_ciphertext?: string | null
+          tracky_api_key_iv?: string | null
+          tracky_api_key_last4?: string | null
+          tracky_config?: Json
           created_at?: string
           updated_at?: string
         }
         Update: {
           user_id?: string
           notifications_enabled?: boolean
-          track_enabled?: boolean
-          track_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
-          track_model?: string | null
-          track_base_url?: string | null
-          track_api_key_ciphertext?: string | null
-          track_api_key_iv?: string | null
-          track_api_key_last4?: string | null
-          track_config?: Json
+          tracky_enabled?: boolean
+          tracky_provider?: "anthropic" | "openai" | "google" | "openrouter" | null
+          tracky_model?: string | null
+          tracky_base_url?: string | null
+          tracky_api_key_ciphertext?: string | null
+          tracky_api_key_iv?: string | null
+          tracky_api_key_last4?: string | null
+          tracky_config?: Json
           created_at?: string
           updated_at?: string
         }
@@ -95,7 +95,7 @@ export type Database = {
           },
         ]
       }
-      track_model_catalog: {
+      tracky_model_catalog: {
         Row: {
           provider: "anthropic" | "openai" | "google" | "openrouter"
           model_id: string

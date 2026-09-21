@@ -27,25 +27,25 @@ import {
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Textarea } from "@/components/ui/textarea"
 
-type CreateMode = "empty" | "import" | "track"
+type CreateMode = "empty" | "import" | "tracky"
 
 export function CreateRoleDialog({
   open,
   onOpenChange,
   onCreateEmpty,
   onImport,
-  onCreateWithTrack,
+  onCreateWithTracky,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreateEmpty: (name: string) => Promise<RoleActionResult>
   onImport: (json: string, nameOverride?: string) => Promise<RoleActionResult>
-  onCreateWithTrack?: (name: string, brief: string) => Promise<RoleActionResult>
+  onCreateWithTracky?: (name: string, brief: string) => Promise<RoleActionResult>
 }) {
-  const { settings } = useTrackWorkspace()
+  const { settings } = useTrackyWorkspace()
   const [name, setName] = useState("")
   const [json, setJson] = useState("")
   const [brief, setBrief] = useState("")
@@ -89,17 +89,17 @@ export function CreateRoleDialog({
       return
     }
 
-    if (mode === "track" && (!brief.trim() || !onCreateWithTrack)) {
+    if (mode === "tracky" && (!brief.trim() || !onCreateWithTracky)) {
       setPending(false)
-      setError("Describe the role you want Track to build.")
+      setError("Describe the role you want Tracky to build.")
       return
     }
 
     const result =
       mode === "empty"
         ? await onCreateEmpty(name)
-        : mode === "track" && onCreateWithTrack
-          ? await onCreateWithTrack(name, brief)
+        : mode === "tracky" && onCreateWithTracky
+          ? await onCreateWithTracky(name, brief)
           : await onImport(json, name.trim() ? name : undefined)
 
     setPending(false)
@@ -146,7 +146,7 @@ export function CreateRoleDialog({
                       value={[mode]}
                       onValueChange={(value) => {
                         const next = Array.isArray(value) ? value[0] : value
-                        if (next === "empty" || next === "import" || next === "track") {
+                        if (next === "empty" || next === "import" || next === "tracky") {
                           setMode(next)
                           setError(null)
                         }
@@ -161,9 +161,9 @@ export function CreateRoleDialog({
                       <ToggleGroupItem value="import" className="flex-1">
                         Import JSON
                       </ToggleGroupItem>
-                      {settings.trackEnabled ? (
-                        <ToggleGroupItem value="track" className="flex-1">
-                          Ask Track
+                      {settings.trackyEnabled ? (
+                        <ToggleGroupItem value="tracky" className="flex-1">
+                          Ask Tracky
                         </ToggleGroupItem>
                       ) : null}
                     </ToggleGroup>
@@ -195,9 +195,9 @@ export function CreateRoleDialog({
                       </FieldDescription>
                     )}
                 </Field>
-                {mode === "track" ? (
-                  <Field data-invalid={error && mode === "track" ? true : undefined}>
-                    <FieldLabel htmlFor="create-role-brief">What should Track build?</FieldLabel>
+                {mode === "tracky" ? (
+                  <Field data-invalid={error && mode === "tracky" ? true : undefined}>
+                    <FieldLabel htmlFor="create-role-brief">What should Tracky build?</FieldLabel>
                     <Textarea
                       id="create-role-brief"
                       value={brief}
@@ -209,7 +209,7 @@ export function CreateRoleDialog({
                     />
                     {error ? <FieldError>{error}</FieldError> : (
                       <FieldDescription>
-                        Track will propose a full roadmap. You accept or reject each change.
+                        Tracky will propose a full roadmap. You accept or reject each change.
                       </FieldDescription>
                     )}
                   </Field>
@@ -241,13 +241,13 @@ export function CreateRoleDialog({
                 {pending
                   ? mode === "import"
                     ? "Importing…"
-                    : mode === "track"
+                    : mode === "tracky"
                       ? "Creating…"
                       : "Creating…"
                   : mode === "import"
                     ? "Import role"
-                    : mode === "track"
-                      ? "Create with Track"
+                    : mode === "tracky"
+                      ? "Create with Tracky"
                       : "Create role"}
               </Button>
             </DialogFooter>

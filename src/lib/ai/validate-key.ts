@@ -1,6 +1,6 @@
 import "server-only"
 
-import type { TrackProvider } from "@/domain/user-settings/types"
+import type { TrackyProvider } from "@/domain/user-settings/types"
 
 const OPENAI_MODELS = "https://api.openai.com/v1/models"
 const OPENROUTER_MODELS = "https://openrouter.ai/api/v1/models"
@@ -8,7 +8,7 @@ const ANTHROPIC_MODELS = "https://api.anthropic.com/v1/models"
 const GOOGLE_MODELS = "https://generativelanguage.googleapis.com/v1beta/models"
 
 export async function validateProviderKey(input: {
-  provider: TrackProvider
+  provider: TrackyProvider
   apiKey: string
   baseUrl?: string | null
 }): Promise<{ ok: true } | { ok: false; message: string }> {

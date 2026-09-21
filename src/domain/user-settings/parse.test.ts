@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { parseTrackConfig } from "@/domain/user-settings/parse"
+import { parseTrackyConfig } from "@/domain/user-settings/parse"
 
-describe("parseTrackConfig", () => {
+describe("parseTrackyConfig", () => {
   it("fills defaults for missing fields", () => {
-    const config = parseTrackConfig({})
+    const config = parseTrackyConfig({})
     expect(config.context.maxChatTurns).toBe(8)
     expect(config.context.maxToolResultChars).toBe(4000)
     expect(config.tools.search_topics).toBe(true)
@@ -18,7 +18,7 @@ describe("parseTrackConfig", () => {
   })
 
   it("clamps numeric context values and ignores leftover include flags", () => {
-    const config = parseTrackConfig({
+    const config = parseTrackyConfig({
       context: {
         maxIndexTopics: 9999,
         maxChatTurns: 0,

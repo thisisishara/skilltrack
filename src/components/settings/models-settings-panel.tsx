@@ -5,10 +5,10 @@ import { Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
 import {
-  addTrackCatalogModelAction,
-  removeTrackCatalogModelAction,
+  addTrackyCatalogModelAction,
+  removeTrackyCatalogModelAction,
 } from "@/application/user-settings/actions"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,17 +18,17 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
-  TRACK_PROVIDER_OPTIONS,
+  TRACKY_PROVIDER_OPTIONS,
   addExtraModel,
   emptyExtraModels,
   modelsForProvider,
 } from "@/domain/user-settings/models"
-import type { TrackProvider } from "@/domain/user-settings/types"
+import type { TrackyProvider } from "@/domain/user-settings/types"
 
 export function ModelsSettingsPanel() {
-  const { settings, setSettings, canManageUsers } = useTrackWorkspace()
+  const { settings, setSettings, canManageUsers } = useTrackyWorkspace()
   const extraModels = settings.extraModels ?? emptyExtraModels()
-  const [draft, setDraft] = useState<Record<TrackProvider, string>>({
+  const [draft, setDraft] = useState<Record<TrackyProvider, string>>({
     anthropic: "",
     openai: "",
     google: "",
@@ -36,14 +36,14 @@ export function ModelsSettingsPanel() {
   })
   const [pending, setPending] = useState(false)
 
-  async function addModel(provider: TrackProvider) {
+  async function addModel(provider: TrackyProvider) {
     const preview = addExtraModel(extraModels, provider, draft[provider])
     if (!preview.ok) {
       toast.error(preview.message)
       return
     }
     setPending(true)
-    const result = await addTrackCatalogModelAction(provider, draft[provider])
+    const result = await addTrackyCatalogModelAction(provider, draft[provider])
     setPending(false)
     if (!result.ok) {
       toast.error(result.message)
@@ -53,9 +53,9 @@ export function ModelsSettingsPanel() {
     setSettings({ ...settings, extraModels: result.extraModels })
   }
 
-  async function removeModel(provider: TrackProvider, modelId: string) {
+  async function removeModel(provider: TrackyProvider, modelId: string) {
     setPending(true)
-    const result = await removeTrackCatalogModelAction(provider, modelId)
+    const result = await removeTrackyCatalogModelAction(provider, modelId)
     setPending(false)
     if (!result.ok) {
       toast.error(result.message)
@@ -72,10 +72,10 @@ export function ModelsSettingsPanel() {
     <FieldSet>
       <FieldLegend>Models</FieldLegend>
       <FieldDescription>
-        These ids appear in Track for every user. Any of them can be removed.
+        These ids appear in Tracky for every user. Any of them can be removed.
       </FieldDescription>
       <div className="flex flex-col gap-4">
-        {TRACK_PROVIDER_OPTIONS.map((item) => {
+        {TRACKY_PROVIDER_OPTIONS.map((item) => {
           const models = modelsForProvider(item.id, extraModels)
           return (
             <div key={item.id} className="flex flex-col gap-2">

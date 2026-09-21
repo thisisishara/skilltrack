@@ -144,7 +144,7 @@ export function JobDetail({
             <p className="text-sm text-muted-foreground">
               {canUseAi
                 ? "This job has no rating yet. Analyze it from the saved posting."
-                : "Ratings need Track enabled with an API key in User settings."}
+                : "Ratings need Tracky enabled with an API key in User settings."}
             </p>
           </div>
           <Button

@@ -69,7 +69,7 @@ export default async function RoleJobDetailPage({
       <JobDetail
         job={job}
         jobs={jobs}
-        canUseAi={settings.trackEnabled && settings.hasApiKey}
+        canUseAi={settings.trackyEnabled && settings.hasApiKey}
       />
     </main>
   )

@@ -7,7 +7,7 @@ import { Bell, CheckCheck, X } from "lucide-react"
 import { listStaleRoadmapNotificationsAction } from "@/application/notifications/actions"
 import type { StaleRoadmapNotification } from "@/domain/notifications/stale"
 import { useRolesUi } from "@/components/roles/roles-workspace"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Button } from "@/components/ui/button"
 import {
   Empty,
@@ -31,7 +31,7 @@ import { WithTooltip } from "@/components/ui/tooltip"
 export function NotificationsMenu() {
   const router = useRouter()
   const { beginNavigation } = useRolesUi()
-  const { settings } = useTrackWorkspace()
+  const { settings } = useTrackyWorkspace()
   const [items, setItems] = useState<StaleRoadmapNotification[]>([])
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set())
   const [loading, setLoading] = useState(true)

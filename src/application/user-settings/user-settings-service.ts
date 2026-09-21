@@ -1,20 +1,20 @@
 import "server-only"
 
 import { ApplicationError, isApplicationError } from "@/domain/errors"
-import { defaultTrackConfig } from "@/domain/user-settings/defaults"
-import { emptyExtraModels, type TrackExtraModels } from "@/domain/user-settings/models"
-import { parseTrackConfig } from "@/domain/user-settings/parse"
+import { defaultTrackyConfig } from "@/domain/user-settings/defaults"
+import { emptyExtraModels, type TrackyExtraModels } from "@/domain/user-settings/models"
+import { parseTrackyConfig } from "@/domain/user-settings/parse"
 import type {
   PublicUserSettings,
-  TrackConfig,
-  TrackProvider,
+  TrackyConfig,
+  TrackyProvider,
   UserSettings,
 } from "@/domain/user-settings/types"
-import { getTrackModelCatalog } from "@/application/track-model-catalog/track-model-catalog-service"
+import { getTrackyModelCatalog } from "@/application/tracky-model-catalog/tracky-model-catalog-service"
 import {
   decryptSecret,
   encryptSecret,
-  isTrackEncryptionConfigured,
+  isTrackyEncryptionConfigured,
   secretLast4,
 } from "@/lib/crypto/secret"
 import { validateProviderKey } from "@/lib/ai/validate-key"
@@ -25,32 +25,32 @@ import {
 
 export function toPublicSettings(
   settings: UserSettings | null,
-  extraModels: TrackExtraModels = emptyExtraModels()
+  extraModels: TrackyExtraModels = emptyExtraModels()
 ): PublicUserSettings {
-  const encryptionConfigured = isTrackEncryptionConfigured()
-  const config = settings?.trackConfig ?? defaultTrackConfig()
+  const encryptionConfigured = isTrackyEncryptionConfigured()
+  const config = settings?.trackyConfig ?? defaultTrackyConfig()
   const hasApiKey = Boolean(
-    settings?.trackApiKeyCiphertext && settings.trackApiKeyIv
+    settings?.trackyApiKeyCiphertext && settings.trackyApiKeyIv
   )
-  const trackEnabled = Boolean(
-    settings?.trackEnabled && hasApiKey && encryptionConfigured && settings.trackProvider
+  const trackyEnabled = Boolean(
+    settings?.trackyEnabled && hasApiKey && encryptionConfigured && settings.trackyProvider
   )
   return {
     notificationsEnabled: settings?.notificationsEnabled ?? true,
-    trackEnabled,
-    trackProvider: settings?.trackProvider ?? null,
-    trackModel: settings?.trackModel ?? null,
-    trackBaseUrl: settings?.trackBaseUrl ?? null,
-    trackApiKeyLast4: settings?.trackApiKeyLast4 ?? null,
+    trackyEnabled,
+    trackyProvider: settings?.trackyProvider ?? null,
+    trackyModel: settings?.trackyModel ?? null,
+    trackyBaseUrl: settings?.trackyBaseUrl ?? null,
+    trackyApiKeyLast4: settings?.trackyApiKeyLast4 ?? null,
     hasApiKey,
-    trackConfig: config,
+    trackyConfig: config,
     extraModels,
     encryptionConfigured,
   }
 }
 
 async function toPublicSettingsWithCatalog(settings: UserSettings | null) {
-  return toPublicSettings(settings, await getTrackModelCatalog())
+  return toPublicSettings(settings, await getTrackyModelCatalog())
 }
 
 export async function getPublicUserSettings(userId: string) {
@@ -69,14 +69,14 @@ export async function getUserSettingsOrDefault(userId: string) {
   return (await getUserSettings(userId)) ?? {
     userId,
     notificationsEnabled: true,
-    trackEnabled: false,
-    trackProvider: null,
-    trackModel: null,
-    trackBaseUrl: null,
-    trackApiKeyCiphertext: null,
-    trackApiKeyIv: null,
-    trackApiKeyLast4: null,
-    trackConfig: defaultTrackConfig(),
+    trackyEnabled: false,
+    trackyProvider: null,
+    trackyModel: null,
+    trackyBaseUrl: null,
+    trackyApiKeyCiphertext: null,
+    trackyApiKeyIv: null,
+    trackyApiKeyLast4: null,
+    trackyConfig: defaultTrackyConfig(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   } satisfies UserSettings
@@ -88,26 +88,26 @@ export async function setNotificationsEnabled(userId: string, enabled: boolean) 
   )
 }
 
-export async function saveTrackSettings(
+export async function saveTrackySettings(
   userId: string,
   input: {
     enabled: boolean
-    provider: TrackProvider | null
+    provider: TrackyProvider | null
     model: string | null
     baseUrl: string | null
     apiKey?: string | null
     clearApiKey?: boolean
-    trackConfig: TrackConfig
+    trackyConfig: TrackyConfig
   }
 ) {
   const existing = await getUserSettingsOrDefault(userId)
-  const config = parseTrackConfig(input.trackConfig)
-  let ciphertext = existing.trackApiKeyCiphertext
-  let iv = existing.trackApiKeyIv
-  let last4 = existing.trackApiKeyLast4
-  let provider = input.provider
-  let model = input.model?.trim() || null
-  let baseUrl = input.baseUrl?.trim() || null
+  const config = parseTrackyConfig(input.trackyConfig)
+  let ciphertext = existing.trackyApiKeyCiphertext
+  let iv = existing.trackyApiKeyIv
+  let last4 = existing.trackyApiKeyLast4
+  const provider = input.provider
+  const model = input.model?.trim() || null
+  const baseUrl = input.baseUrl?.trim() || null
 
   if (input.clearApiKey) {
     ciphertext = null
@@ -117,14 +117,14 @@ export async function saveTrackSettings(
 
   const incomingKey = input.apiKey?.trim() ?? ""
   if (incomingKey) {
-    if (!isTrackEncryptionConfigured()) {
+    if (!isTrackyEncryptionConfigured()) {
       throw new ApplicationError(
         "validation",
-        "Track cannot store API keys until TRACK_ENCRYPTION_KEY is set on the server."
+        "Tracky cannot store API keys until TRACKY_ENCRYPTION_KEY is set on the server."
       )
     }
     if (!provider) {
-      throw new ApplicationError("validation", "Choose a provider for Track.")
+      throw new ApplicationError("validation", "Choose a provider for Tracky.")
     }
     const valid = await validateProviderKey({
       provider,
@@ -144,53 +144,53 @@ export async function saveTrackSettings(
   }
 
   const hasKey = Boolean(ciphertext && iv)
-  let trackEnabled = input.enabled
-  if (trackEnabled) {
-    if (!isTrackEncryptionConfigured()) {
+  let trackyEnabled = input.enabled
+  if (trackyEnabled) {
+    if (!isTrackyEncryptionConfigured()) {
       throw new ApplicationError(
         "validation",
-        "Track cannot be enabled until TRACK_ENCRYPTION_KEY is set on the server."
+        "Tracky cannot be enabled until TRACKY_ENCRYPTION_KEY is set on the server."
       )
     }
     if (!provider || !model || !hasKey) {
-      trackEnabled = false
+      trackyEnabled = false
     }
   }
 
   if (!hasKey || !provider || !model) {
-    trackEnabled = false
+    trackyEnabled = false
   }
 
   return toPublicSettingsWithCatalog(
     await upsertUserSettings(userId, {
-      trackEnabled,
-      trackProvider: provider,
-      trackModel: model,
-      trackBaseUrl: baseUrl,
-      trackApiKeyCiphertext: ciphertext,
-      trackApiKeyIv: iv,
-      trackApiKeyLast4: last4,
-      trackConfig: config,
+      trackyEnabled,
+      trackyProvider: provider,
+      trackyModel: model,
+      trackyBaseUrl: baseUrl,
+      trackyApiKeyCiphertext: ciphertext,
+      trackyApiKeyIv: iv,
+      trackyApiKeyLast4: last4,
+      trackyConfig: config,
     })
   )
 }
 
-export async function resetTrackConfig(userId: string) {
+export async function resetTrackyConfig(userId: string) {
   const existing = await getUserSettingsOrDefault(userId)
   return toPublicSettingsWithCatalog(
     await upsertUserSettings(userId, {
-      trackConfig: defaultTrackConfig(),
-      trackEnabled: existing.trackEnabled,
+      trackyConfig: defaultTrackyConfig(),
+      trackyEnabled: existing.trackyEnabled,
     })
   )
 }
 
-export async function decryptTrackApiKey(settings: UserSettings) {
-  if (!settings.trackApiKeyCiphertext || !settings.trackApiKeyIv) {
+export async function decryptTrackyApiKey(settings: UserSettings) {
+  if (!settings.trackyApiKeyCiphertext || !settings.trackyApiKeyIv) {
     return null
   }
-  if (!isTrackEncryptionConfigured()) {
+  if (!isTrackyEncryptionConfigured()) {
     return null
   }
-  return decryptSecret(settings.trackApiKeyCiphertext, settings.trackApiKeyIv)
+  return decryptSecret(settings.trackyApiKeyCiphertext, settings.trackyApiKeyIv)
 }

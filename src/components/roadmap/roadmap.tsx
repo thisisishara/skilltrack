@@ -68,8 +68,8 @@ import {
 import { RoadmapStatusBar } from "@/components/roadmap/roadmap-status-bar"
 import { ImportRoadmapDialog } from "@/components/roles/import-roadmap-dialog"
 import { useRolesUi } from "@/components/roles/roles-workspace"
-import { TrackPanel } from "@/components/track/track-panel"
-import { useTrackWorkspaceOptional } from "@/components/track/track-workspace"
+import { TrackyPanel } from "@/components/tracky/tracky-panel"
+import { useTrackyWorkspaceOptional } from "@/components/tracky/tracky-workspace"
 import { useIsLgUp } from "@/hooks/use-mobile"
 import {
   applyAcceptedProposal,
@@ -78,7 +78,7 @@ import {
   overlayGhostTopics,
   overlayRoleNotes,
   type RoadmapSnapshot,
-} from "@/domain/track/overlay"
+} from "@/domain/tracky/overlay"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -404,7 +404,7 @@ export function Roadmap({
   const scrollPersistTimerRef = useRef(0)
   const listRef = useRef<HTMLDivElement>(null)
   const { treeFocusRequest } = useRolesUi()
-  const track = useTrackWorkspaceOptional()
+  const track = useTrackyWorkspaceOptional()
   const lgUp = useIsLgUp()
   const appliedAcceptedRef = useRef(new Set<string>())
   const snapshotRef = useRef({
@@ -1709,16 +1709,16 @@ export function Roadmap({
                       : "Switch to Edit to add a topic."}
                 </EmptyDescription>
               </EmptyHeader>
-              {canImport || editMode || track?.settings.trackEnabled ? (
+              {canImport || editMode || track?.settings.trackyEnabled ? (
               <EmptyContent>
-                {track?.settings.trackEnabled ? (
+                {track?.settings.trackyEnabled ? (
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => track.setTrackPanelOpen(true)}
+                    onClick={() => track.setTrackyPanelOpen(true)}
                   >
                     <MessageSquare data-icon="inline-start" />
-                    Ask Track
+                    Ask Tracky
                   </Button>
                 ) : null}
                 {canImport ? (
@@ -1786,7 +1786,7 @@ export function Roadmap({
     </div>
   )
 
-  const trackOpen = Boolean(track?.settings.trackEnabled && track.trackPanelOpen)
+  const trackOpen = Boolean(track?.settings.trackyEnabled && track.trackyPanelOpen)
   const detailsOpen = track?.detailsPanelOpen ?? true
   const listDefaultSize = detailsOpen
     ? trackOpen
@@ -1869,12 +1869,12 @@ export function Roadmap({
   )
 
   const trackPanel = (
-    <TrackPanel
+    <TrackyPanel
       roleId={roleId}
       focusedTopicId={isOverview ? null : configNodeId}
       topicTitles={topicTitles}
       className={lgUp ? undefined : "border-l-0"}
-      onRequestClose={lgUp ? undefined : () => track?.setTrackPanelOpen(false)}
+      onRequestClose={lgUp ? undefined : () => track?.setTrackyPanelOpen(false)}
     />
   )
 
@@ -1942,19 +1942,19 @@ export function Roadmap({
               </div>
             </SheetContent>
           </Sheet>
-          {track?.settings.trackEnabled ? (
+          {track?.settings.trackyEnabled ? (
             <Sheet
               open={trackOpen}
-              onOpenChange={(open) => track.setTrackPanelOpen(open)}
+              onOpenChange={(open) => track.setTrackyPanelOpen(open)}
             >
               <SheetContent
                 side="right"
                 showCloseButton={false}
                 className="h-full min-h-0 w-full max-w-none gap-0 p-0 pb-[env(safe-area-inset-bottom)] data-[side=right]:w-full data-[side=right]:max-w-none data-[side=right]:sm:max-w-lg"
               >
-                <SheetTitle className="sr-only">Track</SheetTitle>
+                <SheetTitle className="sr-only">Tracky</SheetTitle>
                 <SheetDescription className="sr-only">
-                  Chat with Track about this roadmap.
+                  Chat with Tracky about this roadmap.
                 </SheetDescription>
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                   {trackOpen ? trackPanel : null}

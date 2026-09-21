@@ -1,8 +1,8 @@
 import "server-only"
 
 import { ApplicationError } from "@/domain/errors"
-import { parseTrackConfig } from "@/domain/user-settings/parse"
-import { defaultTrackConfig } from "@/domain/user-settings/defaults"
+import { parseTrackyConfig } from "@/domain/user-settings/parse"
+import { defaultTrackyConfig } from "@/domain/user-settings/defaults"
 import type { UserSettings } from "@/domain/user-settings/types"
 import type { Database } from "@/lib/supabase/database"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
@@ -14,14 +14,14 @@ function toSettings(row: SettingsRow): UserSettings {
   return {
     userId: row.user_id,
     notificationsEnabled: row.notifications_enabled,
-    trackEnabled: row.track_enabled,
-    trackProvider: row.track_provider,
-    trackModel: row.track_model,
-    trackBaseUrl: row.track_base_url,
-    trackApiKeyCiphertext: row.track_api_key_ciphertext,
-    trackApiKeyIv: row.track_api_key_iv,
-    trackApiKeyLast4: row.track_api_key_last4,
-    trackConfig: parseTrackConfig(row.track_config),
+    trackyEnabled: row.tracky_enabled,
+    trackyProvider: row.tracky_provider,
+    trackyModel: row.tracky_model,
+    trackyBaseUrl: row.tracky_base_url,
+    trackyApiKeyCiphertext: row.tracky_api_key_ciphertext,
+    trackyApiKeyIv: row.tracky_api_key_iv,
+    trackyApiKeyLast4: row.tracky_api_key_last4,
+    trackyConfig: parseTrackyConfig(row.tracky_config),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -49,19 +49,19 @@ export async function upsertUserSettings(
   userId: string,
   patch: Partial<{
     notificationsEnabled: boolean
-    trackEnabled: boolean
-    trackProvider: UserSettings["trackProvider"]
-    trackModel: string | null
-    trackBaseUrl: string | null
-    trackApiKeyCiphertext: string | null
-    trackApiKeyIv: string | null
-    trackApiKeyLast4: string | null
-    trackConfig: UserSettings["trackConfig"]
+    trackyEnabled: boolean
+    trackyProvider: UserSettings["trackyProvider"]
+    trackyModel: string | null
+    trackyBaseUrl: string | null
+    trackyApiKeyCiphertext: string | null
+    trackyApiKeyIv: string | null
+    trackyApiKeyLast4: string | null
+    trackyConfig: UserSettings["trackyConfig"]
   }>
 ) {
   const supabase = getSupabaseServerClient()
   const existing = await getUserSettings(userId)
-  const nextConfig = patch.trackConfig ?? existing?.trackConfig ?? defaultTrackConfig()
+  const nextConfig = patch.trackyConfig ?? existing?.trackyConfig ?? defaultTrackyConfig()
   const { data, error } = await supabase
     .from("user_settings")
     .upsert(
@@ -69,32 +69,32 @@ export async function upsertUserSettings(
         user_id: userId,
         notifications_enabled:
           patch.notificationsEnabled ?? existing?.notificationsEnabled ?? true,
-        track_enabled: patch.trackEnabled ?? existing?.trackEnabled ?? false,
-        track_provider:
-          patch.trackProvider === undefined
-            ? existing?.trackProvider ?? null
-            : patch.trackProvider,
-        track_model:
-          patch.trackModel === undefined
-            ? existing?.trackModel ?? null
-            : patch.trackModel,
-        track_base_url:
-          patch.trackBaseUrl === undefined
-            ? existing?.trackBaseUrl ?? null
-            : patch.trackBaseUrl,
-        track_api_key_ciphertext:
-          patch.trackApiKeyCiphertext === undefined
-            ? existing?.trackApiKeyCiphertext ?? null
-            : patch.trackApiKeyCiphertext,
-        track_api_key_iv:
-          patch.trackApiKeyIv === undefined
-            ? existing?.trackApiKeyIv ?? null
-            : patch.trackApiKeyIv,
-        track_api_key_last4:
-          patch.trackApiKeyLast4 === undefined
-            ? existing?.trackApiKeyLast4 ?? null
-            : patch.trackApiKeyLast4,
-        track_config: nextConfig as unknown as Database["public"]["Tables"]["user_settings"]["Insert"]["track_config"],
+        tracky_enabled: patch.trackyEnabled ?? existing?.trackyEnabled ?? false,
+        tracky_provider:
+          patch.trackyProvider === undefined
+            ? existing?.trackyProvider ?? null
+            : patch.trackyProvider,
+        tracky_model:
+          patch.trackyModel === undefined
+            ? existing?.trackyModel ?? null
+            : patch.trackyModel,
+        tracky_base_url:
+          patch.trackyBaseUrl === undefined
+            ? existing?.trackyBaseUrl ?? null
+            : patch.trackyBaseUrl,
+        tracky_api_key_ciphertext:
+          patch.trackyApiKeyCiphertext === undefined
+            ? existing?.trackyApiKeyCiphertext ?? null
+            : patch.trackyApiKeyCiphertext,
+        tracky_api_key_iv:
+          patch.trackyApiKeyIv === undefined
+            ? existing?.trackyApiKeyIv ?? null
+            : patch.trackyApiKeyIv,
+        tracky_api_key_last4:
+          patch.trackyApiKeyLast4 === undefined
+            ? existing?.trackyApiKeyLast4 ?? null
+            : patch.trackyApiKeyLast4,
+        tracky_config: nextConfig as unknown as Database["public"]["Tables"]["user_settings"]["Insert"]["tracky_config"],
       },
       { onConflict: "user_id" }
     )

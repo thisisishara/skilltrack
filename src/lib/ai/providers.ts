@@ -5,16 +5,16 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import type { LanguageModel } from "ai"
 
-import { DEFAULT_TRACK_MODELS } from "@/domain/user-settings/defaults"
-import type { TrackProvider } from "@/domain/user-settings/types"
+import { DEFAULT_TRACKY_MODELS } from "@/domain/user-settings/defaults"
+import type { TrackyProvider } from "@/domain/user-settings/types"
 
-export function createTrackModel(input: {
-  provider: TrackProvider
+export function createTrackyModel(input: {
+  provider: TrackyProvider
   apiKey: string
   model: string | null
   baseUrl: string | null
 }): LanguageModel {
-  const model = input.model?.trim() || DEFAULT_TRACK_MODELS[input.provider]
+  const model = input.model?.trim() || DEFAULT_TRACKY_MODELS[input.provider]
 
   if (input.provider === "anthropic") {
     return createAnthropic({ apiKey: input.apiKey })(model)

@@ -7,7 +7,7 @@ import { ChevronsUpDown, Briefcase, LogOut, Map, Settings } from "lucide-react"
 import { signOutAction } from "@/lib/auth/actions"
 import { RoleSwitcher } from "@/components/roles/role-switcher"
 import { useRolesUi } from "@/components/roles/roles-workspace"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ export function AppSidebar({
   avatarUrl,
 }: AppSidebarProps) {
   const { activeRole, beginNavigation } = useRolesUi()
-  const { openSettings } = useTrackWorkspace()
+  const { openSettings } = useTrackyWorkspace()
   const pathname = usePathname()
   const name = displayName ?? githubUsername
   const initials = githubUsername.slice(0, 2).toUpperCase()

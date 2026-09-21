@@ -73,7 +73,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { useRolesUi } from "@/components/roles/roles-workspace"
-import { useTrackWorkspace } from "@/components/track/track-workspace"
+import { useTrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import type { Job } from "@/domain/jobs/types"
 import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
 import { useIsLgUp } from "@/hooks/use-mobile"
@@ -104,7 +104,7 @@ export function JobsWorkspace({
 }) {
   const router = useRouter()
   const { beginNavigation } = useRolesUi()
-  const { userId, detailsPanelOpen, setDetailsPanelOpen } = useTrackWorkspace()
+  const { userId, detailsPanelOpen, setDetailsPanelOpen } = useTrackyWorkspace()
   const lgUp = useIsLgUp()
   const { groupKey, mainDefaultSize, detailsDefaultSize, onLayoutChanged } =
     useDetailsPanelLayout(userId)

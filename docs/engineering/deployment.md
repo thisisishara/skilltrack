@@ -87,7 +87,7 @@ npx vercel --prod --yes --force
 
 The CLI prints a deployment URL and should alias **https://skilltrack-lovat.vercel.app**.
 
-Env: Production uses **skilltrack-prod** `NEXT_PUBLIC_SUPABASE_URL`, anon, and `SUPABASE_SERVICE_ROLE_KEY`. Preview and Development use **skilltrack-dev**. Auth.js vars (`AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `AUTH_TRUST_HOST`) belong on Production, Preview, and Development. `TRACK_ENCRYPTION_KEY` is required for Track. Never paste secrets into Git.
+Env: Production uses **skilltrack-prod** `NEXT_PUBLIC_SUPABASE_URL`, anon, and `SUPABASE_SERVICE_ROLE_KEY`. Preview and Development use **skilltrack-dev**. Auth.js vars (`AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `AUTH_TRUST_HOST`) belong on Production, Preview, and Development. `TRACKY_ENCRYPTION_KEY` is required for Tracky. Never paste secrets into Git.
 
 ```bash
 npx vercel env ls

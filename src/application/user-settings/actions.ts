@@ -5,22 +5,22 @@ import { revalidatePath } from "next/cache"
 import { listManagedUsers } from "@/application/users/users-service"
 import {
   getPublicUserSettings,
-  resetTrackConfig,
-  saveTrackSettings,
+  resetTrackyConfig,
+  saveTrackySettings,
   setNotificationsEnabled,
 } from "@/application/user-settings/user-settings-service"
 import type { ApplicationErrorCode } from "@/domain/errors"
 import type { ApplicationUser } from "@/domain/users/types"
-import type { TrackExtraModels } from "@/domain/user-settings/models"
+import type { TrackyExtraModels } from "@/domain/user-settings/models"
 import type {
   PublicUserSettings,
-  TrackConfig,
-  TrackProvider,
+  TrackyConfig,
+  TrackyProvider,
 } from "@/domain/user-settings/types"
 import {
-  addTrackCatalogModel,
-  removeTrackCatalogModel,
-} from "@/application/track-model-catalog/track-model-catalog-service"
+  addTrackyCatalogModel,
+  removeTrackyCatalogModel,
+} from "@/application/tracky-model-catalog/tracky-model-catalog-service"
 import { failAction } from "@/lib/errors/present"
 import { requireApprovedSession } from "@/lib/auth/session"
 
@@ -59,29 +59,29 @@ export async function setNotificationsEnabledAction(
   }
 }
 
-export async function saveTrackSettingsAction(input: {
+export async function saveTrackySettingsAction(input: {
   enabled: boolean
-  provider: TrackProvider | null
+  provider: TrackyProvider | null
   model: string | null
   baseUrl: string | null
   apiKey?: string | null
   clearApiKey?: boolean
-  trackConfig: TrackConfig
+  trackyConfig: TrackyConfig
 }): Promise<SettingsActionResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
-    const settings = await saveTrackSettings(applicationUser.id, input)
+    const settings = await saveTrackySettings(applicationUser.id, input)
     revalidateDashboard()
     return { ok: true, settings }
   } catch (error) {
-    return failAction(error, "user_settings.track_failed")
+    return failAction(error, "user_settings.tracky_failed")
   }
 }
 
-export async function resetTrackConfigAction(): Promise<SettingsActionResult> {
+export async function resetTrackyConfigAction(): Promise<SettingsActionResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
-    const settings = await resetTrackConfig(applicationUser.id)
+    const settings = await resetTrackyConfig(applicationUser.id)
     revalidateDashboard()
     return { ok: true, settings }
   } catch (error) {
@@ -90,16 +90,16 @@ export async function resetTrackConfigAction(): Promise<SettingsActionResult> {
 }
 
 export type ModelCatalogResult =
-  | { ok: true; extraModels: TrackExtraModels }
+  | { ok: true; extraModels: TrackyExtraModels }
   | { ok: false; code: ApplicationErrorCode; message: string }
 
-export async function addTrackCatalogModelAction(
-  provider: TrackProvider,
+export async function addTrackyCatalogModelAction(
+  provider: TrackyProvider,
   modelId: string
 ): Promise<ModelCatalogResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
-    const extraModels = await addTrackCatalogModel(
+    const extraModels = await addTrackyCatalogModel(
       applicationUser,
       provider,
       modelId
@@ -111,13 +111,13 @@ export async function addTrackCatalogModelAction(
   }
 }
 
-export async function removeTrackCatalogModelAction(
-  provider: TrackProvider,
+export async function removeTrackyCatalogModelAction(
+  provider: TrackyProvider,
   modelId: string
 ): Promise<ModelCatalogResult> {
   try {
     const { applicationUser } = await requireApprovedSession()
-    const extraModels = await removeTrackCatalogModel(
+    const extraModels = await removeTrackyCatalogModel(
       applicationUser,
       provider,
       modelId

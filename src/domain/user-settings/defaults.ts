@@ -1,39 +1,39 @@
 import {
-  TRACK_TOOL_IDS,
-  type TrackConfig,
-  type TrackContextConfig,
-  type TrackProvider,
-  type TrackToolsConfig,
+  TRACKY_TOOL_IDS,
+  type TrackyConfig,
+  type TrackyContextConfig,
+  type TrackyProvider,
+  type TrackyToolsConfig,
 } from "@/domain/user-settings/types"
 
-export const DEFAULT_TRACK_CONTEXT: TrackContextConfig = {
+export const DEFAULT_TRACKY_CONTEXT: TrackyContextConfig = {
   maxChatTurns: 8,
   maxToolResultChars: 4000,
 }
 
-export const TRACK_READ_STEP_BUDGET = 12
+export const TRACKY_READ_STEP_BUDGET = 12
 
-export function defaultTrackTools(): TrackToolsConfig {
-  return Object.fromEntries(TRACK_TOOL_IDS.map((id) => [id, true])) as TrackToolsConfig
+export function defaultTrackyTools(): TrackyToolsConfig {
+  return Object.fromEntries(TRACKY_TOOL_IDS.map((id) => [id, true])) as TrackyToolsConfig
 }
 
-export function defaultTrackConfig(): TrackConfig {
+export function defaultTrackyConfig(): TrackyConfig {
   return {
-    tools: defaultTrackTools(),
+    tools: defaultTrackyTools(),
     systemPrompt: null,
     generationPrompt: null,
-    context: { ...DEFAULT_TRACK_CONTEXT },
+    context: { ...DEFAULT_TRACKY_CONTEXT },
   }
 }
 
-export const DEFAULT_TRACK_MODELS: Record<TrackProvider, string> = {
+export const DEFAULT_TRACKY_MODELS: Record<TrackyProvider, string> = {
   anthropic: "claude-sonnet-5",
   openai: "gpt-5.6-luna",
   google: "gemini-3.8-flash",
   openrouter: "openai/gpt-5.6-luna",
 }
 
-export function isTrackProvider(value: unknown): value is TrackProvider {
+export function isTrackyProvider(value: unknown): value is TrackyProvider {
   return (
     value === "anthropic" ||
     value === "openai" ||

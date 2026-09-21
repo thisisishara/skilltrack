@@ -6,14 +6,14 @@ import { getRoleForUser } from "@/application/roles/roles-service"
 import { listTasksForRole } from "@/application/tasks/tasks-service"
 import { listTopicsForRole } from "@/application/topics/topics-service"
 import {
-  decryptTrackApiKey,
+  decryptTrackyApiKey,
   getUserSettingsOrDefault,
   toPublicSettings,
 } from "@/application/user-settings/user-settings-service"
 import { ApplicationError } from "@/domain/errors"
 import { roadmapProgress } from "@/domain/progress/progress"
 import { isSkillNode } from "@/domain/topics/kind"
-import { createTrackModel } from "@/lib/ai/providers"
+import { createTrackyModel } from "@/lib/ai/providers"
 import type { ExtractedJob } from "@/lib/jobs/extracted-job"
 import { analyzeJobWithAi, type JobAnalysisExpertise } from "@/lib/jobs/analyze-job"
 import { extractedJobFromSaved } from "@/lib/jobs/from-saved-job"
@@ -93,7 +93,7 @@ export async function extractJobForUser(
     return { job: rules, fetchFailed }
   }
 
-  const model = await trackModelForUser(userId)
+  const model = await trackyModelForUser(userId)
 
   const ai = await extractJobWithAi({
     model,
@@ -132,27 +132,27 @@ export async function extractJobForUser(
   }
 }
 
-async function trackModelForUser(userId: string) {
+async function trackyModelForUser(userId: string) {
   const settings = await getUserSettingsOrDefault(userId)
   const publicSettings = toPublicSettings(settings)
-  if (!publicSettings.trackEnabled || !settings.trackProvider) {
+  if (!publicSettings.trackyEnabled || !settings.trackyProvider) {
     throw new ApplicationError(
       "authorization",
-      "Turn on Track and add an API key in User settings to use AI on jobs."
+      "Turn on Tracky and add an API key in User settings to use AI on jobs."
     )
   }
-  const apiKey = await decryptTrackApiKey(settings)
+  const apiKey = await decryptTrackyApiKey(settings)
   if (!apiKey) {
     throw new ApplicationError(
       "authorization",
-      "Track needs an API key before AI can run on jobs."
+      "Tracky needs an API key before AI can run on jobs."
     )
   }
-  return createTrackModel({
-    provider: settings.trackProvider,
+  return createTrackyModel({
+    provider: settings.trackyProvider,
     apiKey,
-    model: settings.trackModel,
-    baseUrl: settings.trackBaseUrl,
+    model: settings.trackyModel,
+    baseUrl: settings.trackyBaseUrl,
   })
 }
 
@@ -187,7 +187,7 @@ export async function analyzeExtractedJobForUser(
   job: ExtractedJob,
   roleId?: string
 ) {
-  const model = await trackModelForUser(userId)
+  const model = await trackyModelForUser(userId)
   return analyzeJobWithAi({
     model,
     job,

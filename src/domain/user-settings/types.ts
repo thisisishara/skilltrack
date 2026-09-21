@@ -1,13 +1,13 @@
-export const TRACK_PROVIDERS = [
+export const TRACKY_PROVIDERS = [
   "anthropic",
   "openai",
   "google",
   "openrouter",
 ] as const
 
-export type TrackProvider = (typeof TRACK_PROVIDERS)[number]
+export type TrackyProvider = (typeof TRACKY_PROVIDERS)[number]
 
-export const TRACK_TOOL_IDS = [
+export const TRACKY_TOOL_IDS = [
   "list_roots",
   "list_children",
   "search_topics",
@@ -33,46 +33,46 @@ export const TRACK_TOOL_IDS = [
   "propose_update_role",
 ] as const
 
-export type TrackToolId = (typeof TRACK_TOOL_IDS)[number]
+export type TrackyToolId = (typeof TRACKY_TOOL_IDS)[number]
 
-export type TrackContextConfig = {
+export type TrackyContextConfig = {
   maxChatTurns: number
   maxToolResultChars: number
 }
 
-export type TrackToolsConfig = Record<TrackToolId, boolean>
+export type TrackyToolsConfig = Record<TrackyToolId, boolean>
 
-export type TrackConfig = {
-  tools: TrackToolsConfig
+export type TrackyConfig = {
+  tools: TrackyToolsConfig
   systemPrompt: string | null
   generationPrompt: string | null
-  context: TrackContextConfig
+  context: TrackyContextConfig
 }
 
 export type UserSettings = {
   userId: string
   notificationsEnabled: boolean
-  trackEnabled: boolean
-  trackProvider: TrackProvider | null
-  trackModel: string | null
-  trackBaseUrl: string | null
-  trackApiKeyCiphertext: string | null
-  trackApiKeyIv: string | null
-  trackApiKeyLast4: string | null
-  trackConfig: TrackConfig
+  trackyEnabled: boolean
+  trackyProvider: TrackyProvider | null
+  trackyModel: string | null
+  trackyBaseUrl: string | null
+  trackyApiKeyCiphertext: string | null
+  trackyApiKeyIv: string | null
+  trackyApiKeyLast4: string | null
+  trackyConfig: TrackyConfig
   createdAt: string
   updatedAt: string
 }
 
 export type PublicUserSettings = {
   notificationsEnabled: boolean
-  trackEnabled: boolean
-  trackProvider: TrackProvider | null
-  trackModel: string | null
-  trackBaseUrl: string | null
-  trackApiKeyLast4: string | null
+  trackyEnabled: boolean
+  trackyProvider: TrackyProvider | null
+  trackyModel: string | null
+  trackyBaseUrl: string | null
+  trackyApiKeyLast4: string | null
   hasApiKey: boolean
-  trackConfig: TrackConfig
-  extraModels: Record<TrackProvider, string[]>
+  trackyConfig: TrackyConfig
+  extraModels: Record<TrackyProvider, string[]>
   encryptionConfigured: boolean
 }

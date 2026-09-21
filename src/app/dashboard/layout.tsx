@@ -10,11 +10,11 @@ import { NavigationProgressBar } from "@/components/layout/navigation-progress-b
 import { RoleRouteShell } from "@/components/roles/role-route-shell"
 import { RolesWorkspace } from "@/components/roles/roles-workspace"
 import { UserSettingsDialog } from "@/components/settings/user-settings-dialog"
-import { TrackRoleSync } from "@/components/track/track-role-sync"
-import { TrackWorkspace } from "@/components/track/track-workspace"
+import { TrackyRoleSync } from "@/components/tracky/tracky-role-sync"
+import { TrackyWorkspace } from "@/components/tracky/tracky-workspace"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { defaultTrackConfig } from "@/domain/user-settings/defaults"
+import { defaultTrackyConfig } from "@/domain/user-settings/defaults"
 import { emptyExtraModels } from "@/domain/user-settings/models"
 import { isApplicationError } from "@/domain/errors"
 import type { PublicUserSettings } from "@/domain/user-settings/types"
@@ -24,13 +24,13 @@ import { requireSession } from "@/lib/auth/session"
 
 const FALLBACK_SETTINGS: PublicUserSettings = {
   notificationsEnabled: true,
-  trackEnabled: false,
-  trackProvider: null,
-  trackModel: null,
-  trackBaseUrl: null,
-  trackApiKeyLast4: null,
+  trackyEnabled: false,
+  trackyProvider: null,
+  trackyModel: null,
+  trackyBaseUrl: null,
+  trackyApiKeyLast4: null,
   hasApiKey: false,
-  trackConfig: defaultTrackConfig(),
+  trackyConfig: defaultTrackyConfig(),
   extraModels: emptyExtraModels(),
   encryptionConfigured: false,
 }
@@ -86,7 +86,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider className="h-dvh overflow-hidden">
-      <TrackWorkspace
+      <TrackyWorkspace
         userId={userId}
         initialSettings={settings}
         canManageUsers={canManageUsers}
@@ -104,10 +104,10 @@ export default async function DashboardLayout({
           </SidebarInset>
           <UserSettingsDialog />
           <Suspense fallback={null}>
-            <TrackRoleSync />
+            <TrackyRoleSync />
           </Suspense>
         </RolesWorkspace>
-      </TrackWorkspace>
+      </TrackyWorkspace>
     </SidebarProvider>
   )
 }

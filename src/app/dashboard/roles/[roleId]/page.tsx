@@ -1,5 +1,6 @@
 import { ListTree } from "lucide-react"
 
+import { listNotesForRole } from "@/application/notes/notes-service"
 import { listTasksForRole } from "@/application/tasks/tasks-service"
 import { listLinksForRole } from "@/application/links/links-service"
 import { listTopicsForRole } from "@/application/topics/topics-service"
@@ -45,10 +46,11 @@ export default async function RoleDashboardPage({
     )
   }
 
-  const [nodes, checklistItems, links] = await Promise.all([
+  const [nodes, checklistItems, links, notes] = await Promise.all([
     listTopicsForRole(applicationUser.id, role.id),
     listTasksForRole(applicationUser.id, role.id),
     listLinksForRole(applicationUser.id, role.id),
+    listNotesForRole(applicationUser.id, role.id),
   ])
 
   return (
@@ -62,6 +64,7 @@ export default async function RoleDashboardPage({
         nodes={nodes}
         checklistItems={checklistItems}
         links={links}
+        notes={notes}
         focusNodeId={focusNodeId}
       />
     </div>

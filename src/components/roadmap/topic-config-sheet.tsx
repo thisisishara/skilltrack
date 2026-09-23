@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { NotebookPen, Pencil, Trash2, XIcon } from "lucide-react"
+import { NotebookPen, Pencil, Plus, Trash2, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import type { TopicActionResult } from "@/application/topics/actions"
@@ -50,6 +50,7 @@ import {
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert"
 import { cn } from "@/lib/utils"
 import type { ChecklistItem } from "@/domain/tasks/types"
+import type { TopicNote } from "@/domain/notes/types"
 import type { NodeLink } from "@/domain/links/types"
 import type { RoadmapNode } from "@/domain/topics/types"
 import { displayNodeTitle } from "@/domain/topics/title"
@@ -91,6 +92,9 @@ export function TopicConfigSheet({
   overviewDescription = "",
   overviewNotes = "",
   highlightFacet = null,
+  topicNotes = [],
+  onOpenTopicNote,
+  onAddTopicNote,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -136,6 +140,9 @@ export function TopicConfigSheet({
   overviewDescription?: string | null
   overviewNotes?: string | null
   highlightFacet?: "notes" | "description" | null
+  topicNotes?: TopicNote[]
+  onOpenTopicNote?: (note: TopicNote) => void
+  onAddTopicNote?: () => void
 }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -151,7 +158,7 @@ export function TopicConfigSheet({
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const accentChoiceRef = useRef<"keep" | "apply" | null>(null)
   const selectedNodeId = node?.id ?? null
-  const incomingNotes = mode === "overview" ? (overviewNotes ?? "") : (node?.notes ?? "")
+  const incomingNotes = mode === "overview" ? (overviewNotes ?? "") : ""
 
   useEffect(() => {
     if (!highlightFacet) {
@@ -291,7 +298,6 @@ export function TopicConfigSheet({
       next.title === node.title &&
       (next.description.trim() || null) === node.description &&
       next.icon === node.icon &&
-      (next.notes.trim() || null) === node.notes &&
       next.accentColor === node.color
     ) {
       return
@@ -598,11 +604,11 @@ export function TopicConfigSheet({
                   )}
                 >
                   <h3 className="text-sm font-medium">Notes</h3>
-                <NotesSection
-                  notes={notes}
-                  emptyDescription="Capture free-form notes for this topic."
+                <TopicNotesList
+                  notes={topicNotes}
                   editable={editMode}
-                  onEdit={() => setNotesOpen(true)}
+                  onOpen={(note) => onOpenTopicNote?.(note)}
+                  onAdd={() => onAddTopicNote?.()}
                 />
                 </section>
                 {showChecklist && editMode ? (
@@ -650,16 +656,6 @@ export function TopicConfigSheet({
                 ) : null}
               </div>
             </ScrollArea>
-        <NotesDialog
-          open={notesOpen}
-          notes={notes}
-          onOpenChange={setNotesOpen}
-          onSave={(next) => {
-            setNotes(next)
-            persistDetailsNow({ notes: next })
-            setNotesOpen(false)
-          }}
-        />
         <Dialog
           open={pendingAccent !== undefined}
           onOpenChange={(next) => {
@@ -705,6 +701,66 @@ export function TopicConfigSheet({
           </DialogContent>
         </Dialog>
     </aside>
+  )
+}
+
+function TopicNotesList({
+  notes,
+  editable,
+  onOpen,
+  onAdd,
+}: {
+  notes: TopicNote[]
+  editable: boolean
+  onOpen: (note: TopicNote) => void
+  onAdd: () => void
+}) {
+  if (notes.length === 0) {
+    return (
+      <Empty className="border border-dashed py-4">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <NotebookPen />
+          </EmptyMedia>
+          <EmptyTitle>No notes</EmptyTitle>
+          <EmptyDescription>Add a markdown note for this topic.</EmptyDescription>
+        </EmptyHeader>
+        {editable ? (
+          <EmptyContent>
+            <Button type="button" size="sm" onClick={onAdd}>
+              <Plus data-icon="inline-start" />
+              Add note
+            </Button>
+          </EmptyContent>
+        ) : null}
+      </Empty>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-1">
+        {notes.map((note) => (
+          <li key={note.id}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto w-full justify-start px-2 py-1.5 text-left font-normal"
+              onClick={() => onOpen(note)}
+            >
+              <NotebookPen data-icon="inline-start" />
+              <span className="truncate">{note.title}</span>
+            </Button>
+          </li>
+        ))}
+      </ul>
+      {editable ? (
+        <Button type="button" size="sm" variant="outline" onClick={onAdd}>
+          <Plus data-icon="inline-start" />
+          Add note
+        </Button>
+      ) : null}
+    </div>
   )
 }
 

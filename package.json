@@ -20,6 +20,7 @@
     "@ai-sdk/openai": "^4.0.71",
     "@ai-sdk/react": "^4.0.110",
     "@base-ui/react": "^1.8.0",
+    "@streamdown/mermaid": "^1.0.2",
     "@supabase/supabase-js": "^2.116.0",
     "@xyflow/react": "^12.11.6",
     "ai": "^7.0.107",

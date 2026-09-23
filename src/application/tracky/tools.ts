@@ -14,6 +14,8 @@ import {
   topicPath,
 } from "@/domain/tracky/traverse"
 import type { NodeLink } from "@/domain/links/types"
+import type { TopicNote } from "@/domain/notes/types"
+import { NOTE_TITLE_MAX } from "@/domain/notes/title"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { RoadmapNode } from "@/domain/topics/types"
 import type { TrackyToolId } from "@/domain/user-settings/types"
@@ -55,6 +57,7 @@ export function createTrackyTools(input: {
   nodes: RoadmapNode[]
   tasks: ChecklistItem[]
   links: NodeLink[]
+  notes: TopicNote[]
   treeIsEmpty: boolean
   maxToolResultChars: number
 }) {
@@ -69,7 +72,7 @@ export function createTrackyTools(input: {
         "List top-level topics only (id, title, childCount, hasNotes, taskCount, linkCount). Do not call this on every turn if search_topics already found the node. Never follow with list_children on every root.",
       inputSchema: z.object({}),
       execute: async () =>
-        clip(listRootSummaries(input.nodes, input.tasks, input.links)),
+        clip(listRootSummaries(input.nodes, input.tasks, input.links, input.notes)),
     })
   }
 
@@ -79,7 +82,9 @@ export function createTrackyTools(input: {
         "List direct children of one topic. Not recursive. Call once on the matching node after search_topics or list_roots. Do not walk the whole tree.",
       inputSchema: z.object({ topicId: uuid }),
       execute: async ({ topicId }) =>
-        clip(listChildSummaries(input.nodes, input.tasks, input.links, topicId)),
+        clip(
+          listChildSummaries(input.nodes, input.tasks, input.links, topicId, input.notes)
+        ),
     })
   }
 
@@ -91,7 +96,9 @@ export function createTrackyTools(input: {
         query: z.string().min(1).max(120),
       }),
       execute: async ({ query }) =>
-        clip(searchTopicSummaries(input.nodes, input.tasks, input.links, query)),
+        clip(
+          searchTopicSummaries(input.nodes, input.tasks, input.links, query, input.notes)
+        ),
     })
   }
 
@@ -135,14 +142,23 @@ export function createTrackyTools(input: {
   if (enabled.has("get_notes")) {
     tools.get_notes = tool({
       description:
-        "Load notes for one topic. Call only when hasNotes is true and you will quote or edit them.",
+        "Load the list of notes on one topic (id, title, markdown body). Call only when hasNotes is true and you will quote or edit them.",
       inputSchema: z.object({ topicId: uuid }),
       execute: async ({ topicId }) => {
         const node = skillTopics(input.nodes).find((item) => item.id === topicId)
         if (!node) {
           return { error: "Topic not found in this role." }
         }
-        return clip({ topicId: node.id, notes: node.notes })
+        return clip({
+          topicId: node.id,
+          notes: input.notes
+            .filter((note) => note.topicId === node.id)
+            .map((note) => ({
+              id: note.id,
+              title: note.title,
+              body: note.body,
+            })),
+        })
       },
     })
   }
@@ -222,7 +238,6 @@ export function createTrackyTools(input: {
         parentId: uuid.nullable(),
         title: z.string().min(1).max(200),
         description: z.string().max(2000).optional(),
-        notes: z.string().max(4000).optional(),
         icon: z.string().max(64).optional(),
         color: z.string().max(16).optional(),
       }),
@@ -247,7 +262,6 @@ export function createTrackyTools(input: {
         topicId: uuid,
         title: z.string().min(1).max(200).optional(),
         description: z.string().max(2000).nullable().optional(),
-        notes: z.string().max(4000).nullable().optional(),
         icon: z.string().max(64).optional(),
         color: z.string().max(16).nullable().optional(),
       }),
@@ -292,19 +306,18 @@ export function createTrackyTools(input: {
   if (enabled.has("propose_create_notes")) {
     tools.propose_create_notes = tool({
       description:
-        "Propose adding notes on a topic that has none. Notes are a single text field on the topic, not a list. Use propose_update_notes if notes already exist.",
+        "Propose a new markdown note on a topic. A topic can have many notes. Each note needs a short title and a markdown body. Mermaid fences are allowed in the body.",
       inputSchema: z.object({
         topicId: uuid,
-        notes: z.string().min(1).max(4000),
+        title: z.string().min(1).max(NOTE_TITLE_MAX),
+        body: z.string().max(20000),
       }),
-      execute: async ({ topicId, notes }) => {
+      execute: async ({ topicId, title, body }) => {
         const node = skillTopics(input.nodes).find((item) => item.id === topicId)
         if (!node) {
           return { error: "Unknown topic id. Use search_topics or list_children." }
         }
-        if (node.notes?.trim()) {
-          return { error: "This topic already has notes. Use propose_update_notes." }
-        }
+        const noteId = crypto.randomUUID()
         return proposalWithTopic(
           input.nodes,
           {
@@ -312,14 +325,15 @@ export function createTrackyTools(input: {
             entity: "topic",
             targetId: node.id,
             parentId: node.parentId,
-            title: node.title,
+            title,
             payload: {
               topicId: node.id,
-              title: node.title,
-              notes,
+              noteId,
+              noteTitle: title,
+              body,
               facet: "notes",
               notesAction: "create",
-              preview: notePreview(notes),
+              preview: notePreview(title),
             },
           },
           node.id
@@ -331,19 +345,25 @@ export function createTrackyTools(input: {
   if (enabled.has("propose_update_notes")) {
     tools.propose_update_notes = tool({
       description:
-        "Propose replacing notes on a topic. Call get_notes first. Use propose_create_notes if the topic has no notes yet.",
+        "Propose edits to one existing note. Call get_notes first and pass that note's id. Send title, body, or both.",
       inputSchema: z.object({
-        topicId: uuid,
-        notes: z.string().min(1).max(4000),
+        noteId: uuid,
+        title: z.string().min(1).max(NOTE_TITLE_MAX).optional(),
+        body: z.string().max(20000).optional(),
       }),
-      execute: async ({ topicId, notes }) => {
-        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
+      execute: async ({ noteId, title, body }) => {
+        if (title === undefined && body === undefined) {
+          return { error: "Send a title, a body, or both." }
+        }
+        const note = input.notes.find((item) => item.id === noteId)
+        if (!note) {
+          return { error: "Unknown note id. Use get_notes." }
+        }
+        const node = skillTopics(input.nodes).find((item) => item.id === note.topicId)
         if (!node) {
-          return { error: "Unknown topic id. Use search_topics or get_notes." }
+          return { error: "That note's topic is missing." }
         }
-        if (!node.notes?.trim()) {
-          return { error: "This topic has no notes. Use propose_create_notes." }
-        }
+        const nextTitle = title ?? note.title
         return proposalWithTopic(
           input.nodes,
           {
@@ -351,14 +371,15 @@ export function createTrackyTools(input: {
             entity: "topic",
             targetId: node.id,
             parentId: node.parentId,
-            title: node.title,
+            title: nextTitle,
             payload: {
               topicId: node.id,
-              title: node.title,
-              notes,
+              noteId: note.id,
+              noteTitle: nextTitle,
+              body: body ?? note.body,
               facet: "notes",
               notesAction: "update",
-              preview: notePreview(node.notes),
+              preview: notePreview(note.title),
             },
           },
           node.id
@@ -370,15 +391,16 @@ export function createTrackyTools(input: {
   if (enabled.has("propose_delete_notes")) {
     tools.propose_delete_notes = tool({
       description:
-        "Propose clearing notes on a topic. Does not delete the topic.",
-      inputSchema: z.object({ topicId: uuid }),
-      execute: async ({ topicId }) => {
-        const node = skillTopics(input.nodes).find((item) => item.id === topicId)
-        if (!node) {
-          return { error: "Unknown topic id." }
+        "Propose deleting one note. Does not delete the topic. Pass the note id from get_notes.",
+      inputSchema: z.object({ noteId: uuid }),
+      execute: async ({ noteId }) => {
+        const note = input.notes.find((item) => item.id === noteId)
+        if (!note) {
+          return { error: "Unknown note id. Use get_notes." }
         }
-        if (!node.notes?.trim()) {
-          return { error: "This topic has no notes to delete." }
+        const node = skillTopics(input.nodes).find((item) => item.id === note.topicId)
+        if (!node) {
+          return { error: "That note's topic is missing." }
         }
         return proposalWithTopic(
           input.nodes,
@@ -387,14 +409,14 @@ export function createTrackyTools(input: {
             entity: "topic",
             targetId: node.id,
             parentId: node.parentId,
-            title: node.title,
+            title: note.title,
             payload: {
               topicId: node.id,
-              title: node.title,
-              notes: null,
+              noteId: note.id,
+              noteTitle: note.title,
               facet: "notes",
               notesAction: "delete",
-              preview: notePreview(node.notes),
+              preview: notePreview(note.title),
             },
           },
           node.id

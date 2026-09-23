@@ -1,4 +1,5 @@
 import type { NodeLink } from "@/domain/links/types"
+import type { TopicNote } from "@/domain/notes/types"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { TrackyProposal } from "@/domain/tracky/proposals"
 import { subtreeNodeIds } from "@/domain/progress/progress"
@@ -9,6 +10,7 @@ export type RoadmapSnapshot = {
   nodes: RoadmapNode[]
   items: ChecklistItem[]
   links: NodeLink[]
+  notes?: TopicNote[]
   roleDescription?: string | null
   roleNotes?: string | null
 }
@@ -67,10 +69,6 @@ export function overlayGhostTopics(
         update.payload.description === undefined
           ? node.description
           : (update.payload.description as string | null),
-      notes:
-        update.payload.notes === undefined
-          ? node.notes
-          : (update.payload.notes as string | null),
       icon: payloadString(update.payload, "icon") || node.icon,
       color:
         update.payload.color === undefined
@@ -99,8 +97,6 @@ export function overlayGhostTopics(
         typeof proposal.payload.description === "string"
           ? proposal.payload.description
           : null,
-      notes:
-        typeof proposal.payload.notes === "string" ? proposal.payload.notes : null,
       icon:
         typeof proposal.payload.icon === "string"
           ? proposal.payload.icon
@@ -227,6 +223,114 @@ export function overlayGhostLinks(
   return extras.length === 0 ? patched : [...patched, ...extras]
 }
 
+function noteRecords(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return []
+    }
+    const row = item as Record<string, unknown>
+    if (typeof row.id !== "string" || typeof row.title !== "string") {
+      return []
+    }
+    return [
+      {
+        id: row.id,
+        title: row.title,
+        body: typeof row.body === "string" ? row.body : "",
+      },
+    ]
+  })
+}
+
+export function overlayTopicNotes(
+  notes: TopicNote[],
+  proposals: TrackyProposal[]
+): TopicNote[] {
+  const pending = pendingProposals(proposals)
+  const now = new Date().toISOString()
+  const deleted = new Set(
+    pending
+      .filter(
+        (item) =>
+          item.payload.facet === "notes" && item.payload.notesAction === "delete"
+      )
+      .map((item) => payloadString(item.payload, "noteId"))
+      .filter((id): id is string => Boolean(id))
+  )
+  const patched = notes
+    .filter((note) => !deleted.has(note.id))
+    .map((note) => {
+      const update = pending.find(
+        (item) =>
+          item.payload.facet === "notes" &&
+          item.payload.notesAction === "update" &&
+          payloadString(item.payload, "noteId") === note.id
+      )
+      if (!update) {
+        return note
+      }
+      return {
+        ...note,
+        title: payloadString(update.payload, "noteTitle") || note.title,
+        body:
+          typeof update.payload.body === "string" ? update.payload.body : note.body,
+      }
+    })
+  const extras: TopicNote[] = []
+  const existing = new Set(patched.map((note) => note.id))
+
+  for (const proposal of pending) {
+    if (proposal.payload.facet === "notes" && proposal.payload.notesAction === "create") {
+      const id = payloadString(proposal.payload, "noteId")
+      const topicId = payloadString(proposal.payload, "topicId") || proposal.targetId
+      if (!id || !topicId || existing.has(id)) {
+        continue
+      }
+      extras.push({
+        id,
+        topicId,
+        title: payloadString(proposal.payload, "noteTitle") || proposal.title,
+        body: typeof proposal.payload.body === "string" ? proposal.payload.body : "",
+        sortOrder: 10_000,
+        createdAt: now,
+        updatedAt: now,
+      })
+      existing.add(id)
+      continue
+    }
+
+    if (proposal.entity !== "topic" || proposal.kind !== "create") {
+      continue
+    }
+    const topicId =
+      (typeof proposal.payload.id === "string" && proposal.payload.id) ||
+      proposal.targetId
+    if (!topicId) {
+      continue
+    }
+    for (const note of noteRecords(proposal.payload.notes)) {
+      if (existing.has(note.id)) {
+        continue
+      }
+      extras.push({
+        id: note.id,
+        topicId,
+        title: note.title,
+        body: note.body,
+        sortOrder: 10_000,
+        createdAt: now,
+        updatedAt: now,
+      })
+      existing.add(note.id)
+    }
+  }
+
+  return extras.length === 0 ? patched : [...patched, ...extras]
+}
+
 function payloadString(payload: Record<string, unknown>, key: string) {
   const value = payload[key]
   return typeof value === "string" ? value : null
@@ -235,6 +339,63 @@ function payloadString(payload: Record<string, unknown>, key: string) {
 function entityId(proposal: TrackyProposal) {
   const fromPayload = payloadString(proposal.payload, "id")
   return fromPayload || proposal.targetId
+}
+
+function applyNoteProposal(
+  snapshot: RoadmapSnapshot,
+  proposal: TrackyProposal,
+  now: string
+): RoadmapSnapshot {
+  const notes = snapshot.notes ?? []
+  const noteId = payloadString(proposal.payload, "noteId")
+  const topicId = payloadString(proposal.payload, "topicId") || proposal.targetId
+  const action = proposal.payload.notesAction
+  if (!noteId || !topicId) {
+    return snapshot
+  }
+
+  if (action === "delete") {
+    return { ...snapshot, notes: notes.filter((note) => note.id !== noteId) }
+  }
+
+  if (action === "update") {
+    return {
+      ...snapshot,
+      notes: notes.map((note) =>
+        note.id === noteId
+          ? {
+              ...note,
+              title: payloadString(proposal.payload, "noteTitle") || note.title,
+              body:
+                typeof proposal.payload.body === "string"
+                  ? proposal.payload.body
+                  : note.body,
+              updatedAt: now,
+            }
+          : note
+      ),
+    }
+  }
+
+  if (action === "create" && !notes.some((note) => note.id === noteId)) {
+    return {
+      ...snapshot,
+      notes: [
+        ...notes,
+        {
+          id: noteId,
+          topicId,
+          title: payloadString(proposal.payload, "noteTitle") || proposal.title,
+          body: typeof proposal.payload.body === "string" ? proposal.payload.body : "",
+          sortOrder: 10_000,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+    }
+  }
+
+  return snapshot
 }
 
 export function applyAcceptedProposal(
@@ -256,7 +417,6 @@ export function applyAcceptedProposal(
         kind: "skill",
         title: payloadString(proposal.payload, "title") || proposal.title,
         description: payloadString(proposal.payload, "description"),
-        notes: payloadString(proposal.payload, "notes"),
         icon: payloadString(proposal.payload, "icon") || "circle-dot",
         color: payloadString(proposal.payload, "color"),
         handleKind: "regular",
@@ -267,7 +427,28 @@ export function applyAcceptedProposal(
         createdAt: now,
         updatedAt: now,
       }
-      return { ...snapshot, nodes: [...snapshot.nodes, node] }
+      const createdNotes = noteRecords(proposal.payload.notes).map((note, index) => ({
+        id: note.id,
+        topicId: id,
+        title: note.title,
+        body: note.body,
+        sortOrder: index,
+        createdAt: now,
+        updatedAt: now,
+      }))
+      return {
+        ...snapshot,
+        nodes: [...snapshot.nodes, node],
+        notes: [...(snapshot.notes ?? []), ...createdNotes],
+      }
+    }
+
+    if (
+      proposal.kind === "update" &&
+      proposal.targetId &&
+      proposal.payload.facet === "notes"
+    ) {
+      return applyNoteProposal(snapshot, proposal, now)
     }
 
     if (proposal.kind === "update" && proposal.targetId) {
@@ -284,10 +465,6 @@ export function applyAcceptedProposal(
               proposal.payload.description === undefined
                 ? node.description
                 : (proposal.payload.description as string | null),
-            notes:
-              proposal.payload.notes === undefined
-                ? node.notes
-                : (proposal.payload.notes as string | null),
             icon: payloadString(proposal.payload, "icon") || node.icon,
             color:
               proposal.payload.color === undefined
@@ -308,6 +485,7 @@ export function applyAcceptedProposal(
         links: snapshot.links.filter(
           (link) => !link.topicId || !removing.has(link.topicId)
         ),
+        notes: (snapshot.notes ?? []).filter((note) => !removing.has(note.topicId)),
       }
     }
   }

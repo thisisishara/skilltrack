@@ -50,13 +50,14 @@ export function summarizeTopic(
   node: RoadmapNode,
   childCounts: Map<string, number>,
   taskCounts: Map<string, number>,
-  linkCounts: Map<string, number>
+  linkCounts: Map<string, number>,
+  noteCounts: Map<string, number>
 ): TopicSummary {
   return {
     id: node.id,
     title: node.title,
     childCount: childCounts.get(node.id) ?? 0,
-    hasNotes: Boolean(node.notes?.trim()),
+    hasNotes: (noteCounts.get(node.id) ?? 0) > 0,
     taskCount: taskCounts.get(node.id) ?? 0,
     linkCount: linkCounts.get(node.id) ?? 0,
   }
@@ -82,26 +83,40 @@ export function topicPath(nodes: RoadmapNode[], topicId: string): TopicPathEntry
   return chain.reverse()
 }
 
-function lookupMaps(nodes: RoadmapNode[], tasks: ChecklistItem[], links: NodeLink[]) {
+function lookupMaps(
+  nodes: RoadmapNode[],
+  tasks: ChecklistItem[],
+  links: NodeLink[],
+  notes: { topicId: string | null }[]
+) {
   return {
     childCounts: childCountByParent(nodes),
     taskCounts: countByTopicId(tasks),
     linkCounts: countByTopicId(links),
+    noteCounts: countByTopicId(notes),
   }
 }
 
 export function listRootSummaries(
   nodes: RoadmapNode[],
   tasks: ChecklistItem[],
-  links: NodeLink[]
+  links: NodeLink[],
+  notes: { topicId: string | null }[] = []
 ) {
-  const { childCounts, taskCounts, linkCounts } = lookupMaps(nodes, tasks, links)
+  const { childCounts, taskCounts, linkCounts, noteCounts } = lookupMaps(
+    nodes,
+    tasks,
+    links,
+    notes
+  )
   const roots = skillTopics(nodes)
     .filter((node) => !node.parentId)
     .sort((a, b) => a.sortOrder - b.sortOrder)
   const sliced = roots.slice(0, MAX_LIST_ROOTS)
   return {
-    topics: sliced.map((node) => summarizeTopic(node, childCounts, taskCounts, linkCounts)),
+    topics: sliced.map((node) =>
+      summarizeTopic(node, childCounts, taskCounts, linkCounts, noteCounts)
+    ),
     truncated: roots.length > MAX_LIST_ROOTS,
   }
 }
@@ -110,20 +125,28 @@ export function listChildSummaries(
   nodes: RoadmapNode[],
   tasks: ChecklistItem[],
   links: NodeLink[],
-  topicId: string
+  topicId: string,
+  notes: { topicId: string | null }[] = []
 ) {
   const parent = skillTopics(nodes).find((node) => node.id === topicId)
   if (!parent) {
     return { error: "Topic not found in this role." as const }
   }
-  const { childCounts, taskCounts, linkCounts } = lookupMaps(nodes, tasks, links)
+  const { childCounts, taskCounts, linkCounts, noteCounts } = lookupMaps(
+    nodes,
+    tasks,
+    links,
+    notes
+  )
   const children = skillTopics(nodes)
     .filter((node) => node.parentId === topicId)
     .sort((a, b) => a.sortOrder - b.sortOrder)
   const sliced = children.slice(0, MAX_LIST_CHILDREN)
   return {
     topicId,
-    topics: sliced.map((node) => summarizeTopic(node, childCounts, taskCounts, linkCounts)),
+    topics: sliced.map((node) =>
+      summarizeTopic(node, childCounts, taskCounts, linkCounts, noteCounts)
+    ),
     truncated: children.length > MAX_LIST_CHILDREN,
   }
 }
@@ -132,17 +155,23 @@ export function searchTopicSummaries(
   nodes: RoadmapNode[],
   tasks: ChecklistItem[],
   links: NodeLink[],
-  query: string
+  query: string,
+  notes: { topicId: string | null }[] = []
 ) {
   const needle = query.trim().toLowerCase()
-  const { childCounts, taskCounts, linkCounts } = lookupMaps(nodes, tasks, links)
+  const { childCounts, taskCounts, linkCounts, noteCounts } = lookupMaps(
+    nodes,
+    tasks,
+    links,
+    notes
+  )
   const matches = skillTopics(nodes).filter((node) =>
     node.title.toLowerCase().includes(needle)
   )
   const sliced = matches.slice(0, MAX_SEARCH_HITS)
   return {
     matches: sliced.map((node) => ({
-      ...summarizeTopic(node, childCounts, taskCounts, linkCounts),
+      ...summarizeTopic(node, childCounts, taskCounts, linkCounts, noteCounts),
       parentId: node.parentId,
       path: topicPath(nodes, node.id) ?? [{ id: node.id, title: node.title }],
     })),

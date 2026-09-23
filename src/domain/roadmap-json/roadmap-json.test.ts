@@ -28,7 +28,9 @@ describe("parseRoadmapJson", () => {
     expect(document.name).toBe("Mixed Tree")
     expect(document.notes).toBe("Roadmap notes")
     expect(leaf?.parentId).toBe(root?.id)
-    expect(root?.notes).toBe("Root notes")
+    expect(root?.notes).toEqual([
+      expect.objectContaining({ title: "Notes", body: "Root notes" }),
+    ])
     expect(root?.tasks).toHaveLength(1)
     expect(root?.links).toHaveLength(1)
   })
@@ -132,7 +134,6 @@ describe("serializeRoadmapDocument", () => {
         kind: "skill" as const,
         title: topic.title,
         description: topic.description,
-        notes: topic.notes,
         icon: topic.icon,
         color: topic.color,
         handleKind: "regular" as const,
@@ -163,6 +164,17 @@ describe("serializeRoadmapDocument", () => {
           topicId: topic.id,
           label: link.label,
           url: link.url,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        }))
+      ),
+      parsed.topics.flatMap((topic) =>
+        topic.notes.map((note, index) => ({
+          id: note.id,
+          topicId: topic.id,
+          title: note.title,
+          body: note.body,
+          sortOrder: index,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
         }))

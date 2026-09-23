@@ -5,6 +5,7 @@ import { wouldCreateCycle } from "@/domain/topics/hierarchy"
 import { DEFAULT_NODE_ICON, normalizeNodeIcon } from "@/domain/topics/icon"
 import { displayNodeTitle } from "@/domain/topics/title"
 import { displayChecklistTitle } from "@/domain/tasks/title"
+import { displayNoteTitle } from "@/domain/notes/title"
 import { displayRoleName } from "@/domain/roles/name"
 
 import {
@@ -12,6 +13,7 @@ import {
   type NormalizedRoadmapDocument,
   type NormalizedTask,
   type NormalizedTopic,
+  type NormalizedTopicNote,
 } from "@/domain/roadmap-json/types"
 import { foldRoleTitleRoot } from "@/domain/roadmap-json/fold-role-title-root"
 import { isUuid } from "@/domain/roadmap-json/uuid"
@@ -31,6 +33,7 @@ const TOPIC_KEYS = new Set([
 ])
 const TASK_KEYS = new Set(["id", "title", "completed", "description"])
 const LINK_KEYS = new Set(["id", "label", "url"])
+const NOTE_KEYS = new Set(["id", "title", "body"])
 
 function fail(message: string): never {
   throw new ApplicationError("validation", message)
@@ -151,12 +154,59 @@ function parseLinks(value: unknown, seen: Set<string>, label: string): Normalize
   })
 }
 
+function parseNotes(value: unknown, seen: Set<string>): NormalizedTopicNote[] {
+  if (value === undefined) {
+    return []
+  }
+
+  if (typeof value === "string") {
+    const body = value.trim()
+    if (!body) {
+      return []
+    }
+    const id = crypto.randomUUID()
+    seen.add(id)
+    return [{ id, title: "Notes", body }]
+  }
+
+  if (!Array.isArray(value)) {
+    fail("Topic notes must be an array or a string.")
+  }
+
+  return value.map((item, index) => {
+    if (!isPlainObject(item)) {
+      fail(`Note ${index + 1} must be an object.`)
+    }
+
+    assertAllowedKeys(item, NOTE_KEYS, `Note ${index + 1}`)
+
+    const id =
+      item.id === undefined
+        ? crypto.randomUUID()
+        : requireUuid(item.id, `Note ${index + 1} id`)
+    if (seen.has(id)) {
+      fail("Note IDs must be unique in the document.")
+    }
+    seen.add(id)
+
+    const title = displayNoteTitle(requireString(item.title, `Note ${index + 1} title`))
+    if (!title) {
+      fail(`Note ${index + 1} title cannot be empty.`)
+    }
+
+    const body = optionalString(item.body, `Note ${index + 1} body`) ?? ""
+
+    return { id, title, body }
+  })
+}
+
 function parseTopic(
   value: unknown,
   parentId: string | null,
   seenTopicIds: Set<string>,
   seenTaskIds: Set<string>,
-  seenLinkIds: Set<string>
+  seenLinkIds: Set<string>,
+  seenNoteIds: Set<string>
 ): NormalizedTopic[] {
   if (!isPlainObject(value)) {
     fail("Each topic must be an object.")
@@ -176,7 +226,7 @@ function parseTopic(
   }
 
   const description = optionalString(value.description, "Topic description")
-  const notes = optionalString(value.notes, "Topic notes")
+  const notes = parseNotes(value.notes, seenNoteIds)
   const colorRaw = optionalString(value.color, "Topic color")
   let color: string | null = null
   if (colorRaw !== undefined) {
@@ -192,7 +242,7 @@ function parseTopic(
     parentId,
     title,
     description: description?.trim() ? description.trim() : null,
-    notes: notes?.trim() ? notes.trim() : null,
+    notes,
     icon: normalizeNodeIcon(optionalString(value.icon, "Topic icon")),
     color,
     tasks: parseTasks(value.tasks, seenTaskIds),
@@ -206,7 +256,9 @@ function parseTopic(
       fail("Topic topics must be an array.")
     }
     for (const child of children) {
-      nested.push(...parseTopic(child, id, seenTopicIds, seenTaskIds, seenLinkIds))
+      nested.push(
+        ...parseTopic(child, id, seenTopicIds, seenTaskIds, seenLinkIds, seenNoteIds)
+      )
     }
   }
 
@@ -280,9 +332,10 @@ export function validateRoadmapDocument(value: unknown): NormalizedRoadmapDocume
   const seenTopicIds = new Set<string>()
   const seenTaskIds = new Set<string>()
   const seenLinkIds = new Set<string>()
+  const seenNoteIds = new Set<string>()
   const roadmapLinks = parseLinks(value.roadmap.links, seenLinkIds, "Roadmap links")
   const topics = value.topics.flatMap((topic) =>
-    parseTopic(topic, null, seenTopicIds, seenTaskIds, seenLinkIds)
+    parseTopic(topic, null, seenTopicIds, seenTaskIds, seenLinkIds, seenNoteIds)
   )
 
   assertGraph(topics)

@@ -1,3 +1,4 @@
+import type { TopicNote } from "@/domain/notes/types"
 import type { Task } from "@/domain/tasks/types"
 import type { Link } from "@/domain/links/types"
 import { isLabelNode } from "@/domain/topics/kind"
@@ -22,7 +23,8 @@ function serializeTopic(
   topic: Topic,
   allTopics: Topic[],
   tasksByTopic: Map<string, Task[]>,
-  linksByTopic: Map<string, Link[]>
+  linksByTopic: Map<string, Link[]>,
+  notesByTopic: Map<string, TopicNote[]>
 ): Record<string, unknown> {
   const tasks = (tasksByTopic.get(topic.id) ?? [])
     .slice()
@@ -40,8 +42,17 @@ function serializeTopic(
     url: link.url,
   }))
 
+  const notes = (notesByTopic.get(topic.id) ?? [])
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((note) => ({
+      id: note.id,
+      title: note.title,
+      body: note.body,
+    }))
+
   const children = sortedSiblings(allTopics, topic.id).map((child) =>
-    serializeTopic(child, allTopics, tasksByTopic, linksByTopic)
+    serializeTopic(child, allTopics, tasksByTopic, linksByTopic, notesByTopic)
   )
 
   return {
@@ -50,7 +61,7 @@ function serializeTopic(
     ...(topic.description ? { description: topic.description } : {}),
     icon: topic.icon,
     ...(topic.color ? { color: topic.color } : {}),
-    ...(topic.notes ? { notes: topic.notes } : {}),
+    ...(notes.length > 0 ? { notes } : {}),
     ...(tasks.length > 0 ? { tasks } : {}),
     ...(links.length > 0 ? { links } : {}),
     ...(children.length > 0 ? { topics: children } : {}),
@@ -61,13 +72,21 @@ export function serializeRoadmapDocument(
   role: Pick<Role, "name" | "description" | "notes">,
   topics: Topic[],
   tasks: Task[],
-  links: Link[]
+  links: Link[],
+  notes: TopicNote[] = []
 ) {
   const tasksByTopic = new Map<string, Task[]>()
   for (const task of tasks) {
     const list = tasksByTopic.get(task.topicId) ?? []
     list.push(task)
     tasksByTopic.set(task.topicId, list)
+  }
+
+  const notesByTopic = new Map<string, TopicNote[]>()
+  for (const note of notes) {
+    const list = notesByTopic.get(note.topicId) ?? []
+    list.push(note)
+    notesByTopic.set(note.topicId, list)
   }
 
   const linksByTopic = new Map<string, Link[]>()
@@ -98,7 +117,7 @@ export function serializeRoadmapDocument(
         : {}),
     },
     topics: sortedSiblings(topics, null).map((topic) =>
-      serializeTopic(topic, topics, tasksByTopic, linksByTopic)
+      serializeTopic(topic, topics, tasksByTopic, linksByTopic, notesByTopic)
     ),
   }
 

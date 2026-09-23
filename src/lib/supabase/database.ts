@@ -159,7 +159,6 @@ export type Database = {
           kind: string
           title: string
           description: string | null
-          notes: string | null
           icon: string
           color: string | null
           handle_kind: string
@@ -177,7 +176,6 @@ export type Database = {
           kind?: string
           title: string
           description?: string | null
-          notes?: string | null
           icon?: string
           color?: string | null
           handle_kind?: string
@@ -195,7 +193,6 @@ export type Database = {
           kind?: string
           title?: string
           description?: string | null
-          notes?: string | null
           icon?: string
           color?: string | null
           handle_kind?: string
@@ -217,6 +214,44 @@ export type Database = {
           {
             foreignKeyName: "topics_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_notes: {
+        Row: {
+          id: string
+          topic_id: string
+          title: string
+          body: string
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          topic_id: string
+          title: string
+          body?: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          topic_id?: string
+          title?: string
+          body?: string
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_notes_topic_id_fkey"
+            columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topics"
             referencedColumns: ["id"]

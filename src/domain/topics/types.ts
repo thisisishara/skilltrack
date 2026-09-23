@@ -8,7 +8,6 @@ export type Topic = {
   kind: NodeKind
   title: string
   description: string | null
-  notes: string | null
   icon: string
   color: string | null
   handleKind: NodeHandleKind

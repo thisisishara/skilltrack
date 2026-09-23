@@ -19,7 +19,13 @@ const SCHEMA_BLOCK = `{
       "icon": "python",
       "color": "#3b82f6",
       "description": "Optional",
-      "notes": "Optional",
+      "notes": [
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "title": "Short title",
+          "body": "Markdown. Mermaid fences are allowed."
+        }
+      ],
       "tasks": [
         {
           "id": "00000000-0000-4000-8000-000000000002",
@@ -73,8 +79,8 @@ Unknown fields are rejected. Do not include parent_id, schema, nodes, checklist,
 
 ## IDs
 
-- Every topic, task, and link needs a UUID (RFC-style: version 1–8, variant 8|9|a|b).
-- IDs must be unique across the whole file. Topics, tasks, and links share one uniqueness space — never reuse an id.
+- Every topic, task, link, and note needs a UUID (RFC-style: version 1–8, variant 8|9|a|b).
+- IDs must be unique across the whole file. Topics, tasks, links, and notes share one uniqueness space — never reuse an id.
 - Example: 00000000-0000-4000-8000-000000000001
 - Prefer version-4 UUIDs. Do not use nil UUID 00000000-0000-0000-0000-000000000000.
 
@@ -82,7 +88,8 @@ Unknown fields are rejected. Do not include parent_id, schema, nodes, checklist,
 
 - Titles and labels: non-empty after trim.
 - completed: boolean true or false, never a string. Use false unless the user asked to import existing progress.
-- Optional strings (description, notes): omit if unused. Task may include optional description.
+- Optional strings (description, roadmap notes): omit if unused. Task may include optional description.
+- Topic notes are an array of { id, title, body }. title is a short label (80 characters or fewer). body is markdown and may include fenced mermaid diagrams. Omit notes when a topic has none. A legacy notes string still imports as one note titled Notes.
 - icon: kebab-case Lucide name or brand id (brain, circle-dot, book-open, python, docker, kubernetes, react, typescript, github). Invalid or missing icons become circle-dot. Only put icon on topics.
 - color: # plus 3 or 6 hex digits (#3b82f6 or #38f). Only on topics. Give each top-level topic a distinct color; children may omit color to inherit in the UI.
 - url: http:// or https:// only. Prefer real, well-known documentation URLs. Omit a link rather than invent a fake or broken URL.

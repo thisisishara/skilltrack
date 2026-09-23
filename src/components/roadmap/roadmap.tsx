@@ -24,6 +24,11 @@ import {
   updateChecklistItemAction,
 } from "@/application/tasks/actions"
 import {
+  createTopicNoteAction,
+  deleteTopicNoteAction,
+  updateTopicNoteAction,
+} from "@/application/notes/actions"
+import {
   createNodeLinkAction,
   deleteNodeLinkAction,
   updateNodeLinkAction,
@@ -49,7 +54,8 @@ import {
   TaskDialog,
   type TopicTasksCopy,
 } from "@/components/roadmap/topic-tasks-section"
-import { NotesDialog, TopicConfigSheet } from "@/components/roadmap/topic-config-sheet"
+import { NoteEditorDialog } from "@/components/roadmap/note-editor-dialog"
+import { TopicConfigSheet } from "@/components/roadmap/topic-config-sheet"
 import { LinkDialog } from "@/components/roadmap/topic-links-section"
 import {
   TopicDialog,
@@ -77,6 +83,7 @@ import {
   overlayGhostTasks,
   overlayGhostTopics,
   overlayRoleNotes,
+  overlayTopicNotes,
   type RoadmapSnapshot,
 } from "@/domain/tracky/overlay"
 import {
@@ -119,6 +126,7 @@ import { useDetailsPanelLayout } from "@/hooks/use-details-panel-layout"
 import { useJsonFileDrop } from "@/hooks/use-json-file-drop"
 import { applyChecklistCompletion } from "@/domain/tasks/completion"
 import { displayChecklistTitle } from "@/domain/tasks/title"
+import type { TopicNote } from "@/domain/notes/types"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { NodeLink } from "@/domain/links/types"
 import {
@@ -313,7 +321,6 @@ function createLocalNode(input: {
     kind: "skill",
     title: input.title,
     description: input.description,
-    notes: null,
     icon: input.icon,
     color: null,
     handleKind: input.handleKind,
@@ -335,6 +342,7 @@ export type RoadmapViewProps = {
   nodes: RoadmapNode[]
   checklistItems: ChecklistItem[]
   links: NodeLink[]
+  notes: TopicNote[]
   focusNodeId?: string
 }
 
@@ -347,11 +355,17 @@ export function Roadmap({
   nodes: serverNodes,
   checklistItems: serverItems,
   links: serverLinks,
+  notes: serverNotes,
   focusNodeId: focusNodeIdFromServer,
 }: RoadmapViewProps) {
   const [nodes, setNodes] = useState<RoadmapNode[]>(serverNodes)
   const [items, setItems] = useState<ChecklistItem[]>(serverItems ?? [])
   const [links, setLinks] = useState<NodeLink[]>(serverLinks ?? [])
+  const [notes, setNotes] = useState<TopicNote[]>(serverNotes ?? [])
+  const [noteEditor, setNoteEditor] = useState<{
+    topicId: string
+    noteId: string | null
+  } | null>(null)
   const [overviewDescription, setOverviewDescription] = useState(roleDescription ?? "")
   const [overviewNotes, setOverviewNotes] = useState(roleNotes ?? "")
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
@@ -411,6 +425,7 @@ export function Roadmap({
     nodes,
     items,
     links,
+    notes,
     roleDescription: overviewDescription,
     roleNotes: overviewNotes,
   })
@@ -418,6 +433,7 @@ export function Roadmap({
     nodes,
     items,
     links,
+    notes,
     roleDescription: overviewDescription,
     roleNotes: overviewNotes,
   }
@@ -432,6 +448,10 @@ export function Roadmap({
   const displayLinks = useMemo(
     () => overlayGhostLinks(links, track?.proposals ?? [], roleId),
     [links, roleId, track?.proposals]
+  )
+  const displayNotes = useMemo(
+    () => overlayTopicNotes(notes, track?.proposals ?? []),
+    [notes, track?.proposals]
   )
   const {
     groupKey,
@@ -490,6 +510,13 @@ export function Roadmap({
   }, [serverLinks])
 
   useEffect(() => {
+    setNotes((current) => {
+      const next = mergeById(serverNotes ?? [], current)
+      return sameById(next, current) ? current : next
+    })
+  }, [serverNotes])
+
+  useEffect(() => {
     const accepted = (track?.proposals ?? []).filter(
       (proposal) =>
         proposal.status === "accepted" &&
@@ -509,6 +536,9 @@ export function Roadmap({
     setNodes(next.nodes)
     setItems(next.items)
     setLinks(next.links)
+    if (next.notes) {
+      setNotes(next.notes)
+    }
     if (next.roleDescription !== undefined) {
       setOverviewDescription(next.roleDescription ?? "")
     }
@@ -1027,6 +1057,10 @@ export function Roadmap({
       openCreate(nodeId)
       return
     }
+    if (kind === "notes") {
+      openNoteEditor(nodeId, null)
+      return
+    }
     setCompose({ type: kind, nodeId })
   }
 
@@ -1169,7 +1203,6 @@ export function Roadmap({
       title,
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
-      notes: input.notes.trim() || null,
       color: input.accentColor,
     }
     const previous = nodes
@@ -1201,7 +1234,6 @@ export function Roadmap({
       title: next.title,
       description: next.description,
       icon: next.icon,
-      notes: next.notes,
       color: next.color,
       nestedAccents: input.nestedAccents,
       handleKind: next.handleKind,
@@ -1215,33 +1247,88 @@ export function Roadmap({
     return { ok: true as const, node: next }
   }
 
-  function handleSaveNotes(nodeId: string, notes: string) {
-    const target = nodes.find((node) => node.id === nodeId)
-    if (!target) {
+  function openNoteEditor(topicId: string, noteId: string | null) {
+    setConfigNodeId(topicId)
+    setNoteEditor({ topicId, noteId })
+  }
+
+  function handleSaveTopicNote(input: { title: string; body: string }) {
+    if (!noteEditor) {
+      return
+    }
+    const { topicId, noteId } = noteEditor
+    const existing = noteId ? notes.find((note) => note.id === noteId) : null
+    if (noteId && !existing) {
       return
     }
 
-    const previous = target
-    const next: RoadmapNode = {
-      ...target,
-      notes: notes.trim() || null,
+    if (existing) {
+      const previous = notes
+      const next: TopicNote = {
+        ...existing,
+        title: input.title,
+        body: input.body,
+        updatedAt: new Date().toISOString(),
+      }
+      setNotes((current) => current.map((note) => (note.id === next.id ? next : note)))
+      setNoteEditor(null)
+      void updateTopicNoteAction({
+        roleId,
+        topicId,
+        noteId: existing.id,
+        title: input.title,
+        body: input.body,
+      }).then((result) => {
+        if (!result.ok) {
+          setNotes(previous)
+          toast.error(result.message)
+        }
+      })
+      return
     }
-    setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
 
-    void updateNodeAction({
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const created: TopicNote = {
+      id,
+      topicId,
+      title: input.title,
+      body: input.body,
+      sortOrder: notes.filter((note) => note.topicId === topicId).length,
+      createdAt: now,
+      updatedAt: now,
+    }
+    setNotes((current) => [...current, created])
+    setNoteEditor(null)
+    void createTopicNoteAction({
+      id,
       roleId,
-      nodeId: next.id,
-      title: next.title,
-      description: next.description,
-      icon: next.icon,
-      notes: next.notes,
-      color: next.color,
-      handleKind: next.handleKind,
+      topicId,
+      title: input.title,
+      body: input.body,
     }).then((result) => {
       if (!result.ok) {
-        setNodes((current) =>
-          current.map((node) => (node.id === previous.id ? previous : node))
-        )
+        setNotes((current) => current.filter((note) => note.id !== id))
+        toast.error(result.message)
+      }
+    })
+  }
+
+  function handleDeleteTopicNote() {
+    if (!noteEditor?.noteId) {
+      return
+    }
+    const noteId = noteEditor.noteId
+    const previous = notes
+    setNotes((current) => current.filter((note) => note.id !== noteId))
+    setNoteEditor(null)
+    void deleteTopicNoteAction({
+      roleId,
+      topicId: noteEditor.topicId,
+      noteId,
+    }).then((result) => {
+      if (!result.ok) {
+        setNotes(previous)
         toast.error(result.message)
       }
     })
@@ -1256,10 +1343,12 @@ export function Roadmap({
     const previousNodes = nodes
     const previousItems = items
     const previousLinks = links
+    const previousTopicNotes = notes
     const previousNotes = overviewNotes
     setNodes([])
     setItems([])
     setLinks([])
+    setNotes([])
     setOverviewNotes("")
     setConfigNodeId(null)
 
@@ -1268,6 +1357,7 @@ export function Roadmap({
       setNodes(previousNodes)
       setItems(previousItems)
       setLinks(previousLinks)
+      setNotes(previousTopicNotes)
       setOverviewNotes(previousNotes)
       toast.error(result.message)
       return
@@ -1292,11 +1382,13 @@ export function Roadmap({
     const previousNodes = nodes
     const previousItems = items
     const previousLinks = links
+    const previousTopicNotes = notes
     setNodes((current) => current.filter((node) => !removing.has(node.id)))
     setItems((current) => current.filter((item) => !removing.has(item.topicId)))
     setLinks((current) =>
       current.filter((link) => !link.topicId || !removing.has(link.topicId))
     )
+    setNotes((current) => current.filter((note) => !removing.has(note.topicId)))
     setDeleteOpen(false)
     if (configNodeId && removing.has(configNodeId)) {
       setConfigNodeId(null)
@@ -1311,6 +1403,7 @@ export function Roadmap({
           setNodes(previousNodes)
           setItems(previousItems)
           setLinks(previousLinks)
+          setNotes(previousTopicNotes)
           toast.error(failed.message)
         }
       }
@@ -1823,6 +1916,15 @@ export function Roadmap({
       overviewDescription={overviewDescription}
       overviewNotes={displayOverviewNotes}
       highlightFacet={detailsHighlight}
+      topicNotes={
+        panelNode ? displayNotes.filter((note) => note.topicId === panelNode.id) : []
+      }
+      onOpenTopicNote={(note) => openNoteEditor(note.topicId, note.id)}
+      onAddTopicNote={() => {
+        if (panelNode) {
+          openNoteEditor(panelNode.id, null)
+        }
+      }}
       canInheritAccent={Boolean(panelNode?.parentId)}
       subtitle={
         isOverview
@@ -2010,25 +2112,37 @@ export function Roadmap({
         }}
         onUpdate={() => null}
       />
-      <NotesDialog
-        open={compose?.type === "notes"}
-        notes={
-          compose?.type === "notes"
-            ? (nodes.find((node) => node.id === compose.nodeId)?.notes ?? "")
+      <NoteEditorDialog
+        open={noteEditor !== null}
+        title={
+          noteEditor?.noteId
+            ? (displayNotes.find((note) => note.id === noteEditor.noteId)?.title ?? "")
             : ""
+        }
+        body={
+          noteEditor?.noteId
+            ? (displayNotes.find((note) => note.id === noteEditor.noteId)?.body ?? "")
+            : ""
+        }
+        readOnly={
+          !editMode ||
+          Boolean(
+            noteEditor?.noteId && !notes.some((note) => note.id === noteEditor.noteId)
+          )
         }
         onOpenChange={(open) => {
           if (!open) {
-            setCompose(null)
+            setNoteEditor(null)
           }
         }}
-        onSave={(notes) => {
-          if (!compose || compose.type !== "notes") {
-            return
-          }
-          handleSaveNotes(compose.nodeId, notes)
-          setCompose(null)
-        }}
+        onSave={handleSaveTopicNote}
+        onDelete={
+          editMode &&
+          noteEditor?.noteId &&
+          notes.some((note) => note.id === noteEditor.noteId)
+            ? handleDeleteTopicNote
+            : undefined
+        }
       />
       <DeleteTopicAlert
         open={deleteOpen}

@@ -105,16 +105,16 @@ export function proposalHeadline(
   if (proposal.payload.facet === "notes") {
     const action =
       proposal.payload.notesAction === "delete"
-        ? "Clear notes"
+        ? "Delete note"
         : proposal.payload.notesAction === "create"
-          ? "Add notes"
-          : "Edit notes"
-    const where = topicTitle || proposal.title
-    const preview = notePreview(proposal.payload.preview)
-    if (preview && where) {
-      return `${action} · ${where} · ${preview}`
-    }
-    return where ? `${action} · ${where}` : action
+          ? "Add note"
+          : "Edit note"
+    const where = topicTitle
+    const noteTitle =
+      (typeof proposal.payload.noteTitle === "string" && proposal.payload.noteTitle) ||
+      proposal.title
+    const line = where ? `${action} · ${where}` : action
+    return noteTitle ? `${line} · ${noteTitle}` : line
   }
 
   const verb =

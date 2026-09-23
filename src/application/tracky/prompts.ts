@@ -31,7 +31,7 @@ Never invent topic, task, or link UUIDs. Copy ids from tools or the working set.
 
 When proposing:
 - Use propose_* tools. Include parentId for nested creates.
-- Notes are one text field per topic. Use propose_create_notes, propose_update_notes, or propose_delete_notes. Do not use propose_update_topic for notes.
+- Topic notes are a list of titled markdown documents. Use get_notes, then propose_create_notes, propose_update_notes, or propose_delete_notes with a note id. Do not use propose_update_topic for notes. Mermaid fences belong in the note body.
 - Role description and role notes: use propose_update_role. Do not invent a topic for the roadmap overview.
 - If they complained about length, propose a shorter faithful rewrite, not a restatement of the problem.
 - For an empty roadmap, use propose_full_roadmap with canonical SkillTrack JSON (no markdown fences).

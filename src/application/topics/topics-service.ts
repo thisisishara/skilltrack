@@ -213,7 +213,6 @@ export async function updateNodeDetails(
     title: string
     description?: string | null
     icon?: string | null
-    notes?: string | null
     accentColor?: string | null
     color?: string | null
     nestedAccents?: NestedAccentMode
@@ -243,9 +242,6 @@ export async function updateNodeDetails(
         : node.description,
     icon:
       input.icon !== undefined ? normalizeNodeIcon(input.icon) : node.icon,
-    ...(input.notes !== undefined
-      ? { notes: optionalDescription(input.notes) }
-      : {}),
     ...(input.color !== undefined || input.accentColor !== undefined
       ? { color: optionalAccent(input.color ?? input.accentColor) }
       : {}),

@@ -18,6 +18,7 @@ import {
   exportFileName,
   type NormalizedRoadmapDocument,
 } from "@/domain/roadmap-json"
+import * as notesRepository from "@/repositories/notes/notes-repository"
 import * as tasksRepository from "@/repositories/tasks/tasks-repository"
 import * as linksRepository from "@/repositories/links/links-repository"
 import * as topicsRepository from "@/repositories/topics/topics-repository"
@@ -30,14 +31,18 @@ async function documentIdsCollide(document: NormalizedRoadmapDocument) {
     ...document.links.map((link) => link.id),
     ...document.topics.flatMap((topic) => topic.links.map((link) => link.id)),
   ]
+  const noteIds = document.topics.flatMap((topic) => topic.notes.map((note) => note.id))
 
-  const [topics, tasks, links] = await Promise.all([
+  const [topics, tasks, links, notes] = await Promise.all([
     topicsRepository.listExistingIds(topicIds),
     tasksRepository.listExistingIds(taskIds),
     linksRepository.listExistingIds(linkIds),
+    notesRepository.listExistingIds(noteIds),
   ])
 
-  return ids.some((id) => topics.has(id) || tasks.has(id) || links.has(id))
+  return ids.some(
+    (id) => topics.has(id) || tasks.has(id) || links.has(id) || notes.has(id)
+  )
 }
 
 function siblingSortOrders(document: NormalizedRoadmapDocument) {
@@ -76,7 +81,6 @@ async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) 
         kind: "skill",
         title: topic.title,
         description: topic.description,
-        notes: topic.notes,
         icon: topic.icon,
         color: topic.color,
         handleKind: "regular",
@@ -125,8 +129,19 @@ async function insertGraph(roleId: string, document: NormalizedRoadmapDocument) 
     ),
   ]
 
+  const noteRows = document.topics.flatMap((topic) =>
+    topic.notes.map((note, index) => ({
+      id: note.id,
+      topicId: topic.id,
+      title: note.title,
+      body: note.body,
+      sortOrder: index,
+    }))
+  )
+
   await tasksRepository.insertMany(taskRows)
   await linksRepository.insertMany(linkRows)
+  await notesRepository.insertMany(noteRows)
 }
 
 async function applyRoadmapFields(userId: string, role: Role, document: NormalizedRoadmapDocument) {
@@ -199,13 +214,14 @@ export async function exportRoadmap(userId: string, roleId: string) {
     throw new ApplicationError("not_found", "That role no longer exists.")
   }
 
-  const [topics, tasks, links] = await Promise.all([
+  const [topics, tasks, links, notes] = await Promise.all([
     topicsRepository.listByRoleId(role.id),
     tasksRepository.listByRoleId(role.id),
     linksRepository.listByRoleId(role.id),
+    notesRepository.listByRoleId(role.id),
   ])
 
-  const json = serializeRoadmapDocument(role, topics, tasks, links)
+  const json = serializeRoadmapDocument(role, topics, tasks, links, notes)
   return {
     filename: exportFileName(role.name),
     json,

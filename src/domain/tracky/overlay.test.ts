@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { applyAcceptedProposal, overlayGhostLinks, overlayGhostTopics, overlayRoleNotes, type RoadmapSnapshot } from "@/domain/tracky/overlay"
+import { applyAcceptedProposal, overlayGhostLinks, overlayRoleNotes, overlayTopicNotes, type RoadmapSnapshot } from "@/domain/tracky/overlay"
 import type { TrackyProposal } from "@/domain/tracky/proposals"
 
 function snapshot(partial?: Partial<RoadmapSnapshot>): RoadmapSnapshot {
@@ -14,7 +14,6 @@ function snapshot(partial?: Partial<RoadmapSnapshot>): RoadmapSnapshot {
         kind: "skill",
         title: "Python",
         description: null,
-        notes: "Old notes",
         icon: "circle-dot",
         color: null,
         handleKind: "regular",
@@ -46,6 +45,17 @@ function snapshot(partial?: Partial<RoadmapSnapshot>): RoadmapSnapshot {
         topicId: "topic-1",
         label: "Docs",
         url: "https://example.com",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    notes: [
+      {
+        id: "note-1",
+        topicId: "topic-1",
+        title: "Notes",
+        body: "Old notes",
+        sortOrder: 0,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
       },
@@ -83,18 +93,23 @@ describe("applyAcceptedProposal", () => {
     expect(next.nodes.map((node) => node.title)).toEqual(["Python", "Rust"])
   })
 
-  it("clears notes on a topic", () => {
+  it("deletes one topic note", () => {
     const next = applyAcceptedProposal(
       snapshot(),
       proposal({
         entity: "topic",
         kind: "update",
-        title: "Python",
+        title: "Notes",
         targetId: "topic-1",
-        payload: { notes: null, facet: "notes" },
+        payload: {
+          noteId: "note-1",
+          topicId: "topic-1",
+          facet: "notes",
+          notesAction: "delete",
+        },
       })
     )
-    expect(next.nodes[0]?.notes).toBeNull()
+    expect(next.notes).toEqual([])
     expect(next.nodes[0]?.title).toBe("Python")
   })
 
@@ -143,22 +158,25 @@ describe("applyAcceptedProposal", () => {
 })
 
 describe("pending overlays", () => {
-  it("shows topic note edits on the existing node", () => {
-    const nodes = overlayGhostTopics(
-      snapshot().nodes,
-      [
-        proposal({
-          status: "pending",
-          entity: "topic",
-          kind: "update",
-          title: "Python",
-          targetId: "topic-1",
-          payload: { notes: "Shorter notes.", facet: "notes" },
-        }),
-      ],
-      "role-1"
-    )
-    expect(nodes[0]?.notes).toBe("Shorter notes.")
+  it("shows topic note edits before they are accepted", () => {
+    const notes = overlayTopicNotes(snapshot().notes ?? [], [
+      proposal({
+        status: "pending",
+        entity: "topic",
+        kind: "update",
+        title: "Shorter",
+        targetId: "topic-1",
+        payload: {
+          noteId: "note-1",
+          noteTitle: "Shorter",
+          body: "Shorter notes.",
+          facet: "notes",
+          notesAction: "update",
+        },
+      }),
+    ])
+    expect(notes[0]?.title).toBe("Shorter")
+    expect(notes[0]?.body).toBe("Shorter notes.")
   })
 
   it("shows link edits and hides deleted links", () => {

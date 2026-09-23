@@ -11,12 +11,18 @@ export type NormalizedLink = {
   url: string
 }
 
+export type NormalizedTopicNote = {
+  id: string
+  title: string
+  body: string
+}
+
 export type NormalizedTopic = {
   id: string
   parentId: string | null
   title: string
   description: string | null
-  notes: string | null
+  notes: NormalizedTopicNote[]
   icon: string
   color: string | null
   tasks: NormalizedTask[]

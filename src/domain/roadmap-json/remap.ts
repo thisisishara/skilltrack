@@ -32,6 +32,10 @@ export function remapRoadmapDocument(
         ...task,
         id: mapped(task.id, otherIds),
       })),
+      notes: topic.notes.map((note) => ({
+        ...note,
+        id: mapped(note.id, otherIds),
+      })),
       links: topic.links.map((link) => ({
         ...link,
         id: mapped(link.id, otherIds),
@@ -51,6 +55,9 @@ export function collectDocumentIds(document: NormalizedRoadmapDocument) {
     ids.push(topic.id)
     for (const task of topic.tasks) {
       ids.push(task.id)
+    }
+    for (const note of topic.notes) {
+      ids.push(note.id)
     }
     for (const link of topic.links) {
       ids.push(link.id)

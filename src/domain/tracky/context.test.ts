@@ -17,7 +17,6 @@ function node(
     kind: "skill",
     title,
     description: "desc",
-    notes: extra?.notes ?? "notes",
     icon: "circle-dot",
     color: null,
     handleKind: "regular",

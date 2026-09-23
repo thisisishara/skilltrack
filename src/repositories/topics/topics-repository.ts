@@ -22,7 +22,6 @@ function toNode(row: NodeRow): RoadmapNode {
     kind: normalizeNodeKind(row.kind),
     title: row.title,
     description: row.description,
-    notes: row.notes,
     icon: row.icon,
     color: row.color,
     handleKind: normalizeNodeHandleKind(row.handle_kind),
@@ -125,7 +124,6 @@ export async function insertMany(
     kind: NodeKind
     title: string
     description: string | null
-    notes: string | null
     icon: string
     color: string | null
     handleKind: NodeHandleKind
@@ -150,7 +148,6 @@ export async function insertMany(
         kind: row.kind,
         title: displayNodeTitle(row.title),
         description: row.description,
-        notes: row.notes,
         icon: row.icon,
         color: row.color,
         handle_kind: row.handleKind,
@@ -209,7 +206,6 @@ export async function updateDetails(
     title: string
     description: string | null
     icon: string
-    notes?: string | null
     color?: string | null
     handleKind?: NodeHandleKind
     incomingEdgeAnimated?: boolean
@@ -222,7 +218,6 @@ export async function updateDetails(
       title: displayNodeTitle(input.title),
       description: input.description,
       icon: input.icon,
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
       ...(input.color !== undefined ? { color: input.color } : {}),
       ...(input.handleKind !== undefined ? { handle_kind: input.handleKind } : {}),
       ...(input.incomingEdgeAnimated !== undefined

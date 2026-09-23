@@ -3,6 +3,11 @@ import {
   deleteNodeLinkAction,
   updateNodeLinkAction,
 } from "@/application/links/actions"
+import {
+  createTopicNoteAction,
+  deleteTopicNoteAction,
+  updateTopicNoteAction,
+} from "@/application/notes/actions"
 import { updateRoleDescriptionAction, updateRoleNotesAction } from "@/application/roles/actions"
 import { createNodeAction, deleteNodeAction, updateNodeAction } from "@/application/topics/actions"
 import {
@@ -31,7 +36,61 @@ export async function persistTrackyProposal(
         description: asString(proposal.payload.description) || null,
         icon: asString(proposal.payload.icon) || null,
       })
-      return result.ok ? { ok: true } : { ok: false, message: result.message }
+      if (!result.ok) {
+        return { ok: false, message: result.message }
+      }
+      if (!("node" in result)) {
+        return { ok: true }
+      }
+      const notes = Array.isArray(proposal.payload.notes) ? proposal.payload.notes : []
+      for (const item of notes) {
+        if (!item || typeof item !== "object") {
+          continue
+        }
+        const note = item as { id?: unknown; title?: unknown; body?: unknown }
+        const created = await createTopicNoteAction({
+          id: typeof note.id === "string" ? note.id : undefined,
+          roleId,
+          topicId: result.node.id,
+          title: typeof note.title === "string" ? note.title : "Notes",
+          body: typeof note.body === "string" ? note.body : "",
+        })
+        if (!created.ok) {
+          return { ok: false, message: created.message }
+        }
+      }
+      return { ok: true }
+    }
+    if (
+      proposal.kind === "update" &&
+      proposal.targetId &&
+      proposal.payload.facet === "notes"
+    ) {
+      const topicId = asString(proposal.payload.topicId) || proposal.targetId
+      const noteId = asString(proposal.payload.noteId)
+      const action = proposal.payload.notesAction
+      if (action === "create") {
+        const created = await createTopicNoteAction({
+          id: noteId || undefined,
+          roleId,
+          topicId,
+          title: asString(proposal.payload.noteTitle) || proposal.title,
+          body: asString(proposal.payload.body),
+        })
+        return created.ok ? { ok: true } : { ok: false, message: created.message }
+      }
+      if (action === "delete") {
+        const deleted = await deleteTopicNoteAction({ roleId, topicId, noteId })
+        return deleted.ok ? { ok: true } : { ok: false, message: deleted.message }
+      }
+      const updated = await updateTopicNoteAction({
+        roleId,
+        topicId,
+        noteId,
+        title: asString(proposal.payload.noteTitle) || proposal.title,
+        body: asString(proposal.payload.body),
+      })
+      return updated.ok ? { ok: true } : { ok: false, message: updated.message }
     }
     if (proposal.kind === "update" && proposal.targetId) {
       const result = await updateNodeAction({
@@ -42,10 +101,6 @@ export async function persistTrackyProposal(
           proposal.payload.description === undefined
             ? undefined
             : (proposal.payload.description as string | null),
-        notes:
-          proposal.payload.notes === undefined
-            ? undefined
-            : (proposal.payload.notes as string | null),
         icon:
           proposal.payload.icon === undefined
             ? undefined

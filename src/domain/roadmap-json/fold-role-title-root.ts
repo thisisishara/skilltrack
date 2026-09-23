@@ -1,7 +1,17 @@
-import type { NormalizedRoadmapDocument } from "@/domain/roadmap-json/types"
+import type {
+  NormalizedRoadmapDocument,
+  NormalizedTopicNote,
+} from "@/domain/roadmap-json/types"
 
 function sameTitle(left: string, right: string) {
   return left.trim().toLowerCase() === right.trim().toLowerCase()
+}
+
+function notesText(notes: NormalizedTopicNote[]) {
+  const parts = notes
+    .map((note) => note.body.trim())
+    .filter((body) => body.length > 0)
+  return parts.length > 0 ? parts.join("\n\n") : null
 }
 
 function mergeText(primary: string | null, extra: string | null) {
@@ -36,7 +46,7 @@ export function foldRoleTitleRoot(
   return {
     ...document,
     description: mergeText(document.description, wrapper.description),
-    notes: mergeText(document.notes, wrapper.notes),
+    notes: mergeText(document.notes, notesText(wrapper.notes)),
     links: [...document.links, ...wrapper.links],
     topics: document.topics
       .filter((topic) => topic.id !== wrapper.id)

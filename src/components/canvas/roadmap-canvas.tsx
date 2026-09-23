@@ -307,7 +307,6 @@ function createLocalNode(input: {
   const now = new Date().toISOString()
   return {
     ...input,
-    notes: null,
     color: null,
     createdAt: now,
     updatedAt: now,
@@ -892,7 +891,6 @@ function RoadmapCanvasInner({
       title,
       description: input.description.trim() || null,
       icon: normalizeNodeIcon(input.icon),
-      notes: input.notes.trim() || null,
       color: input.accentColor,
     }
     setNodes((current) => current.map((node) => (node.id === next.id ? next : node)))
@@ -903,7 +901,6 @@ function RoadmapCanvasInner({
       title: next.title,
       description: next.description,
       icon: next.icon,
-      notes: next.notes,
       color: next.color,
       nestedAccents: input.nestedAccents,
       handleKind: next.handleKind,
@@ -1166,7 +1163,6 @@ function RoadmapCanvasInner({
         title: text,
         description: previous.description,
         icon: previous.icon,
-        notes: previous.notes,
         handleKind: previous.handleKind,
         incomingEdgeAnimated: previous.incomingEdgeAnimated,
       }).then((result) => {

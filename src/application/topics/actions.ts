@@ -64,7 +64,6 @@ export async function updateNodeAction(input: {
   title: string
   description?: string | null
   icon?: string | null
-  notes?: string | null
   accentColor?: string | null
   color?: string | null
   nestedAccents?: "keep" | "apply"

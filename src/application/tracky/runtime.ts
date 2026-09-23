@@ -1,6 +1,7 @@
 import { getRoleForUser } from "@/application/roles/roles-service"
 import { listLinksForRole } from "@/application/links/links-service"
 import { listTasksForRole } from "@/application/tasks/tasks-service"
+import { listNotesForRole } from "@/application/notes/notes-service"
 import { listTopicsForRole } from "@/application/topics/topics-service"
 import { composeSystemPrompt } from "@/application/tracky/prompts"
 import { createTrackyTools } from "@/application/tracky/tools"
@@ -43,10 +44,11 @@ export async function loadTrackyRuntime(input: {
     throw new ApplicationError("not_found", "That role was not found.")
   }
 
-  const [nodes, tasks, links] = await Promise.all([
+  const [nodes, tasks, links, notes] = await Promise.all([
     listTopicsForRole(input.userId, role.id),
     listTasksForRole(input.userId, role.id),
     listLinksForRole(input.userId, role.id),
+    listNotesForRole(input.userId, role.id),
   ])
 
   const treeIsEmpty = skillTopics(nodes).length === 0
@@ -92,6 +94,7 @@ ${JSON.stringify(workingSet)}`
       nodes,
       tasks,
       links,
+      notes,
       treeIsEmpty,
       maxToolResultChars: settings.trackyConfig.context.maxToolResultChars,
     }),

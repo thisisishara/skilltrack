@@ -10,7 +10,7 @@ import type { NodeLink } from "@/domain/links/types"
 import type { ChecklistItem } from "@/domain/tasks/types"
 import type { RoadmapNode } from "@/domain/topics/types"
 
-function node(id: string, parentId: string | null, title: string, notes: string | null = null): RoadmapNode {
+function node(id: string, parentId: string | null, title: string): RoadmapNode {
   const now = "2026-09-19T00:00:00.000Z"
   return {
     id,
@@ -19,7 +19,6 @@ function node(id: string, parentId: string | null, title: string, notes: string 
     kind: "skill",
     title,
     description: null,
-    notes,
     icon: "circle-dot",
     color: null,
     handleKind: "regular",
@@ -61,7 +60,8 @@ function link(id: string, topicId: string | null, label: string): NodeLink {
 }
 
 const roots = node("root", null, "Foundations")
-const child = node("child", "root", "Python", "study notes")
+const child = node("child", "root", "Python")
+const notes = [{ topicId: "child" }]
 const leaf = node("leaf", "child", "Async")
 const nodes = [roots, child, leaf]
 const tasks = [task("t1", "child", "Write a generator")]
@@ -84,7 +84,7 @@ describe("track traversal", () => {
   })
 
   it("lists direct children only", () => {
-    const result = listChildSummaries(nodes, tasks, links, "root")
+    const result = listChildSummaries(nodes, tasks, links, "root", notes)
     expect("error" in result).toBe(false)
     if ("error" in result) {
       return

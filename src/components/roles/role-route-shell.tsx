@@ -35,6 +35,7 @@ export function RegisterRoadmap(props: RoadmapViewProps) {
     props.nodes,
     props.checklistItems,
     props.links,
+    props.notes,
   ])
 
   if (cachedRoadmap?.roleId === props.roleId) {

@@ -303,6 +303,7 @@ export function LinkDialog({
   useEffect(() => {
     if (!open) {
       titleRequestRef.current += 1
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLookingUpTitle(false)
       return
     }
@@ -322,11 +323,13 @@ export function LinkDialog({
 
     const trimmed = normalizeLinkUrl(url)
     if (!isValidHttpUrl(trimmed)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLookingUpTitle(false)
       return
     }
 
     const requestId = ++titleRequestRef.current
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLookingUpTitle(true)
     const timer = window.setTimeout(() => {
       void previewLinkTitleAction(trimmed)

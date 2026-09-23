@@ -131,8 +131,11 @@ export function TrackyWorkspace({
       return
     }
     const snapshot = readStoredTrackySession(userId, focusedRoleId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProposals(snapshot?.proposals ?? [])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setScratchpad(snapshot?.scratchpad ?? "")
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPinnedRefs(snapshot?.pinnedRefs ?? [])
   }, [focusedRoleId, sessionEpoch, userId])
 

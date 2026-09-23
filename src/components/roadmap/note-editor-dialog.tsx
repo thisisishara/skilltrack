@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Eye, Pencil } from "lucide-react"
 import { Streamdown } from "streamdown"
 import { mermaid } from "@streamdown/mermaid"
 
@@ -15,10 +16,8 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { NOTE_TITLE_MAX, displayNoteTitle } from "@/domain/notes/title"
-import { useIsLgUp } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 
 import "streamdown/styles.css"
@@ -61,10 +60,10 @@ export function NoteEditorDialog({
   onSave: (input: { title: string; body: string }) => void
   onDelete?: () => void
 }) {
-  const lgUp = useIsLgUp()
   const [draftTitle, setDraftTitle] = useState(title)
   const [draftBody, setDraftBody] = useState(body)
   const [error, setError] = useState<string | null>(null)
+  const [mode, setMode] = useState<"edit" | "preview">("edit")
 
   useEffect(() => {
     if (!open) {
@@ -74,7 +73,8 @@ export function NoteEditorDialog({
     setDraftTitle(title)
     setDraftBody(body)
     setError(null)
-  }, [open, title, body])
+    setMode(readOnly ? "preview" : "edit")
+  }, [open, title, body, readOnly])
 
   function submit() {
     const nextTitle = displayNoteTitle(draftTitle)
@@ -85,49 +85,44 @@ export function NoteEditorDialog({
     onSave({ title: nextTitle, body: draftBody })
   }
 
-  const editor = (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <Field>
-        <FieldLabel htmlFor="note-title">Title</FieldLabel>
-        <Input
-          id="note-title"
-          value={draftTitle}
-          maxLength={NOTE_TITLE_MAX}
-          disabled={readOnly}
-          placeholder="Short title"
-          onChange={(event) => setDraftTitle(event.target.value)}
-        />
-      </Field>
-      <Field className="min-h-0 flex-1">
-        <FieldLabel htmlFor="note-body">Markdown</FieldLabel>
-        <Textarea
-          id="note-body"
-          value={draftBody}
-          disabled={readOnly}
-          placeholder={"Write in markdown. Fenced mermaid blocks render in the preview.\n\n```mermaid\ngraph TD\n  A --> B\n```"}
-          className="field-sizing-fixed min-h-48 flex-1 resize-none overflow-auto font-mono text-xs lg:min-h-0"
-          onChange={(event) => setDraftBody(event.target.value)}
-        />
-      </Field>
-    </div>
-  )
-
-  const preview = (
-    <div className="min-h-48 flex-1 overflow-y-auto rounded-lg border bg-muted/30 p-3 lg:min-h-0">
-      <NoteMarkdown source={draftBody} />
-    </div>
-  )
+  const isPreview = mode === "preview"
 
   return (
     <Dialog form open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(90dvh,40rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-4xl">
+      <DialogContent className="flex h-[min(90dvh,44rem)] w-full flex-col gap-4 overflow-hidden sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{title.trim() ? title : "New note"}</DialogTitle>
-          <DialogDescription>
-            {readOnly
-              ? "This note is still a pending Tracky change."
-              : "Markdown note. Mermaid diagrams in fenced blocks show in the preview."}
-          </DialogDescription>
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <DialogTitle>{title.trim() ? title : "New note"}</DialogTitle>
+              <DialogDescription className="mt-0.5">
+                {readOnly
+                  ? "This note is a pending Tracky change."
+                  : "Markdown · Mermaid diagrams render in preview."}
+              </DialogDescription>
+            </div>
+            {!readOnly ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+                onClick={() => setMode(isPreview ? "edit" : "preview")}
+                aria-label={isPreview ? "Switch to edit mode" : "Switch to preview mode"}
+              >
+                {isPreview ? (
+                  <>
+                    <Pencil data-icon="inline-start" />
+                    Edit
+                  </>
+                ) : (
+                  <>
+                    <Eye data-icon="inline-start" />
+                    Preview
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
         </DialogHeader>
         <form
           className="flex min-h-0 flex-1 flex-col gap-4"
@@ -138,26 +133,40 @@ export function NoteEditorDialog({
             }
           }}
         >
-          {lgUp ? (
-            <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
-              {editor}
-              {preview}
-            </div>
-          ) : (
-            <Tabs defaultValue="edit" className="min-h-0 flex-1">
-              <TabsList>
-                <TabsTrigger value="edit">Edit</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-              </TabsList>
-              <TabsContent value="edit" className="min-h-0 flex-1 overflow-y-auto">
-                {editor}
-              </TabsContent>
-              <TabsContent value="preview" className="min-h-0 flex-1">
-                {preview}
-              </TabsContent>
-            </Tabs>
-          )}
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <Field>
+              <FieldLabel htmlFor="note-title">Title</FieldLabel>
+              <Input
+                id="note-title"
+                value={draftTitle}
+                maxLength={NOTE_TITLE_MAX}
+                disabled={readOnly || isPreview}
+                placeholder="Short title"
+                onChange={(event) => setDraftTitle(event.target.value)}
+              />
+            </Field>
+
+            {isPreview ? (
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border bg-muted/30 p-4">
+                <NoteMarkdown source={draftBody} />
+              </div>
+            ) : (
+              <Field className="min-h-0 flex-1">
+                <FieldLabel htmlFor="note-body">Markdown</FieldLabel>
+                <Textarea
+                  id="note-body"
+                  value={draftBody}
+                  disabled={readOnly}
+                  placeholder={"Write in markdown. Fenced mermaid blocks render in preview.\n\n```mermaid\ngraph TD\n  A --> B\n```"}
+                  className="field-sizing-fixed min-h-48 flex-1 resize-none overflow-auto font-mono text-xs"
+                  onChange={(event) => setDraftBody(event.target.value)}
+                />
+              </Field>
+            )}
+          </div>
+
           {error ? <FieldError>{error}</FieldError> : null}
+
           <DialogFooter>
             {onDelete && !readOnly ? (
               <Button

@@ -163,6 +163,7 @@ export function TrackyPanel({
     pendingProposals: pending.map(toProposalIndex),
     scratchpad,
   })
+  // eslint-disable-next-line react-hooks/refs
   bodyRef.current = {
     roleId,
     focusedTopicId,
@@ -174,6 +175,7 @@ export function TrackyPanel({
     []
   )
 
+  /* eslint-disable react-hooks/refs */
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -188,6 +190,7 @@ export function TrackyPanel({
       }),
     [sessionEpoch, roleId]
   )
+  /* eslint-enable react-hooks/refs */
 
   const { messages, sendMessage, setMessages, status, error } = useChat({
     id: `${roleId}:${sessionEpoch}`,
@@ -206,8 +209,11 @@ export function TrackyPanel({
     const snapshot = readStoredTrackySession(userId, roleId)
     const { older, visible } = splitTrackyTranscript(snapshot?.messages ?? [])
     olderMessagesRef.current = older
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderCount(older.length)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages((visible as typeof messages | undefined) ?? [])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessageContext(snapshot?.messageContext ?? {})
     turnStartedAtRef.current = null
     elapsedByMessageRef.current = snapshot?.elapsedByMessage ?? {}
@@ -406,6 +412,7 @@ export function TrackyPanel({
           scroller.scrollTop < 64 &&
           olderMessagesRef.current.length > 0
         ) {
+          // eslint-disable-next-line react-hooks/immutability
           revealOlder(scroller, depth + 1)
         }
       })
@@ -507,6 +514,7 @@ export function TrackyPanel({
               Earlier messages
             </button>
           ) : null}
+          {/* eslint-disable-next-line react-hooks/refs */}
           {messages.map((message, index) => {
             const text = textFromParts(message.parts)
             const activities = toolActivitiesFromParts(

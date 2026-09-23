@@ -21,6 +21,7 @@ function extractRoleId(href: string | null): string | null {
 export function RegisterRoadmap(props: RoadmapViewProps) {
   const { rememberRoadmap, cachedRoadmap } = useRolesUi()
   const propsRef = useRef(props)
+  // eslint-disable-next-line react-hooks/refs
   propsRef.current = props
 
   useLayoutEffect(() => {

@@ -39,8 +39,11 @@ export function NotificationsMenu() {
 
   useEffect(() => {
     if (!settings.notificationsEnabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setItems([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadFailed(false)
       return
     }

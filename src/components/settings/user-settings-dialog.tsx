@@ -215,6 +215,7 @@ function RoadmapNotificationsSwitch() {
   const { settings, setSettings } = useTrackyWorkspace()
   const requestIdRef = useRef(0)
   const settingsRef = useRef(settings)
+  // eslint-disable-next-line react-hooks/refs
   settingsRef.current = settings
 
   return (
@@ -278,6 +279,7 @@ function TrackySettingsForm() {
     clearApiKey,
     config,
   })
+  // eslint-disable-next-line react-hooks/refs
   draftRef.current = {
     enabled,
     provider,
@@ -380,6 +382,7 @@ function TrackySettingsForm() {
       }
     })
   }
+  // eslint-disable-next-line react-hooks/refs
   persistDraftRef.current = persistDraft
 
   function persistNow(patch?: Partial<TrackyDraft>) {

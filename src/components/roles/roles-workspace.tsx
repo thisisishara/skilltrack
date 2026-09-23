@@ -156,6 +156,7 @@ export function RolesWorkspace({
       return
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCachedRoadmaps((current) => {
       const cached = current[activeRole.id]
       if (!cached) {

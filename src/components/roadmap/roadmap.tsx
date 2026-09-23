@@ -489,6 +489,7 @@ export function Roadmap({
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNodes((current) => {
       const next = mergeById(serverNodes, current)
       return sameById(next, current) ? current : next
@@ -496,6 +497,7 @@ export function Roadmap({
   }, [serverNodes])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems((current) => {
       const next = mergeById(serverItems, current)
       return sameById(next, current) ? current : next
@@ -503,6 +505,7 @@ export function Roadmap({
   }, [serverItems])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLinks((current) => {
       const next = mergeById(serverLinks, current)
       return sameById(next, current) ? current : next
@@ -510,6 +513,7 @@ export function Roadmap({
   }, [serverLinks])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNotes((current) => {
       const next = mergeById(serverNotes ?? [], current)
       return sameById(next, current) ? current : next

@@ -189,6 +189,33 @@ export function NoteEditorDialog({
     }
   }, [open, title, readOnly])
 
+  // Keyboard shortcuts — only active while the dialog is open.
+  //   Ctrl+Shift+P (⌘⇧P)  → toggle Edit ↔ Preview
+  //   Ctrl+Shift+E (⌘⇧E)  → jump to Edit
+  // Both combos are unclaimed in Chrome, Firefox, Edge and macOS system-wide.
+  useEffect(() => {
+    if (!open || readOnly) return
+
+    function onKeyDown(e: KeyboardEvent) {
+      const mod = e.ctrlKey || e.metaKey
+      if (!mod || !e.shiftKey) return
+
+      const key = e.key.toLowerCase()
+      if (key === "p") {
+        e.preventDefault()
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMode((m) => (m === "edit" ? "preview" : "edit"))
+      } else if (key === "e") {
+        e.preventDefault()
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMode("edit")
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [open, readOnly])
+
   function submit() {
     const nextTitle = displayNoteTitle(draftTitle)
     if (!nextTitle) {
@@ -201,6 +228,9 @@ export function NoteEditorDialog({
 
   const isPreview = mode === "preview"
   const charCount = draftBody.length
+  const isMac =
+    typeof navigator !== "undefined" && /mac/i.test(navigator.platform)
+  const shortcutHint = isMac ? "⌘⇧P" : "Ctrl+⇧P"
 
   return (
     <Dialog form open={open} onOpenChange={onOpenChange}>
@@ -278,9 +308,14 @@ export function NoteEditorDialog({
             )}
           </span>
 
-          {/* Right: mode toggle */}
+          {/* Right: shortcut hint + mode toggle */}
           {!readOnly ? (
-            <ModeToggle mode={mode} onChange={setMode} />
+            <div className="flex items-center gap-2">
+              <kbd className="hidden rounded border border-border/50 bg-muted/60 px-1.5 py-0.5 font-mono text-[0.65rem] text-muted-foreground/50 sm:inline">
+                {shortcutHint}
+              </kbd>
+              <ModeToggle mode={mode} onChange={setMode} />
+            </div>
           ) : null}
         </div>
 

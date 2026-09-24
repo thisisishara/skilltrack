@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Eye, FileText, Pencil, Trash2 } from "lucide-react"
+import { Eye, FileText, Maximize2, Minimize2, Pencil, Trash2 } from "lucide-react"
 import { Streamdown } from "streamdown"
 import { mermaid } from "@streamdown/mermaid"
 
@@ -120,6 +120,21 @@ function EmptyPreview() {
 }
 
 // ---------------------------------------------------------------------------
+// Expand / collapse persistence
+// ---------------------------------------------------------------------------
+
+const LS_EXPANDED_KEY = "skilltrack:note-editor:expanded"
+
+function readExpanded(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    return localStorage.getItem(LS_EXPANDED_KEY) === "true"
+  } catch {
+    return false
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main dialog
 // ---------------------------------------------------------------------------
 
@@ -144,7 +159,18 @@ export function NoteEditorDialog({
   const [draftBody, setDraftBody] = useState(body)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<"edit" | "preview">("edit")
+  const [expanded, setExpanded] = useState<boolean>(readExpanded)
   const titleRef = useRef<HTMLInputElement>(null)
+
+  function toggleExpanded() {
+    setExpanded((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(LS_EXPANDED_KEY, String(next))
+      } catch {}
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!open) return
@@ -185,10 +211,13 @@ export function NoteEditorDialog({
        */}
       <DialogContent
         className={cn(
-          // Size
-          "h-[min(90dvh,46rem)] max-h-[min(90dvh,46rem)] w-full sm:max-w-2xl",
           // Layout override
           "flex flex-col gap-0 overflow-hidden p-0",
+          // Size — animated via transition on the width/height classes
+          "transition-[width,max-width,height,max-height] duration-200",
+          expanded
+            ? "h-[92dvh] max-h-[92dvh] w-full sm:max-w-[92vw]"
+            : "h-[min(90dvh,46rem)] max-h-[min(90dvh,46rem)] w-full sm:max-w-2xl",
         )}
       >
         {/* Accessible title (visually hidden — the raw input IS the title) */}
@@ -196,8 +225,21 @@ export function NoteEditorDialog({
           {draftTitle.trim() || "Untitled note"}
         </DialogTitle>
 
+        {/* Expand / collapse button — sits just left of the default close button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-3 right-12 z-10 text-muted-foreground hover:text-foreground"
+          aria-label={expanded ? "Collapse editor" : "Expand editor"}
+          onClick={toggleExpanded}
+        >
+          {expanded ? <Minimize2 /> : <Maximize2 />}
+        </Button>
+
         {/* ── Title zone ─────────────────────────────────────────── */}
-        <div className="shrink-0 px-6 pt-6 pb-4 pr-14">
+        {/* pr-20 = clear both icon buttons (expand + close) */}
+        <div className="shrink-0 px-6 pt-6 pb-4 pr-20">
           <input
             ref={titleRef}
             type="text"
